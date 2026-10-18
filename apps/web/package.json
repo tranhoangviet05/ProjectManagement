@@ -1,0 +1,31 @@
+{
+  "name": "@stb/web",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "oxlint",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@stb/shared-types": "workspace:*",
+    "firebase": "^11.4.0",
+    "laravel-echo": "^2.6.1",
+    "lucide-react": "^1.16.0",
+    "pusher-js": "^8.6.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-router-dom": "^7.2.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "oxlint": "^1.81.0",
+    "tailwindcss": "^4.0.0",
+    "vite": "^8.3.0"
+  }
+}
