@@ -1,0 +1,17 @@
+node_modules/
+.pnpm-store/
+dist/
+build/
+.expo/
+.turbo/
+*.log
+.DS_Store
+Thumbs.db
+.idea/
+.env
+.env.*
+!.env.example
+# Firebase service accounts - NEVER commit
+*firebase-adminsdk*.json
+service-account*.json
+apps/api/storage/app/firebase/

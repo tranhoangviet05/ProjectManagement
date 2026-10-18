@@ -1,0 +1,25 @@
+{
+  "name": "social-travel-booking",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev:web": "pnpm --filter @stb/web dev",
+    "dev:mobile": "pnpm --filter @stb/mobile start",
+    "dev:api": "php apps/api/artisan serve",
+    "dev:reverb": "php apps/api/artisan reverb:start --debug",
+    "build:web": "pnpm --filter @stb/web build",
+    "lint": "pnpm -r --if-present lint",
+    "format": "prettier --write .",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx,json,css,md}": "prettier --write"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.7.1",
+    "@commitlint/config-conventional": "^19.7.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.4.3",
+    "prettier": "^3.5.0"
+  }
+}
