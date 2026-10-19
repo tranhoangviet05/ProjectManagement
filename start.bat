@@ -35,8 +35,8 @@ echo.
 rem ------------------------------------------------------------
 rem 3. Start Laravel API (Port 8000)
 rem ------------------------------------------------------------
-echo [2/5] Starting Laravel API Server (http://localhost:8000)...
-start "STB - Laravel API (Port 8000)" cmd /k "title STB - Laravel API && cd /d "%~dp0apps\api" && php artisan serve --port=8000"
+echo [2/5] Starting Laravel API Server (http://0.0.0.0:8000)...
+start "STB - Laravel API (Port 8000)" cmd /k "title STB - Laravel API && cd /d "%~dp0apps\api" && php artisan serve --host=0.0.0.0 --port=8000"
 
 rem ------------------------------------------------------------
 rem 4. Start Laravel Reverb WebSocket Server (Port 8080)

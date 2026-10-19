@@ -11,21 +11,23 @@ Route::get('/health', function () {
     ]);
 });
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
-});
-
 // API Version 1
 Route::prefix('v1')->group(function () {
-    // Public & Auth routes
+    // Public & Auth routes: /api/v1/...
     Route::group([], base_path('routes/api/v1/public.php'));
 
-    // Tourist routes: /api/v1/tourist
-    Route::prefix('tourist')->group(base_path('routes/api/v1/tourist.php'));
+    // Tourist routes: /api/v1/tourist/... (Yêu cầu xác thực + Role Tourist hoặc Admin)
+    Route::prefix('tourist')
+        ->middleware(['firebase.auth', 'role:tourist,admin'])
+        ->group(base_path('routes/api/v1/tourist.php'));
 
-    // Provider routes: /api/v1/provider
-    Route::prefix('provider')->group(base_path('routes/api/v1/provider.php'));
+    // Provider routes: /api/v1/provider/... (Yêu cầu xác thực + Role Provider hoặc Admin)
+    Route::prefix('provider')
+        ->middleware(['firebase.auth', 'role:provider,admin'])
+        ->group(base_path('routes/api/v1/provider.php'));
 
-    // Admin routes: /api/v1/admin
-    Route::prefix('admin')->group(base_path('routes/api/v1/admin.php'));
+    // Admin routes: /api/v1/admin/... (Yêu cầu xác thực + Role Admin)
+    Route::prefix('admin')
+        ->middleware(['firebase.auth', 'role:admin'])
+        ->group(base_path('routes/api/v1/admin.php'));
 });

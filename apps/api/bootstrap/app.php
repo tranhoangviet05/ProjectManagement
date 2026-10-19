@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Middleware\CheckRoleMiddleware;
+use App\Http\Middleware\FirebaseAuthMiddleware;
+use App\Http\Middleware\SanitizeAndValidateRequestMiddleware;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -14,7 +17,17 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // Kiểm duyệt và làm sạch toàn bộ dữ liệu từ Client gửi vào nhóm route API
+        $middleware->api(prepend: [
+            SanitizeAndValidateRequestMiddleware::class,
+        ]);
+
+        // Định danh các Middleware xác thực và phân quyền
+        $middleware->alias([
+            'firebase.auth' => FirebaseAuthMiddleware::class,
+            'role' => CheckRoleMiddleware::class,
+            'api.sanitize' => SanitizeAndValidateRequestMiddleware::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
