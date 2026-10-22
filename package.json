@@ -10,6 +10,8 @@
     "build:web": "pnpm --filter @stb/web build",
     "lint": "pnpm -r --if-present lint",
     "format": "prettier --write .",
+    "sync:roadmap": "node scripts/sync-roadmap.mjs",
+    "sync:roadmap:dry": "node scripts/sync-roadmap.mjs --dry-run",
     "prepare": "husky"
   },
   "lint-staged": {

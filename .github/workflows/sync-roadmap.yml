@@ -1,0 +1,35 @@
+name: Sync Roadmap to GitHub Issues
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Chế độ chạy thử (Dry Run - chỉ in log, không tạo issue)'
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  sync-roadmap:
+    name: Sync Roadmap to Milestones & Issues
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Run Roadmap Sync Script
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          node scripts/sync-roadmap.mjs
