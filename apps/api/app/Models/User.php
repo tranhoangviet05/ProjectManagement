@@ -13,14 +13,19 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
-#[Fillable(['firebase_uid', 'name', 'email', 'password', 'avatar_url', 'role', 'status', 'social_active'])]
+#[Fillable(['firebase_uid', 'email', 'password', 'role', 'status', 'social_active'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, Notifiable;
 
-    protected $appends = ['display_name'];
+    /**
+     * Bảng users chỉ lưu created_at, không có updated_at.
+     */
+    public const UPDATED_AT = null;
+
+    protected $appends = ['display_name', 'name', 'avatar_url'];
 
     /**
      * Get the attributes that should be cast.
@@ -30,7 +35,6 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'social_active' => 'boolean',
         ];
@@ -41,7 +45,33 @@ class User extends Authenticatable
      */
     public function getDisplayNameAttribute(): string
     {
-        return $this->name ?? '';
+        if ($this->relationLoaded('touristProfile') && $this->touristProfile?->name) {
+            return $this->touristProfile->name;
+        }
+        if ($this->relationLoaded('providerProfile') && $this->providerProfile?->business_name) {
+            return $this->providerProfile->business_name;
+        }
+        if ($this->relationLoaded('socialProfile') && $this->socialProfile?->display_name) {
+            return $this->socialProfile->display_name;
+        }
+
+        return explode('@', $this->email ?? '')[0] ?? 'User';
+    }
+
+    /**
+     * Accessor tương thích cho name.
+     */
+    public function getNameAttribute(): string
+    {
+        return $this->getDisplayNameAttribute();
+    }
+
+    /**
+     * Accessor tương thích cho avatar_url.
+     */
+    public function getAvatarUrlAttribute(): ?string
+    {
+        return $this->relationLoaded('socialProfile') ? $this->socialProfile?->avatar_url : null;
     }
 
     /**

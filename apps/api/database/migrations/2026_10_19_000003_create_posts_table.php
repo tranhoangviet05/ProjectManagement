@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
             $table->text('content')->nullable();
-            
+
             // Địa điểm check-in
             $table->string('location_name', 255)->nullable();
             $table->decimal('latitude', 10, 7)->nullable();

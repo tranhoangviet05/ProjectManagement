@@ -13,7 +13,7 @@ return new class extends Migration
             $table->id();
             $table->string('booking_code', 20)->unique();      // Mã đơn hiển thị: STB-20261019-XXXX
             $table->string('qr_checkin_token', 64)->unique();  // Token bảo mật dùng render mã QR check-in
-            
+
             // Khóa ngoại liên kết
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
             $table->foreignId('service_id')->constrained('services')->cascadeOnDelete();
