@@ -38,14 +38,14 @@ ProjectManagement/
 │   │   ├── app.json           # Expo app config
 │   │   ├── App.js             # Entry point gắn Navigation Container
 │   │   └── src/
-│   │       ├── components/    # Reusable Native UI components (Button, Input, Card...)
-│   │       ├── features/      # Module tính năng (auth, booking, social...)
-│   │       ├── hooks/         # Custom React hooks dùng riêng cho mobile
+│   │       ├── components/    # Reusable Native UI components dùng chung (AppText, Button...)
+│   │       ├── features/      # Module tính năng chuẩn Feature-Based MVC (auth, tourist, provider, tour...)
+│   │       │   └── [feature]/ # components/ (View), screens/ (View), hooks/ (Controller), models/ (Model)
+│   │       ├── hooks/         # Custom React hooks dùng chung cho mobile (useAuth...)
 │   │       ├── utils/         # Helper functions (formatCurrency, formatDate, storage...)
-│   │       ├── lib/           # Cấu hình Echo (Reverb WebSocket), Axios API client
-│   │       ├── navigation/    # Điều hướng React Navigation (Stack, Bottom Tabs)
-│   │       ├── screens/       # Các màn hình app (Home, Tours, Booking, Profile...)
-│   │       └── theme/         # Cấu hình màu sắc, kiểu dáng StyleSheet
+│   │       ├── lib/           # Cấu hình Echo (Reverb WebSocket), apiClient
+│   │       ├── navigation/    # Điều hướng React Navigation (RootNavigator)
+│   │       └── theme/         # Design tokens (colors, typographyScale, spacing, radius)
 │   │
 │   ├── web/                   # [@stb/web] Vite React Web Portal (Admin & Provider)
 │   │   ├── vite.config.js     # Cấu hình Vite & TailwindCSS plugin

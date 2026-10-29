@@ -52,20 +52,28 @@ Gợi nhớ những vùng vịnh nước trong vắt và du lịch thiên nhiên
 
 ---
 
-## 2. Quy chuẩn kiểu chữ (Typography - Font Quicksand trên Mobile)
+## 2. Quy chuẩn kiểu chữ (Typography - Plus Jakarta Sans & Quicksand)
 
-Font chữ chính thức trên Mobile là **Quicksand** (Google Fonts) – kiểu chữ sans-serif hình học với góc bo tròn mềm mại, mang lại cảm xúc thân thiện, thư thái, hiện đại và tràn đầy năng lượng du lịch.
+Hệ thống phân định rạch ròi 2 nhóm font chữ nhằm tối ưu hóa tính nhận diện thương hiệu và trải nghiệm đọc thực tế:
 
-| Cấp bậc        | Web (Tailwind)          | Mobile (Quicksand)      | Cỡ chữ    | Trọng lượng (Font Weight) | Sử dụng cho                           |
-| :------------- | :---------------------- | :---------------------- | :-------- | :------------------------ | :------------------------------------ |
-| **Display**    | `text-3xl`              | `Quicksand_700Bold`     | 28px      | Bold (700)                | Banner chào đón, số liệu nổi bật      |
-| **H1**         | `text-2xl`              | `Quicksand_700Bold`     | 24px      | Bold (700)                | Tiêu đề màn hình chính                |
-| **H2**         | `text-xl`               | `Quicksand_700Bold`     | 20px      | Bold (700)                | Tiêu đề danh mục, tour nổi bật        |
-| **H3 / Title** | `text-lg`               | `Quicksand_600SemiBold` | 17px-18px | SemiBold (600)            | Tên tour, khách sạn, tiêu đề Card     |
-| **Body Large** | `text-base`             | `Quicksand_400Regular`  | 16px      | Regular (400)             | Nội dung chính, mô tả tour            |
-| **Body Small** | `text-sm`               | `Quicksand_400Regular`  | 14px      | Regular (400)             | Đoạn trích ngắn, thông tin dịch vụ    |
-| **Label**      | `text-sm font-semibold` | `Quicksand_600SemiBold` | 13px      | SemiBold (600)            | Tiêu đề trường nhập, text nút bấm     |
-| **Caption**    | `text-xs`               | `Quicksand_500Medium`   | 12px      | Medium (500)              | Badge trạng thái, ngày giờ, số review |
+- **Logo / Brand Identity**: Sử dụng **Quicksand** (Google Fonts) – kiểu chữ sans-serif hình học với nét bo tròn thân thiện, mang lại cảm xúc thư thái, tự do xê dịch và kết nối xã hội. Dành riêng cho logo "Social Travel Booking" và các ấn phẩm nhận diện thương hiệu.
+- **Hệ thống giao diện UI (Toàn bộ Web & Mobile)**: Sử dụng **Plus Jakarta Sans** (Google Fonts) – kiểu chữ sans-serif hình học hiện đại, độ mở thoáng đãng, sắc sảo, tối ưu hiển thị số liệu giá vé, ngày giờ, lịch trình và hỗ trợ tiếng Việt hoàn hảo trên cả màn hình di động ngoài trời lẫn giao diện web.
+
+| Cấp bậc        | Web (Tailwind)          | Mobile (Plus Jakarta Sans)    | Cỡ chữ    | Trọng lượng (Font Weight) | Sử dụng cho                            |
+| :------------- | :---------------------- | :---------------------------- | :-------- | :------------------------ | :------------------------------------- |
+| **Brand Logo** | `font-logo text-2xl`    | `Quicksand_700Bold`           | 24px-28px | Bold (700)                | Logo "Social Travel Booking", branding |
+| **Display**    | `text-3xl font-bold`    | `PlusJakartaSans_700Bold`     | 28px      | Bold (700)                | Banner chào đón, số liệu nổi bật       |
+| **H1**         | `text-2xl font-bold`    | `PlusJakartaSans_700Bold`     | 24px      | Bold (700)                | Tiêu đề màn hình chính                 |
+| **H2**         | `text-xl font-bold`     | `PlusJakartaSans_700Bold`     | 20px      | Bold (700)                | Tiêu đề danh mục, tour nổi bật         |
+| **H3 / Title** | `text-lg font-semibold` | `PlusJakartaSans_600SemiBold` | 17px-18px | SemiBold (600)            | Tên tour, khách sạn, tiêu đề Card      |
+| **Body Large** | `text-base`             | `PlusJakartaSans_400Regular`  | 16px      | Regular (400)             | Nội dung chính, mô tả tour             |
+| **Body Small** | `text-sm`               | `PlusJakartaSans_400Regular`  | 14px      | Regular (400)             | Đoạn trích ngắn, thông tin dịch vụ     |
+| **Label**      | `text-sm font-semibold` | `PlusJakartaSans_600SemiBold` | 13px      | SemiBold (600)            | Tiêu đề trường nhập, text nút bấm      |
+| **Caption**    | `text-xs font-medium`   | `PlusJakartaSans_500Medium`   | 12px      | Medium (500)              | Badge trạng thái, ngày giờ, số review  |
+
+### 2.1. Đóng gói Tokens dùng chung (`@stb/tokens`)
+
+Toàn bộ mã màu, kích thước font chữ, khoảng cách đều được quản lý tại package độc lập **`packages/tokens`** (`@stb/tokens`). Cả Web (`apps/web`) và Mobile (`apps/mobile`) đều import trực tiếp từ nguồn chân lý duy nhất này, tránh sai lệch hay phân mảnh thiết kế.
 
 ---
 
@@ -97,22 +105,28 @@ Font chữ chính thức trên Mobile là **Quicksand** (Google Fonts) – kiể
 │     ├── Web: apps/web/src/components/ui/
 │     └── Mobile: apps/mobile/src/components/common/
 │
-├── 2. Feature / Screen Components   (Dùng riêng cho từng tính năng / màn hình)
-│     ├── Web: apps/web/src/features/[feature]/components/
-│     └── Mobile: apps/mobile/src/features/[feature]/components/ hoặc apps/mobile/src/screens/components/[screen]/
-│
-└── 3. Screen / Page Orchestrators    (Màn hình điều phối hoàn chỉnh ghép từ các sub-components)
-      ├── Web: apps/web/src/features/[feature]/pages/[Page].jsx
-      └── Mobile: apps/mobile/src/features/[feature]/screens/[Screen].js
+├── 2. Feature-Based Architecture    (Đóng gói toàn bộ giao diện & logic theo từng tính năng)
+│     ├── apps/web/src/features/[feature]/
+│     │     ├── components/          # Sub-components riêng của feature
+│     │     ├── pages/               # Màn hình web (Page Orchestrators)
+│     │     ├── services/            # API Service gọi Backend
+│     │     └── context/ hoặc hooks/ # State & logic điều phối
+│     │
+│     └── apps/mobile/src/features/[feature]/
+│           ├── components/          # [VIEW] Sub-components riêng của màn hình mobile
+│           ├── screens/             # [VIEW] Màn hình mobile hoàn chỉnh (Screen Orchestrators)
+│           ├── hooks/               # [CONTROLLER] Custom hooks quản lý state & sự kiện
+│           ├── services/            # [API SERVICE] Giao tiếp API Backend
+│           └── models/              # [MODEL] Data contract, Adapter chuyển đổi, Validation rules
 ```
 
 ### 4.2. Quy tắc phân định trách nhiệm
 
-| Cấp bậc                        | Vị trí thư mục                         | Trách nhiệm                                                                                                                                                    | Ví dụ thực tế                                                                      |
-| :----------------------------- | :------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------- |
-| **Shared Components**          | `components/ui/`, `components/common/` | Các nguyên tử giao diện (Atoms) không chứa logic nghiệp vụ đặc thù của màn hình nào, nhận dữ liệu hoàn toàn qua props.                                         | `<Typography>`, `<AppText>`, `<Modal>`, `<Badge>`                                  |
-| **Screen-Specific Components** | `features/[name]/components/`          | Các khối thành phần riêng của màn hình (Molecules / Organisms). Được tách ra thành từng file riêng biệt để giải phóng dung lượng code cho file màn hình chính. | `<AuthHeroShowcase>`, `<LoginForm>`, `<TouristDealCard>`, `<ProviderQrScannerBox>` |
-| **Screen Orchestrators**       | `pages/`, `screens/`                   | Đóng vai trò là "nhạc trưởng": quản lý state tổng, gọi Custom Hooks / Context, xử lý logic điều hướng và ghép các sub-components thành màn hình hoàn chỉnh.    | `AuthPage.jsx`, `AuthScreen.js`, `TouristWorkspaceScreen.js`                       |
+| Cấp bậc                        | Vị trí thư mục                                       | Trách nhiệm                                                                                                                                                    | Ví dụ thực tế                                                                      |
+| :----------------------------- | :--------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------- |
+| **Shared Components**          | `components/ui/`, `components/common/`               | Các nguyên tử giao diện (Atoms) không chứa logic nghiệp vụ đặc thù của màn hình nào, nhận dữ liệu hoàn toàn qua props.                                         | `<Typography>`, `<AppText>`, `<Modal>`, `<Badge>`                                  |
+| **Screen-Specific Components** | `features/[name]/components/`                        | Các khối thành phần riêng của màn hình (Molecules / Organisms). Được tách ra thành từng file riêng biệt để giải phóng dung lượng code cho file màn hình chính. | `<AuthHeroShowcase>`, `<LoginForm>`, `<TouristDealCard>`, `<ProviderQrScannerBox>` |
+| **Screen Orchestrators**       | `features/[name]/pages/`, `features/[name]/screens/` | Đóng vai trò là "nhạc trưởng": quản lý state tổng, gọi Custom Hooks / Context, xử lý logic điều hướng và ghép các sub-components thành màn hình hoàn chỉnh.    | `AuthPage.jsx`, `AuthScreen.js`, `TouristWorkspaceScreen.js`                       |
 
 ### 4.3. Các nguyên tắc bắt buộc khi lập trình giao diện
 
@@ -126,3 +140,31 @@ Font chữ chính thức trên Mobile là **Quicksand** (Google Fonts) – kiể
    - Mọi tương tác của người dùng (submit form, click tab, đổi input) được component con phát sự kiện ngược lên page cha qua callback props (`onSubmit`, `onSelectMode`, `onResetFeedback`).
 4. **Cô lập lỗi và dễ dàng bảo trì (Fault Isolation)**:
    - Khi cần nâng cấp giao diện của một thẻ card hoặc một form, lập trình viên chỉ mở và chỉnh sửa đúng file component đó mà không làm phát sinh rủi ro cho các thành phần khác trên màn hình.
+
+---
+
+## 5. Mô hình MVC thích ứng trong Frontend (Feature-Based MVC) & Vai trò của Model ở Frontend
+
+### 5.1. Vai trò của Model ở Frontend (Frontend Models)
+
+Trong khi Backend xử lý Model dưới dạng ORM/Database Schema, Model ở Frontend đóng vai trò là **người bảo vệ tính toàn vẹn dữ liệu cho giao diện**, bao gồm 4 nhiệm vụ then chốt:
+
+1. **Khuôn mẫu dữ liệu & Hợp đồng API (Data Contracts)**:
+   - Định nghĩa rõ ràng một thực thể (User, Booking, Tour) ở Client gồm các trường nào, kiểu dữ liệu gì.
+   - Nếu Backend thay đổi tên trường (ví dụ `avatar_url` sang `picture`), chỉ cần sửa tại Model Adapter của Frontend mà không phải đi sửa hàng chục component giao diện.
+2. **Chuyển đổi & Chuẩn hóa dữ liệu (Data Transformation / Adapter)**:
+   - Dữ liệu API trả về thường ở dạng thô (`price: 2500000`, `created_at: "2026-10-19T00:00:00Z"`).
+   - Model ở FE chịu trách nhiệm chuẩn hóa sang dữ liệu thân thiện với UI (`formattedPrice: "2.500.000 ₫"`, `formattedDate: "19/10/2026"`), xử lý các giá trị `null/undefined` mặc định, giúp tránh lỗi runtime crash app (`Cannot read property of undefined`).
+3. **Quy tắc xác thực biểu mẫu phía Client (Client-side Validation Rules)**:
+   - Tách các hàm kiểm tra dữ liệu đầu vào (`validateLoginInput`, `validateRegisterInput`) ra khỏi file giao diện JSX. View chỉ việc gọi hàm validate từ Model.
+4. **Quy tắc nghiệp vụ Client (Business Domain Helpers)**:
+   - Các hàm tính toán, kiểm tra quyền hạn phía Client: ví dụ `canScanCheckin(provider)`, `hasSufficientBalance(wallet, amount)`.
+
+### 5.2. Sự ánh xạ MVC trong cấu trúc `features/[feature]/`
+
+- **Model (M) - `features/[feature]/models/`**:
+  Chứa Data Contracts, Adapters (`transformTouristData`), Validation Schemas, và Business Helper Functions.
+- **View (V) - `features/[feature]/screens/` & `components/`**:
+  Giao diện hiển thị thuần túy (JSX/StyleSheet). Không chứa code tính toán phức tạp hay code gọi HTTP trực tiếp.
+- **Controller (C) - `features/[feature]/hooks/` & `services/`**:
+  Custom React Hooks đóng vai trò là Controller: tiếp nhận sự kiện từ View, gọi API thông qua Service, cập nhật State, và chuyển giao dữ liệu đã chuẩn hóa qua Model cho View render.
