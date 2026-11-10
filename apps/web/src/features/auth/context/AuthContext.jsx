@@ -63,7 +63,7 @@ export function AuthProvider({ children }) {
     } catch (error) {
       return {
         success: false,
-        message: error.message || "Thông tin đăng nhập không chính xác.",
+        message: error.message || "Tài khoản hoặc mật khẩu không chính xác.",
         errors: error.errors || null,
       };
     } finally {
@@ -112,6 +112,11 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const updateUser = (updatedUser) => {
+    setUser(updatedUser);
+    tokenStorage.setUser(updatedUser);
+  };
+
   const logout = async () => {
     await authService.logout();
     setUser(null);
@@ -126,6 +131,7 @@ export function AuthProvider({ children }) {
     login,
     register,
     loginWithGoogle,
+    updateUser,
     logout,
     refreshUser: verifySession,
     getDashboardRouteByRole: (r, u = user) => getDashboardRouteByRole(r, u),
