@@ -8,6 +8,7 @@ import ProviderOnboardingPage from "../features/provider/pages/ProviderOnboardin
 import AdminDashboardPage from "../features/admin/pages/AdminDashboardPage";
 import AdminProviderKycPage from "../features/admin/pages/AdminProviderKycPage";
 import ProviderDashboardPage from "../features/provider/pages/ProviderDashboardPage";
+import ProviderProfilePage from "../features/provider/pages/ProviderProfilePage";
 import NotFoundPage from "../features/common/pages/NotFoundPage";
 import Typography from "../components/ui/Typography";
 
@@ -54,9 +55,9 @@ function ProviderOnboardingRoute({ children }) {
 /**
  * Bảo vệ Route theo phân quyền (Role-based Guard):
  * - Nếu chưa đăng nhập -> Luôn chuyển về trang đăng nhập (/auth).
- * - Nếu đã đăng nhập nhưng không có quyền truy cập vai trò này -> Chuyển sang trang 404.
+ * - Nếu đã đăng nhập nhưng vai trò không nằm trong danh sách được phép -> Chuyển sang trang 404.
  */
-function ProtectedRoute({ allowedRoles, children }) {
+function ProtectedRoute({ allowedRoles, allowUnapprovedProvider = false, children }) {
   const { isAuthenticated, isLoading, user, role } = useAuth();
 
   if (isLoading) return <LoadingScreen />;
@@ -73,6 +74,7 @@ function ProtectedRoute({ allowedRoles, children }) {
 
   // 3. Chặn Provider vào Dashboard vận hành nếu chưa hoàn thành onboarding hoặc chưa được duyệt KYC
   if (
+    !allowUnapprovedProvider &&
     role === "provider" &&
     (!user?.provider_profile || user?.provider_profile?.status !== "approved")
   ) {
@@ -192,7 +194,38 @@ export default function AppRouter() {
           }
         />
 
-        {/* Bảng điều khiển Nhà cung cấp (Provider) */}
+        {/* Phân hệ Nhà cung cấp dịch vụ (Provider) */}
+        {/* 1. Quản lý hồ sơ đối tác kinh doanh / cá nhân (task8) */}
+        <Route
+          path="/provider/profile"
+          element={
+            <ProtectedRoute allowedRoles={["provider", "admin"]} allowUnapprovedProvider={true}>
+              <ProviderProfilePage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* 2. Bảng điều hành tổng quan */}
+        <Route
+          path="/provider/dashboard"
+          element={
+            <ProtectedRoute allowedRoles={["provider", "admin"]}>
+              <ProviderDashboardPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Điều hướng mặc định cho /provider -> /provider/dashboard */}
+        <Route
+          path="/provider"
+          element={
+            <ProtectedRoute allowedRoles={["provider", "admin"]}>
+              <Navigate to="/provider/dashboard" replace />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Fallback các route khác của provider về ProviderDashboardPage */}
         <Route
           path="/provider/*"
           element={
