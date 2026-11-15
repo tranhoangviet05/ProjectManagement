@@ -19,7 +19,19 @@ class FirebaseAuthMiddleware
      */
     public function handle(Request $request, Closure $next): mixed
     {
+<<<<<<< HEAD
         $bearerToken = $request->bearerToken();
+=======
+        // Hỗ trợ trường hợp kiểm thử tự động với Sanctum::actingAs() hoặc Auth::login()
+        if ($request->user()) {
+            $request->attributes->set('userModel', $request->user());
+
+            return $next($request);
+        }
+
+        // Hỗ trợ token từ Authorization Header hoặc query parameter cho media/file stream
+        $bearerToken = $request->bearerToken() ?? $request->query('token');
+>>>>>>> 76b849c (feat(api/admin): xay dung api phe duyet va tu choi ho so kyc)
 
         if (!$bearerToken) {
             return $this->unauthorizedResponse('Vui lòng đăng nhập để tiếp tục.');

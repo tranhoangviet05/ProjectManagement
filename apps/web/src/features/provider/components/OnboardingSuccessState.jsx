@@ -1,5 +1,5 @@
 import React from "react";
-import { Clock, CheckCircle2, ArrowRight, ShieldCheck } from "lucide-react";
+import { Clock, CheckCircle2, ArrowRight, ShieldCheck, FileCheck } from "lucide-react";
 import Typography from "../../../components/ui/Typography";
 
 /**
@@ -8,6 +8,65 @@ import Typography from "../../../components/ui/Typography";
 export default function OnboardingSuccessState({ formData, submissionInfo, onBackToAuth }) {
   const referenceCode = submissionInfo?.referenceCode || "STB-PRV-202688";
   const submittedAt = submissionInfo?.submittedAt || "Hôm nay";
+
+  const getBusinessTypeName = (id) => {
+    const map = {
+      1: "Lưu trú / Khách sạn",
+      2: "Tour du lịch / Lữ hành",
+      3: "Vận tải du lịch",
+      4: "Nhà hàng / Ẩm thực",
+      5: "Vé tham quan & Trải nghiệm",
+    };
+    return map[id] || formData?.businessType || "Tour & Du lịch";
+  };
+
+  const businessTypeName = getBusinessTypeName(formData?.business_type_id);
+
+  const getAttachmentLabel = () => {
+    const rawVal = formData?.business_license_url;
+    let list = [];
+
+    if (Array.isArray(rawVal)) {
+      list = rawVal.filter(Boolean);
+    } else if (typeof rawVal === "string" && rawVal.trim().length > 0) {
+      const trimmed = rawVal.trim();
+      if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+        try {
+          const parsed = JSON.parse(trimmed);
+          list = Array.isArray(parsed) ? parsed.filter(Boolean) : [trimmed];
+        } catch {
+          list = [trimmed];
+        }
+      } else {
+        list = [trimmed];
+      }
+    }
+
+    if (list.length === 0) {
+      if (Array.isArray(formData?.license_files) && formData.license_files.length > 0) {
+        const count = formData.license_files.length;
+        const isPdf = formData.license_files.some(
+          (f) => f?.type === "application/pdf" || f?.name?.endsWith(".pdf"),
+        );
+        return isPdf
+          ? "Đã đính kèm 1 tài liệu PDF giấy phép kinh doanh"
+          : `Đã đính kèm ${count} ảnh giấy phép kinh doanh`;
+      }
+      return "Đã đính kèm hồ sơ giấy phép kinh doanh";
+    }
+
+    const hasPdf = list.some(
+      (item) =>
+        typeof item === "string" &&
+        (item.toLowerCase().includes(".pdf") || item.includes("data:application/pdf")),
+    );
+
+    if (hasPdf) {
+      return "Đã đính kèm 1 tài liệu PDF giấy phép kinh doanh";
+    }
+
+    return `Đã đính kèm ${list.length} ảnh giấy phép kinh doanh`;
+  };
 
   return (
     <div className="w-full max-w-xl mx-auto text-center py-4">
@@ -46,21 +105,21 @@ export default function OnboardingSuccessState({ formData, submissionInfo, onBac
           <div>
             <span className="text-xs text-ink-subtle block mb-0.5">Tên đơn vị:</span>
             <span className="font-medium text-ink-primary truncate block">
-              {formData.businessName || "Chưa cập nhật"}
+              {formData?.businessName || "Chưa cập nhật"}
             </span>
           </div>
 
           <div>
             <span className="text-xs text-ink-subtle block mb-0.5">Loại hình dịch vụ:</span>
             <span className="font-medium text-ink-primary truncate block">
-              {formData.businessType || "Tour & Du lịch"}
+              {businessTypeName || formData?.businessType || "Tour & Du lịch"}
             </span>
           </div>
 
           <div>
             <span className="text-xs text-ink-subtle block mb-0.5">Người đại diện:</span>
             <span className="font-medium text-ink-primary truncate block">
-              {formData.representativeName || "Chưa cập nhật"}
+              {formData?.representativeName || "Chưa cập nhật"}
             </span>
           </div>
 
@@ -68,6 +127,29 @@ export default function OnboardingSuccessState({ formData, submissionInfo, onBac
             <span className="text-xs text-ink-subtle block mb-0.5">Thời gian gửi:</span>
             <span className="font-medium text-ink-primary block">{submittedAt}</span>
           </div>
+
+          {formData?.address && (
+            <div className="col-span-2">
+              <span className="text-xs text-ink-subtle block mb-0.5">Địa chỉ cơ sở:</span>
+              <span className="text-ink-primary block text-xs sm:text-sm">{formData.address}</span>
+            </div>
+          )}
+
+          {((Array.isArray(formData?.business_license_url) &&
+            formData.business_license_url.length > 0) ||
+            (Array.isArray(formData?.license_files) && formData.license_files.length > 0) ||
+            (typeof formData?.business_license_url === "string" &&
+              formData.business_license_url.trim().length > 0)) && (
+            <div className="col-span-2 pt-1">
+              <span className="text-xs text-ink-subtle block mb-1">
+                Hồ sơ giấy phép kinh doanh:
+              </span>
+              <div className="flex items-center gap-2 text-xs text-emerald-700 bg-emerald-50 px-2.5 py-1.5 rounded-lg border border-emerald-200 w-fit">
+                <FileCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span className="font-medium">{getAttachmentLabel()}</span>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="pt-3 border-t border-border-subtle flex items-center gap-2 text-xs text-amber-700 bg-amber-50/80 p-2.5 rounded-lg border border-amber-200">
