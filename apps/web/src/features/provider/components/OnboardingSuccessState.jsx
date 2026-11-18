@@ -28,6 +28,65 @@ export default function OnboardingSuccessState({ formData, submissionInfo, onBac
     return "Đã đính kèm 1 ảnh giấy phép kinh doanh";
   };
 
+  const getBusinessTypeName = (id) => {
+    const map = {
+      1: "Lưu trú / Khách sạn",
+      2: "Tour du lịch / Lữ hành",
+      3: "Vận tải du lịch",
+      4: "Nhà hàng / Ẩm thực",
+      5: "Vé tham quan & Trải nghiệm",
+    };
+    return map[id] || formData?.businessType || "Tour & Du lịch";
+  };
+
+  const businessTypeName = getBusinessTypeName(formData?.business_type_id);
+
+  const getAttachmentLabel = () => {
+    const rawVal = formData?.business_license_url;
+    let list = [];
+
+    if (Array.isArray(rawVal)) {
+      list = rawVal.filter(Boolean);
+    } else if (typeof rawVal === "string" && rawVal.trim().length > 0) {
+      const trimmed = rawVal.trim();
+      if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+        try {
+          const parsed = JSON.parse(trimmed);
+          list = Array.isArray(parsed) ? parsed.filter(Boolean) : [trimmed];
+        } catch {
+          list = [trimmed];
+        }
+      } else {
+        list = [trimmed];
+      }
+    }
+
+    if (list.length === 0) {
+      if (Array.isArray(formData?.license_files) && formData.license_files.length > 0) {
+        const count = formData.license_files.length;
+        const isPdf = formData.license_files.some(
+          (f) => f?.type === "application/pdf" || f?.name?.endsWith(".pdf"),
+        );
+        return isPdf
+          ? "Đã đính kèm 1 tài liệu PDF giấy phép kinh doanh"
+          : `Đã đính kèm ${count} ảnh giấy phép kinh doanh`;
+      }
+      return "Đã đính kèm hồ sơ giấy phép kinh doanh";
+    }
+
+    const hasPdf = list.some(
+      (item) =>
+        typeof item === "string" &&
+        (item.toLowerCase().includes(".pdf") || item.includes("data:application/pdf")),
+    );
+
+    if (hasPdf) {
+      return "Đã đính kèm 1 tài liệu PDF giấy phép kinh doanh";
+    }
+
+    return `Đã đính kèm ${list.length} ảnh giấy phép kinh doanh`;
+  };
+
   return (
     <div className="w-full max-w-xl mx-auto text-center py-4">
       {/* Icon trạng thái chờ duyệt */}
@@ -102,7 +161,11 @@ export default function OnboardingSuccessState({ formData, submissionInfo, onBac
             </div>
           )}
 
-          {formData.business_license_url && (
+          {((Array.isArray(formData?.business_license_url) &&
+            formData.business_license_url.length > 0) ||
+            (Array.isArray(formData?.license_files) && formData.license_files.length > 0) ||
+            (typeof formData?.business_license_url === "string" &&
+              formData.business_license_url.trim().length > 0)) && (
             <div className="col-span-2 pt-1">
               <span className="text-xs text-ink-subtle block mb-1">
                 Hồ sơ giấy phép kinh doanh:
