@@ -16,6 +16,9 @@ class TouristProfile extends Model
         'phone_number',
         'gender',
         'date_of_birth',
+    ];
+
+    protected $hidden = [
         'nationality',
         'id_card_number',
     ];
@@ -23,7 +26,7 @@ class TouristProfile extends Model
     protected function casts(): array
     {
         return [
-            'date_of_birth' => 'date',
+            'date_of_birth' => 'date:Y-m-d',
         ];
     }
 

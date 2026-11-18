@@ -236,7 +236,6 @@ class AuthService
                 [
                     'name' => $resolvedName,
                     'phone_number' => $extra['phone'] ?? null,
-                    'nationality' => 'Việt Nam',
                 ]
             );
         }
@@ -299,7 +298,8 @@ class AuthService
                 'id' => $user->touristProfile->id,
                 'name' => $user->touristProfile->name,
                 'phone_number' => $user->touristProfile->phone_number,
-                'nationality' => $user->touristProfile->nationality,
+                'gender' => $user->touristProfile->gender,
+                'date_of_birth' => $user->touristProfile->date_of_birth?->format('Y-m-d'),
             ] : null,
             'provider_profile' => $user->providerProfile ? [
                 'id' => $user->providerProfile->id,
