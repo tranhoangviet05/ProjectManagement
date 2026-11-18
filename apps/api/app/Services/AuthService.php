@@ -59,7 +59,7 @@ class AuthService
             $password = $firebaseData['password'] ?? null;
             $requestedRole = in_array($firebaseData['role'] ?? '', [UserRole::Tourist->value, UserRole::Provider->value], true)
                 ? $firebaseData['role']
-                : UserRole::Provider->value;
+                : UserRole::Tourist->value;
 
             $isNewUser = false;
 
@@ -104,6 +104,31 @@ class AuthService
                 if ($dirty) {
                     $user->save();
                 }
+            }
+
+            // Đảm bảo khởi tạo ví tiền mặc định cho tài khoản đăng nhập/đồng bộ từ Google
+            Wallet::firstOrCreate(
+                ['user_id' => $user->id],
+                ['balance' => 0.00, 'locked_balance' => 0.00, 'currency' => 'VND']
+            );
+
+            // Đồng bộ ảnh đại diện (avatar) và tên hiển thị từ Google vào SocialProfile
+            $avatar = $firebaseData['picture'] ?? $firebaseData['avatar_url'] ?? $firebaseData['avatarUrl'] ?? null;
+            $displayName = $firebaseData['name'] ?? $firebaseData['displayName'] ?? $firebaseData['display_name'] ?? null;
+
+            if ($avatar || $displayName) {
+                $socialProfile = SocialProfile::firstOrNew(['user_id' => $user->id]);
+                if ($avatar) {
+                    $socialProfile->avatar_url = $avatar;
+                }
+                if ($displayName && empty($socialProfile->display_name)) {
+                    $socialProfile->display_name = $displayName;
+                }
+                if (empty($socialProfile->username)) {
+                    $usernameBase = explode('@', $user->email ?? '')[0] ?? 'user';
+                    $socialProfile->username = Str::slug($usernameBase).'_'.Str::lower(Str::random(6));
+                }
+                $socialProfile->save();
             }
 
             $sanctumToken = $user->createToken('stb_client_token')->plainTextToken;
@@ -221,7 +246,8 @@ class AuthService
                 ['user_id' => $user->id],
                 [
                     'business_name' => $extra['business_name'] ?? ($resolvedName.' Travel'),
-                    'business_type' => $extra['business_type'] ?? 'Tour & Lưu trú',
+                    'representative_name' => $extra['representative_name'] ?? $resolvedName,
+                    'business_type_id' => $extra['business_type_id'] ?? null,
                     'phone' => $extra['phone'] ?? null,
                     'address' => $extra['address'] ?? null,
                     'status' => ProviderStatus::Approved->value,
@@ -302,9 +328,18 @@ class AuthService
             'provider_profile' => $user->providerProfile ? [
                 'id' => $user->providerProfile->id,
                 'business_name' => $user->providerProfile->business_name,
-                'business_type' => $user->providerProfile->business_type,
+                'representative_name' => $user->providerProfile->representative_name,
+                'business_type_id' => $user->providerProfile->business_type_id,
+                'business_type' => $user->providerProfile->businessType ? [
+                    'id' => $user->providerProfile->businessType->id,
+                    'type' => $user->providerProfile->businessType->type,
+                    'name' => $user->providerProfile->businessType->name,
+                    'slug' => $user->providerProfile->businessType->slug,
+                ] : null,
                 'phone' => $user->providerProfile->phone,
                 'address' => $user->providerProfile->address,
+                'business_license_url' => $user->providerProfile->business_license_url,
+                'description' => $user->providerProfile->description,
                 'status' => $user->providerProfile->status,
             ] : null,
             'social_profile' => $user->socialProfile ? [

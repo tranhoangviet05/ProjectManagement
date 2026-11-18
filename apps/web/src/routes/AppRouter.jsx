@@ -8,6 +8,7 @@ import ProviderOnboardingPage from "../features/provider/pages/ProviderOnboardin
 import AdminDashboardPage from "../features/admin/pages/AdminDashboardPage";
 import AdminProviderKycPage from "../features/admin/pages/AdminProviderKycPage";
 import ProviderDashboardPage from "../features/provider/pages/ProviderDashboardPage";
+import NotFoundPage from "../features/common/pages/NotFoundPage";
 import Typography from "../components/ui/Typography";
 
 function LoadingScreen() {
@@ -22,19 +23,60 @@ function LoadingScreen() {
 }
 
 /**
- * Bảo vệ Route theo phân quyền (Role-based Guard)
+ * Bảo vệ Route cho trang Onboarding của Provider:
+ * - Nếu chưa đăng nhập -> Chuyển về trang đăng nhập (/auth).
+ * - Nếu đã đăng nhập nhưng vai trò không phải provider -> Chuyển sang 404.
+ * - Nếu Provider đã được phê duyệt chính thức (status: approved) -> Chuyển thẳng vào dashboard.
  */
-function ProtectedRoute({ allowedRoles, children }) {
-  const { isAuthenticated, isLoading, role, getDashboardRouteByRole } = useAuth();
+function ProviderOnboardingRoute({ children }) {
+  const { isAuthenticated, isLoading, user, role } = useAuth();
 
   if (isLoading) return <LoadingScreen />;
 
+  // 1. Chặn khách chưa đăng nhập xem trang onboarding -> Quay về trang đăng nhập /auth
   if (!isAuthenticated) {
     return <Navigate to="/auth" replace />;
   }
 
+  // 2. Chặn người dùng có vai trò khác không phải provider
+  if (role !== "provider") {
+    return <Navigate to="/404" replace />;
+  }
+
+  // 3. Nếu hồ sơ đã được duyệt chính thức thì không cần vào lại onboarding
+  if (user?.provider_profile?.status === "approved") {
+    return <Navigate to="/provider/dashboard" replace />;
+  }
+
+  return children;
+}
+
+/**
+ * Bảo vệ Route theo phân quyền (Role-based Guard):
+ * - Nếu chưa đăng nhập -> Luôn chuyển về trang đăng nhập (/auth).
+ * - Nếu đã đăng nhập nhưng không có quyền truy cập vai trò này -> Chuyển sang trang 404.
+ */
+function ProtectedRoute({ allowedRoles, children }) {
+  const { isAuthenticated, isLoading, user, role } = useAuth();
+
+  if (isLoading) return <LoadingScreen />;
+
+  // 1. Chưa đăng nhập -> Chuyển về trang đăng nhập /auth
+  if (!isAuthenticated) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  // 2. Đã đăng nhập nhưng vai trò không nằm trong danh sách được phép -> Chuyển sang 404
   if (allowedRoles && !allowedRoles.includes(role)) {
-    return <Navigate to={getDashboardRouteByRole(role)} replace />;
+    return <Navigate to="/404" replace />;
+  }
+
+  // 3. Chặn Provider vào Dashboard vận hành nếu chưa hoàn thành onboarding hoặc chưa được duyệt KYC
+  if (
+    role === "provider" &&
+    (!user?.provider_profile || user?.provider_profile?.status !== "approved")
+  ) {
+    return <Navigate to="/provider/onboarding" replace />;
   }
 
   return children;
@@ -44,12 +86,12 @@ function ProtectedRoute({ allowedRoles, children }) {
  * Tự động chuyển hướng khỏi trang /auth nếu đã đăng nhập
  */
 function GuestRoute({ children }) {
-  const { isAuthenticated, isLoading, role, getDashboardRouteByRole } = useAuth();
+  const { isAuthenticated, isLoading, user, role, getDashboardRouteByRole } = useAuth();
 
   if (isLoading) return <LoadingScreen />;
 
   if (isAuthenticated) {
-    return <Navigate to={getDashboardRouteByRole(role)} replace />;
+    return <Navigate to={getDashboardRouteByRole(role, user)} replace />;
   }
 
   return children;
@@ -59,6 +101,16 @@ export default function AppRouter() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* Trang chủ điều hướng về /auth hoặc bảng điều khiển */}
+        <Route
+          path="/"
+          element={
+            <GuestRoute>
+              <Navigate to="/auth" replace />
+            </GuestRoute>
+          }
+        />
+
         {/* Trang Đăng nhập / Đăng ký */}
         <Route
           path="/auth"
@@ -69,12 +121,29 @@ export default function AppRouter() {
           }
         />
 
-        {/* Trang thông báo giới hạn nền tảng 404 cho vai trò chưa hỗ trợ trên Web (ví dụ: Tourist) */}
+        {/* Trang lỗi 404 chuyên biệt */}
+        <Route path="/404" element={<NotFoundPage />} />
+
+        {/* Trang thông báo giới hạn nền tảng cho vai trò chưa hỗ trợ trên Web (ví dụ: Tourist) */}
         <Route path="/unsupported" element={<PlatformUnsupportedPage />} />
 
-        {/* Trang Khởi tạo / Thiết lập hồ sơ Nhà cung cấp dịch vụ (Onboarding) */}
-        <Route path="/onboarding" element={<ProviderOnboardingPage />} />
-        <Route path="/provider/onboarding" element={<ProviderOnboardingPage />} />
+        {/* Trang Khởi tạo / Thiết lập hồ sơ Nhà cung cấp dịch vụ (Onboarding) - Bảo vệ nghiêm ngặt */}
+        <Route
+          path="/onboarding"
+          element={
+            <ProviderOnboardingRoute>
+              <ProviderOnboardingPage />
+            </ProviderOnboardingRoute>
+          }
+        />
+        <Route
+          path="/provider/onboarding"
+          element={
+            <ProviderOnboardingRoute>
+              <ProviderOnboardingPage />
+            </ProviderOnboardingRoute>
+          }
+        />
 
         {/* Phân hệ Quản trị viên (Admin) - Tách route riêng biệt */}
         {/* 1. Route Tổng quan vận hành */}
@@ -136,8 +205,8 @@ export default function AppRouter() {
         {/* Điều hướng không gian Du khách sang trang Unsupported trên Web */}
         <Route path="/tourist/*" element={<Navigate to="/unsupported" replace />} />
 
-        {/* Điều hướng mặc định */}
-        <Route path="*" element={<Navigate to="/auth" replace />} />
+        {/* Bất kỳ đường dẫn nào sai hoặc không tồn tại đều hiển thị trang 404 */}
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>
   );
