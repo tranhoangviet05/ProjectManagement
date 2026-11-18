@@ -135,7 +135,7 @@ export default function ProviderInfoForm({ user, isSubmitting, onSubmit, feedbac
         {/* Số điện thoại liên hệ */}
         <div>
           <Typography variant="label" as="label" htmlFor="phone" className="block mb-1.5">
-            Số điện thoại Hotline / CSKH <span className="text-status-danger">*</span>
+            Chăm sóc khách hàng <span className="text-status-danger">*</span>
           </Typography>
           <input
             id="phone"
