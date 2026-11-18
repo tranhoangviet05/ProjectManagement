@@ -1,5 +1,6 @@
-import React, { createContext, useState } from "react";
+import React, { createContext, useCallback, useState } from "react";
 import authService from "../services/authService";
+import { mobileSessionStore } from "../../../lib/apiClient";
 
 export const AuthContext = createContext(null);
 
@@ -52,6 +53,17 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
 
+  const updateUser = useCallback((updatedData) => {
+    setUser((prevUser) => {
+      const nextUser =
+        typeof updatedData === "function"
+          ? updatedData(prevUser)
+          : { ...(prevUser || {}), ...updatedData };
+      mobileSessionStore.setUser(nextUser);
+      return nextUser;
+    });
+  }, []);
+
   return (
     <AuthContext.Provider
       value={{
@@ -62,6 +74,7 @@ export function AuthProvider({ children }) {
         login,
         register,
         logout,
+        updateUser,
       }}
     >
       {children}
