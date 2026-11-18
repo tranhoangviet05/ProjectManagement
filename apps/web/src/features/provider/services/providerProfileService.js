@@ -2,14 +2,24 @@ import apiClient, { tokenStorage } from "../../../lib/apiClient";
 
 export const providerProfileService = {
   /**
-   * Lấy thông tin hồ sơ phiên hiện tại (GET /api/v1/auth/me)
+   * Lấy thông tin hồ sơ Provider (GET /api/v1/provider/profile)
    */
   async fetchProfile() {
     try {
-      const res = await apiClient.get("/auth/me");
+      const res = await apiClient.get("/provider/profile");
       if (res?.data) {
-        tokenStorage.setUser(res.data);
-        return res.data;
+        const currentUser = tokenStorage.getUser() || {};
+        const updatedUser = {
+          ...currentUser,
+          provider_profile: res.data,
+          wallet: res.data.wallet || currentUser.wallet,
+        };
+        tokenStorage.setUser(updatedUser);
+        return {
+          success: true,
+          data: res.data,
+          user: updatedUser,
+        };
       }
     } catch (err) {
       console.warn("[providerProfileService] fetchProfile fallback:", err.message);
@@ -18,15 +28,26 @@ export const providerProfileService = {
   },
 
   /**
-   * Cập nhật thông tin Profile (PUT /api/v1/auth/profile)
-   * Body: { name, phone, bio, birthday, gender, address, business_name, description }
+   * Cập nhật thông tin Profile (PUT /api/v1/provider/profile)
+   * Body: { business_name, representative_name, business_type_id, address, phone, description }
    */
   async updateProfile(payload) {
     try {
-      const res = await apiClient.put("/auth/profile", payload);
+      const res = await apiClient.put("/provider/profile", payload);
       if (res?.data) {
-        tokenStorage.setUser(res.data);
-        return res;
+        const currentUser = tokenStorage.getUser() || {};
+        const updatedUser = {
+          ...currentUser,
+          provider_profile: {
+            ...(currentUser.provider_profile || {}),
+            ...res.data,
+          },
+        };
+        tokenStorage.setUser(updatedUser);
+        return {
+          ...res,
+          user: updatedUser,
+        };
       }
     } catch (err) {
       console.warn("[providerProfileService] updateProfile fallback:", err.message);
@@ -38,12 +59,15 @@ export const providerProfileService = {
     const currentUser = tokenStorage.getUser() || {};
     const updatedUser = {
       ...currentUser,
-      name: payload.name || currentUser.name,
+      name: payload.representative_name || payload.name || currentUser.name,
       phone: payload.phone || currentUser.phone,
       provider_profile: {
         ...(currentUser.provider_profile || {}),
         business_name: payload.business_name || currentUser.provider_profile?.business_name,
-        representative_name: payload.name || currentUser.provider_profile?.representative_name,
+        representative_name:
+          payload.representative_name ||
+          payload.name ||
+          currentUser.provider_profile?.representative_name,
         phone: payload.phone || currentUser.provider_profile?.phone,
         address:
           payload.address !== undefined ? payload.address : currentUser.provider_profile?.address,
@@ -56,7 +80,8 @@ export const providerProfileService = {
     return {
       success: true,
       message: "Cập nhật hồ sơ thành công.",
-      data: updatedUser,
+      data: updatedUser.provider_profile,
+      user: updatedUser,
     };
   },
 
@@ -72,13 +97,21 @@ export const providerProfileService = {
       const res = await apiClient.post("/auth/avatar", formData);
       if (res?.data) {
         const currentUser = tokenStorage.getUser() || {};
+        const avatarUrl = res.data.avatar_url || res.data.url;
         const updatedUser = {
           ...currentUser,
-          avatar_url: res.data.avatar_url || res.data.url,
-          avatar: res.data.avatar_url || res.data.url,
+          avatar_url: avatarUrl,
+          avatar: avatarUrl,
+          provider_profile: {
+            ...(currentUser.provider_profile || {}),
+            avatar_url: avatarUrl,
+          },
         };
         tokenStorage.setUser(updatedUser);
-        return res;
+        return {
+          ...res,
+          user: updatedUser,
+        };
       }
     } catch (err) {
       console.warn("[providerProfileService] uploadAvatar fallback:", err.message);
@@ -95,6 +128,10 @@ export const providerProfileService = {
           ...currentUser,
           avatar_url: base64Url,
           avatar: base64Url,
+          provider_profile: {
+            ...(currentUser.provider_profile || {}),
+            avatar_url: base64Url,
+          },
         };
         tokenStorage.setUser(updatedUser);
         resolve({
@@ -140,12 +177,20 @@ export const providerProfileService = {
       const res = await apiClient.post("/provider/wallet/activate", payload);
       if (res?.data) {
         const currentUser = tokenStorage.getUser() || {};
+        const walletInfo = {
+          ...(res.data.wallet || res.data),
+          is_activated: true,
+        };
         const updatedUser = {
           ...currentUser,
-          wallet: res.data.wallet || res.data,
+          wallet: walletInfo,
         };
         tokenStorage.setUser(updatedUser);
-        return res;
+        return {
+          ...res,
+          data: walletInfo,
+          user: updatedUser,
+        };
       }
     } catch (err) {
       console.warn("[providerProfileService] activateWallet fallback:", err.message);
@@ -156,11 +201,12 @@ export const providerProfileService = {
     const currentUser = tokenStorage.getUser() || {};
     const newWallet = {
       id: currentUser.wallet?.id || 101,
+      wallet_id: currentUser.wallet?.id || 101,
       user_id: currentUser.id || 1,
-      balance: 0,
-      locked_balance: 0,
+      balance: "0.00",
+      locked_balance: "0.00",
       currency: "VND",
-      status: "active",
+      is_activated: true,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };

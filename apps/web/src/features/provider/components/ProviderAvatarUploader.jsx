@@ -112,7 +112,8 @@ export default function ProviderAvatarUploader({ user, isUploading, onUploadFile
         variant="caption"
         className="block text-[11px] text-ink-subtle mt-3 leading-relaxed"
       >
-        Hỗ trợ định dạng JPG, PNG, WEBP. Dung lượng tối đa 2MB.
+        Hỗ trợ định dạng JPG, PNG, WEBP (tối đa 2MB). Hình ảnh đại diện sẽ hiển thị trên hồ sơ
+        thương hiệu và chứng từ đặt chỗ.
       </Typography>
 
       {/* Thông báo kết quả tải ảnh */}
