@@ -173,12 +173,7 @@ export interface Service {
   status: ServiceStatus;
   base_price: number;
   price_unit: string;
-  max_guests: number;
-  duration_days: number;
-  duration_nights: number;
   address?: string;
-  latitude?: number;
-  longitude?: number;
   amenities?: string[];
   includes?: string[];
   excludes?: string[];
