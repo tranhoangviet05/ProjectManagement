@@ -98,8 +98,6 @@ export interface TouristProfile {
   phone_number?: string;
   gender?: string;
   date_of_birth?: string;
-  nationality?: string;
-  id_card_number?: string;
 }
 
 export interface BusinessType {

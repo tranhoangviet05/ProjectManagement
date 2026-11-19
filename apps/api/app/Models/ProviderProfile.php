@@ -16,6 +16,7 @@ class ProviderProfile extends Model
         'business_name',
         'representative_name',
         'business_type_id',
+        'avatar_url',
         'phone',
         'address',
         'business_license_url',

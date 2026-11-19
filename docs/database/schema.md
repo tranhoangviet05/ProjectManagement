@@ -56,8 +56,6 @@ Tài liệu thiết kế và đặc tả chi tiết Cơ sở dữ liệu cho d�
 | `phone_number`             | `VARCHAR(20)`  | `NULLABLE`               | Số điện thoại liên hệ nhận vé/đơn    |
 | `gender`                   | `VARCHAR(20)`  | `NULLABLE`               | Giới tính: `male`, `female`, `other` |
 | `date_of_birth`            | `DATE`         | `NULLABLE`               | Ngày tháng năm sinh                  |
-| `nationality`              | `VARCHAR(100)` | `NULLABLE`               | Quốc tịch                            |
-| `id_card_number`           | `VARCHAR(30)`  | `NULLABLE`               | Số CCCD / Hộ chiếu                   |
 | `created_at`, `updated_at` | `TIMESTAMP`    |                          | Thời gian tạo và cập nhật            |
 
 #### `business_types` (Loại hình Doanh nghiệp Nhà cung cấp)
