@@ -30,6 +30,12 @@ class UpdateServiceRequest extends FormRequest
             'excludes' => ['nullable', 'array'],
             'excludes.*' => ['string', 'max:255'],
 
+            'availabilities' => ['nullable', 'array'],
+            'availabilities.*.available_date' => ['required_with:availabilities', 'date'],
+            'availabilities.*.total_slots' => ['required_with:availabilities', 'integer', 'min:0'],
+            'availabilities.*.price_override' => ['nullable', 'numeric', 'min:0'],
+            'availabilities.*.is_blocked' => ['nullable', 'boolean'],
+
             'schedules' => ['nullable', 'array'],
             'schedules.*.day_number' => ['required_with:schedules', 'integer', 'min:1'],
             'schedules.*.title' => ['required_with:schedules', 'string', 'max:255'],
