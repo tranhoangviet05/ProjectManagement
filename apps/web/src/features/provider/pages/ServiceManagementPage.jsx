@@ -6,7 +6,6 @@ import {
   Trash2,
   Compass,
   Image as ImageIcon,
-  Loader2,
   AlertCircle,
   CheckCircle2,
   Users,
@@ -15,6 +14,7 @@ import {
 } from "lucide-react";
 import ProviderLayout from "../layouts/ProviderLayout";
 import Typography from "../../../components/ui/Typography";
+import { ServiceGridSkeleton } from "../../../components/ui/Skeleton";
 import ServiceFormStepper from "../components/ServiceFormStepper";
 import providerServiceApi from "../services/providerServiceApi";
 import {
@@ -284,12 +284,7 @@ export default function ServiceManagementPage() {
 
             {/* Service Grid */}
             {isLoading ? (
-              <div className="bg-surface-elevated rounded-3xl p-14 flex flex-col items-center justify-center gap-3 shadow-[0_4px_24px_rgba(15,23,42,0.04)]">
-                <Loader2 className="w-7 h-7 text-brand-primary animate-spin" />
-                <Typography variant="body-sm" className="text-ink-subtle">
-                  Đang tải danh sách dịch vụ...
-                </Typography>
-              </div>
+              <ServiceGridSkeleton count={6} />
             ) : services.length === 0 ? (
               <div className="bg-surface-elevated rounded-3xl p-12 text-center space-y-4 shadow-[0_4px_24px_rgba(15,23,42,0.04)]">
                 <div className="w-16 h-16 mx-auto rounded-2xl bg-brand-subtle text-brand-primary flex items-center justify-center">
