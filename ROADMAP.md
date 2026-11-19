@@ -42,17 +42,18 @@
 
 ## SPRINT 2: Quản Lý Dịch Vụ & Khám Phá Trải Nghiệm (Tuần 2)
 
-**Mục tiêu (Sprint Goal):** Provider đăng ký và cấu hình dịch vụ bán hàng (ưu tiên Tour & Phòng lưu trú), User có thể tìm kiếm, lọc và xem thông tin chi tiết dịch vụ.
-**Thời gian:** 02/11 - 08/11 | **Tổng Estimate:** 14 Points
+**Mục tiêu (Sprint Goal):** Provider đăng ký và cấu hình dịch vụ bán hàng (ưu tiên Tour & Phòng lưu trú), Admin kiểm duyệt dịch vụ hợp lệ lên sàn, User có thể tìm kiếm, lọc và xem thông tin chi tiết dịch vụ.
+**Thời gian:** 02/11 - 08/11 | **Tổng Estimate:** 16 Points
 
-| Tên Task (Issue / Sub-issues)                                 |     Platform     |  Status  | Priority | Estimate | Module      | Role         | Start date | Date target |
-| :------------------------------------------------------------ | :--------------: | :------: | :------: | :------: | :---------- | :----------- | :--------- | :---------- |
-| **[EPIC] Quản lý Dịch vụ (Provider Portal)**                  |  **API / Web**   | **Todo** |  **P0**  |  **8**   | **Booking** | **provider** | 02/11      | 06/11       |
-| ↳ CRUD Dịch vụ du lịch (Tour / Khách sạn) + Quản lý album ảnh |       Web        |   Todo   |    P0    |    5     | Booking     | provider     | 02/11      | 05/11       |
-| ↳ Cấu hình Lịch phục vụ (Availability) & Bảng giá theo ngày   |       Web        |   Todo   |    P0    |    3     | Booking     | provider     | 05/11      | 06/11       |
-| **[EPIC] Khám phá & Tìm kiếm Dịch vụ (Tourist)**              | **API / Mobile** | **Todo** |  **P0**  |  **6**   | **Booking** | **user**     | 05/11      | 08/11       |
-| ↳ Trang chủ & Tìm kiếm (Theo điểm đến, từ khóa, khoảng giá)   |    Mobile/Web    |   Todo   |    P0    |    3     | Booking     | user         | 05/11      | 07/11       |
-| ↳ Màn hình Chi tiết Dịch vụ (Thông tin, ảnh, chính sách, giá) |      Mobile      |   Todo   |    P0    |    3     | Booking     | user         | 07/11      | 08/11       |
+| Tên Task (Issue / Sub-issues)                                   |     Platform     |  Status  | Priority | Estimate | Module      | Role         | Start date | Date target |
+| :-------------------------------------------------------------- | :--------------: | :------: | :------: | :------: | :---------- | :----------- | :--------- | :---------- |
+| **[EPIC #15] Quản lý Dịch vụ**                                  |  **API / Web**   | **Todo** |  **P0**  |  **10**  | **Booking** | **provider** | 02/11      | 07/11       |
+| ↳ CRUD Dịch vụ du lịch (Tour / Khách sạn) + Quản lý album ảnh   |       Web        |   Done   |    P0    |    5     | Booking     | provider     | 02/11      | 05/11       |
+| ↳ Cấu hình Lịch phục vụ (Availability) & Bảng giá theo ngày     |       Web        |   Todo   |    P0    |    3     | Booking     | provider     | 05/11      | 06/11       |
+| ↳ Admin Dashboard: Kiểm duyệt & Phê duyệt/Từ chối Dịch vụ [#46] |    Web / API     |   Todo   |    P0    |    2     | Admin       | admin        | 06/11      | 07/11       |
+| **[EPIC] Khám phá & Tìm kiếm Dịch vụ (Tourist)**                | **API / Mobile** | **Todo** |  **P0**  |  **6**   | **Booking** | **user**     | 05/11      | 08/11       |
+| ↳ Trang chủ & Tìm kiếm (Theo điểm đến, từ khóa, khoảng giá)     |    Mobile/Web    |   Todo   |    P0    |    3     | Booking     | user         | 05/11      | 07/11       |
+| ↳ Màn hình Chi tiết Dịch vụ (Thông tin, ảnh, chính sách, giá)   |      Mobile      |   Todo   |    P0    |    3     | Booking     | user         | 07/11      | 08/11       |
 
 ---
 

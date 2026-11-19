@@ -12,8 +12,15 @@ class BusinessTypeSeeder extends Seeder
      */
     public function run(): void
     {
+        // Chuyển đổi bản ghi cũ 'homestay-villa' sang 'homestay' để giữ nguyên khóa ngoại nếu đã dùng
+        BusinessType::where('slug', 'homestay-villa')->update([
+            'type' => 'Chỗ ở',
+            'name' => 'Homestay',
+            'slug' => 'homestay',
+        ]);
+
         $types = [
-            // Nhóm: Chỗ ở
+            // Nhóm: Chỗ ở (Khách sạn & Homestay: phòng/đêm | Villa & Resort: đêm)
             [
                 'type' => 'Chỗ ở',
                 'name' => 'Khách sạn',
@@ -21,8 +28,13 @@ class BusinessTypeSeeder extends Seeder
             ],
             [
                 'type' => 'Chỗ ở',
-                'name' => 'Homestay & Villa',
-                'slug' => 'homestay-villa',
+                'name' => 'Homestay',
+                'slug' => 'homestay',
+            ],
+            [
+                'type' => 'Chỗ ở',
+                'name' => 'Villa',
+                'slug' => 'villa',
             ],
             [
                 'type' => 'Chỗ ở',
