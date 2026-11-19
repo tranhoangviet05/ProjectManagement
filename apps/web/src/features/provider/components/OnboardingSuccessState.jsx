@@ -10,36 +10,8 @@ import { getBusinessTypeName } from "../models/providerOnboardingModel";
 export default function OnboardingSuccessState({ formData, submissionInfo, onBackToAuth }) {
   const referenceCode = submissionInfo?.referenceCode || "STB-PRV-202688";
   const submittedAt = submissionInfo?.submittedAt || "Hôm nay";
-  const businessTypeName = getBusinessTypeName(formData.business_type_id);
-
-  const getAttachmentLabel = () => {
-    const val = formData.business_license_url || "";
-    if (val.includes(".pdf") || val.includes("data:application/pdf")) {
-      return "Đã đính kèm 1 tài liệu PDF giấy phép kinh doanh";
-    }
-    if (val.startsWith("[") && val.endsWith("]")) {
-      try {
-        const count = JSON.parse(val).length;
-        return `Đã đính kèm ${count} ảnh giấy phép kinh doanh`;
-      } catch {
-        return "Đã đính kèm ảnh giấy phép kinh doanh";
-      }
-    }
-    return "Đã đính kèm 1 ảnh giấy phép kinh doanh";
-  };
-
-  const getBusinessTypeName = (id) => {
-    const map = {
-      1: "Lưu trú / Khách sạn",
-      2: "Tour du lịch / Lữ hành",
-      3: "Vận tải du lịch",
-      4: "Nhà hàng / Ẩm thực",
-      5: "Vé tham quan & Trải nghiệm",
-    };
-    return map[id] || formData?.businessType || "Tour & Du lịch";
-  };
-
-  const businessTypeName = getBusinessTypeName(formData?.business_type_id);
+  const businessTypeName =
+    getBusinessTypeName(formData?.business_type_id) || formData?.businessType || "Tour & Du lịch";
 
   const getAttachmentLabel = () => {
     const rawVal = formData?.business_license_url;
