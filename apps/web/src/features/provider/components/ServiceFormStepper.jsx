@@ -582,34 +582,7 @@ export default function ServiceFormStepper({
         {/* BƯỚC 1: THÔNG TIN CƠ BẢN (Bắt buộc toàn bộ) */}
         {currentStep === 1 && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {isTour && (
-              <div>
-                <label className="block text-sm font-semibold text-ink-primary mb-2">
-                  Số lượng khách tối đa mỗi ngày (mặc định 15 ngày tới){" "}
-                  <span className="text-status-danger">*</span>
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  value={formData.daily_slots}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setFormError("");
-                    setFormData((prev) => ({
-                      ...prev,
-                      daily_slots: val,
-                      availabilities: !initialService?.id
-                        ? generate15DayAvailability(Math.max(1, Number(val || 1)))
-                        : prev.availabilities,
-                    }));
-                  }}
-                  placeholder="15"
-                  className={INPUT_CLASS}
-                />
-              </div>
-            )}
-
-            <div className={isTour ? "" : "md:col-span-2"}>
+            <div className="md:col-span-2">
               <label className="block text-sm font-semibold text-ink-primary mb-2">
                 Tên dịch vụ <span className="text-status-danger">*</span>
               </label>
@@ -728,34 +701,7 @@ export default function ServiceFormStepper({
               />
             </div>
 
-            {isTour && (
-              <div>
-                <label className="block text-sm font-semibold text-ink-primary mb-2">
-                  Số lượng khách tối đa mỗi ngày (mặc định 15 ngày tới){" "}
-                  <span className="text-status-danger">*</span>
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  value={formData.daily_slots}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setFormError("");
-                    setFormData((prev) => ({
-                      ...prev,
-                      daily_slots: val,
-                      availabilities: !initialService?.id
-                        ? generate15DayAvailability(Math.max(1, Number(val || 1)))
-                        : prev.availabilities,
-                    }));
-                  }}
-                  placeholder="15"
-                  className={INPUT_CLASS}
-                />
-              </div>
-            )}
-
-            <div className={isTour ? "" : "md:col-span-2"}>
+            <div className="md:col-span-2">
               <label className="block text-sm font-semibold text-ink-primary mb-2">
                 Mô tả chi tiết dịch vụ <span className="text-status-danger">*</span>
               </label>
