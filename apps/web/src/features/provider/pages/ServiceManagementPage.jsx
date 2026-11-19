@@ -11,6 +11,7 @@ import {
   CheckCircle2,
   Users,
   Clock,
+  MapPin,
 } from "lucide-react";
 import ProviderLayout from "../layouts/ProviderLayout";
 import Typography from "../../../components/ui/Typography";
@@ -184,18 +185,36 @@ export default function ServiceManagementPage() {
   };
 
   return (
-    <ProviderLayout
-      title="Quản lý Tour & Dịch vụ"
-      subtitle="Đăng bán dịch vụ mới, quản lý album ảnh và theo dõi trạng thái kiểm duyệt từ Admin."
-    >
+    <ProviderLayout serviceBadge={String(services.length)}>
       <div className="space-y-6">
+        {/* Page Header (Travel Editorial Style, No Outer Border) */}
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+          <div>
+            <Typography variant="h1">Tour & Hạng phòng</Typography>
+            <Typography variant="body-sm" className="text-ink-subtle mt-1">
+              Thiết kế trải nghiệm du lịch, quản lý album ảnh và theo dõi trạng thái kiểm duyệt.
+            </Typography>
+          </div>
+
+          {viewMode === "list" && (
+            <button
+              type="button"
+              onClick={handleOpenCreate}
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-brand-primary text-white text-sm font-semibold hover:bg-brand-hover shadow-sm transition-all self-start sm:self-auto"
+            >
+              <Plus className="w-4 h-4" />
+              Tạo dịch vụ mới
+            </button>
+          )}
+        </div>
+
         {/* Feedback Banner */}
         {feedback && (
           <div
-            className={`p-4 rounded-xl border flex items-center gap-2.5 text-sm font-medium ${
+            className={`p-4 rounded-2xl flex items-center gap-2.5 text-sm font-medium ${
               feedback.type === "success"
-                ? "bg-emerald-50 border-emerald-200 text-emerald-800"
-                : "bg-rose-50 border-rose-200 text-rose-800"
+                ? "bg-status-success-bg text-status-success"
+                : "bg-status-danger-bg text-status-danger"
             }`}
           >
             {feedback.type === "success" ? (
@@ -224,127 +243,128 @@ export default function ServiceManagementPage() {
           />
         ) : (
           <>
-            {/* Toolbar */}
-            <div className="bg-surface-card border border-border-default rounded-2xl p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4 shadow-card">
-              <div className="flex flex-wrap items-center gap-3 flex-1">
-                <div className="relative flex-1 min-w-[220px] max-w-sm">
-                  <Search className="w-4 h-4 text-ink-subtle absolute left-3.5 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Tìm theo tên dịch vụ..."
-                    className="w-full pl-9 pr-3.5 py-2 rounded-xl border border-border-default bg-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary/30"
-                  />
-                </div>
-
-                <select
-                  value={typeFilter}
-                  onChange={(e) => setTypeFilter(e.target.value)}
-                  className="px-3.5 py-2 rounded-xl border border-border-default bg-white text-sm"
-                >
-                  <option value="all">Tất cả loại hình</option>
-                  {SERVICE_TYPE_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="px-3.5 py-2 rounded-xl border border-border-default bg-white text-sm"
-                >
-                  <option value="all">Tất cả trạng thái</option>
-                  <option value="draft">Bản nháp</option>
-                  <option value="pending_review">Chờ Admin duyệt</option>
-                  <option value="active">Đang mở bán</option>
-                  <option value="rejected">Bị từ chối</option>
-                </select>
+            {/* Borderless Filter Bar */}
+            <div className="bg-surface-elevated rounded-2xl p-3 sm:p-4 flex flex-wrap items-center gap-3 shadow-[0_4px_20px_rgba(15,23,42,0.04)]">
+              <div className="relative flex-1 min-w-[220px]">
+                <Search className="w-4 h-4 text-ink-subtle absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Tìm kiếm tour, khách sạn, homestay..."
+                  className="w-full pl-10 pr-4 py-2 rounded-xl bg-surface-muted/70 text-ink-primary text-sm placeholder:text-ink-subtle focus:bg-surface-elevated focus:outline-none focus:ring-2 focus:ring-brand-primary/30 transition-all"
+                />
               </div>
 
-              <button
-                type="button"
-                onClick={handleOpenCreate}
-                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-brand-primary text-white text-sm font-semibold hover:opacity-95 transition-opacity"
+              <select
+                value={typeFilter}
+                onChange={(e) => setTypeFilter(e.target.value)}
+                className="px-3.5 py-2 rounded-xl bg-surface-muted/70 text-ink-primary text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary/30"
               >
-                <Plus className="w-4 h-4" />
-                Tạo dịch vụ mới
-              </button>
+                <option value="all">Tất cả loại hình</option>
+                {SERVICE_TYPE_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="px-3.5 py-2 rounded-xl bg-surface-muted/70 text-ink-primary text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary/30"
+              >
+                <option value="all">Tất cả trạng thái</option>
+                <option value="draft">Bản nháp</option>
+                <option value="pending_review">Chờ Admin duyệt</option>
+                <option value="active">Đang mở bán</option>
+                <option value="rejected">Bị từ chối</option>
+              </select>
             </div>
 
-            {/* List */}
+            {/* Service Grid */}
             {isLoading ? (
-              <div className="bg-surface-card border border-border-default rounded-2xl p-12 flex flex-col items-center justify-center gap-3">
+              <div className="bg-surface-elevated rounded-3xl p-14 flex flex-col items-center justify-center gap-3 shadow-[0_4px_24px_rgba(15,23,42,0.04)]">
                 <Loader2 className="w-7 h-7 text-brand-primary animate-spin" />
                 <Typography variant="body-sm" className="text-ink-subtle">
                   Đang tải danh sách dịch vụ...
                 </Typography>
               </div>
             ) : services.length === 0 ? (
-              <div className="bg-surface-card border border-border-default rounded-2xl p-12 text-center space-y-3">
-                <div className="w-14 h-14 mx-auto rounded-2xl bg-brand-primary/10 text-brand-primary flex items-center justify-center">
-                  <Compass className="w-7 h-7" />
+              <div className="bg-surface-elevated rounded-3xl p-12 text-center space-y-4 shadow-[0_4px_24px_rgba(15,23,42,0.04)]">
+                <div className="w-16 h-16 mx-auto rounded-2xl bg-brand-subtle text-brand-primary flex items-center justify-center">
+                  <Compass className="w-8 h-8" />
                 </div>
-                <Typography variant="heading-sm" className="text-ink-primary">
-                  Chưa có dịch vụ nào
-                </Typography>
-                <Typography variant="body-sm" className="text-ink-subtle max-w-md mx-auto">
-                  Hãy tạo dịch vụ đầu tiên (Tour, Khách sạn, Homestay hoặc Xe) để gửi duyệt và mở
-                  bán tới hàng ngàn du khách.
-                </Typography>
+                <div className="space-y-1">
+                  <Typography variant="h3" className="text-ink-primary">
+                    Chưa có dịch vụ nào được đăng bán
+                  </Typography>
+                  <Typography variant="body-sm" className="text-ink-subtle max-w-md mx-auto">
+                    Bắt đầu hành trình kinh doanh bằng cách tạo tour du lịch, khách sạn hoặc
+                    homestay đầu tiên của bạn.
+                  </Typography>
+                </div>
                 <button
                   type="button"
                   onClick={handleOpenCreate}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-brand-primary text-white text-sm font-semibold"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-secondary-warm text-white text-sm font-semibold hover:bg-secondary-warm-hover shadow-sm transition-colors"
                 >
                   <Plus className="w-4 h-4" />
                   Tạo dịch vụ ngay
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {services.map((service) => {
                   const statusInfo =
                     SERVICE_STATUS_CONFIG[service.status] || SERVICE_STATUS_CONFIG.draft;
                   return (
                     <div
                       key={service.id}
-                      className="bg-surface-card border border-border-default rounded-2xl overflow-hidden shadow-card flex flex-col"
+                      className="group bg-surface-elevated rounded-3xl overflow-hidden shadow-[0_6px_24px_rgba(15,23,42,0.05)] hover:shadow-[0_12px_32px_rgba(15,23,42,0.09)] transition-all duration-300 flex flex-col"
                     >
-                      <div className="relative aspect-[16/9] bg-surface-subtle">
+                      <div className="relative aspect-[16/10] bg-surface-muted overflow-hidden">
                         {service.cover_image ? (
                           <img
                             src={service.cover_image}
                             alt={service.name}
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                           />
                         ) : (
-                          <div className="w-full h-full flex flex-col items-center justify-center text-ink-subtle gap-1.5">
-                            <ImageIcon className="w-8 h-8 opacity-50" />
-                            <span className="text-xs">Chưa có ảnh bìa</span>
+                          <div className="w-full h-full flex flex-col items-center justify-center text-ink-subtle gap-1.5 bg-gradient-to-br from-brand-subtle to-surface-muted">
+                            <ImageIcon className="w-8 h-8 opacity-45" />
+                            <span className="text-xs font-medium">Chưa có ảnh bìa</span>
                           </div>
                         )}
+
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/50 via-transparent to-transparent pointer-events-none" />
+
                         <span
-                          className={`absolute top-3 left-3 px-2.5 py-1 rounded-full text-xs font-semibold border ${statusInfo.badgeClass}`}
+                          className={`absolute top-3.5 left-3.5 px-3 py-1 rounded-full text-xs font-semibold shadow-xs ${statusInfo.badgeClass}`}
                         >
                           {statusInfo.label}
                         </span>
-                        <span className="absolute bottom-3 right-3 px-2 py-0.5 rounded-lg bg-slate-900/75 text-white text-xs">
+
+                        <span className="absolute bottom-3 right-3.5 px-2.5 py-1 rounded-full bg-slate-950/65 backdrop-blur-xs text-white text-xs font-medium">
                           {service.media_count || 0} ảnh
                         </span>
                       </div>
 
-                      <div className="p-4 flex-1 flex flex-col justify-between gap-3">
-                        <div className="space-y-2">
-                          <div className="text-xs font-medium text-brand-primary uppercase tracking-wide">
-                            {service.type}{" "}
-                            {service.location?.name ? `· ${service.location.name}` : ""}
+                      <div className="p-5 flex-1 flex flex-col justify-between gap-4">
+                        <div className="space-y-2.5">
+                          <div className="flex items-center gap-2 text-xs font-semibold text-secondary-lagoon uppercase tracking-wide">
+                            <span>{service.type}</span>
+                            {service.location?.name && (
+                              <span className="inline-flex items-center gap-1 text-ink-subtle font-medium normal-case">
+                                <MapPin className="w-3.5 h-3.5 text-brand-primary" />
+                                {service.location.name}
+                              </span>
+                            )}
                           </div>
+
                           <Typography
-                            variant="body-md"
-                            className="font-bold text-ink-primary line-clamp-2"
+                            variant="h3"
+                            className="text-ink-primary line-clamp-2 leading-snug"
                           >
                             {service.name}
                           </Typography>
@@ -361,15 +381,15 @@ export default function ServiceManagementPage() {
                           </div>
 
                           {service.status === "rejected" && service.rejection_reason && (
-                            <div className="p-2.5 rounded-lg bg-rose-50 border border-rose-200 text-xs text-rose-700">
+                            <div className="p-3 rounded-xl bg-status-danger-bg text-xs text-status-danger">
                               <strong>Lý do từ chối:</strong> {service.rejection_reason}
                             </div>
                           )}
                         </div>
 
-                        <div className="pt-3 border-t border-border-default flex items-center justify-between gap-2">
+                        <div className="pt-3.5 flex items-center justify-between gap-2 bg-surface-muted/40 -mx-5 -mb-5 px-5 py-3.5">
                           <div>
-                            <div className="text-base font-bold text-ink-primary">
+                            <div className="text-lg font-bold text-brand-primary leading-tight">
                               {formatCurrencyVnd(service.base_price)}
                             </div>
                             <div className="text-[11px] text-ink-subtle">
@@ -377,22 +397,23 @@ export default function ServiceManagementPage() {
                             </div>
                           </div>
 
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-2">
                             <button
                               type="button"
                               onClick={() => handleOpenEdit(service)}
-                              className="p-2 rounded-xl border border-border-default text-ink-primary hover:bg-surface-subtle"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-elevated text-ink-primary text-xs font-semibold hover:bg-brand-light hover:text-brand-primary shadow-xs transition-colors"
                               title="Chỉnh sửa dịch vụ"
                             >
-                              <Edit3 className="w-4 h-4" />
+                              <Edit3 className="w-3.5 h-3.5" />
+                              Sửa
                             </button>
                             <button
                               type="button"
                               onClick={() => setDeleteTarget(service)}
-                              className="p-2 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50"
+                              className="p-2 rounded-full bg-surface-elevated text-status-danger hover:bg-status-danger-bg shadow-xs transition-colors"
                               title="Xóa dịch vụ"
                             >
-                              <Trash2 className="w-4 h-4" />
+                              <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           </div>
                         </div>
@@ -408,9 +429,9 @@ export default function ServiceManagementPage() {
 
       {/* Delete Confirmation Modal */}
       {deleteTarget && (
-        <div className="fixed inset-0 z-50 bg-slate-950/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl">
-            <Typography variant="heading-sm" className="text-ink-primary">
+        <div className="fixed inset-0 z-50 bg-slate-950/45 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-surface-elevated rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+            <Typography variant="h3" className="text-ink-primary">
               Xác nhận xóa dịch vụ?
             </Typography>
             <Typography variant="body-sm" className="text-ink-subtle">
@@ -421,7 +442,7 @@ export default function ServiceManagementPage() {
               <button
                 type="button"
                 onClick={() => setDeleteTarget(null)}
-                className="px-4 py-2 rounded-xl border border-border-default text-sm font-medium text-ink-primary hover:bg-surface-subtle"
+                className="px-4 py-2 rounded-full bg-surface-muted text-sm font-semibold text-ink-primary hover:bg-slate-200 transition-colors"
               >
                 Hủy
               </button>
@@ -429,7 +450,7 @@ export default function ServiceManagementPage() {
                 type="button"
                 disabled={isSubmitting}
                 onClick={handleConfirmDelete}
-                className="px-4 py-2 rounded-xl bg-rose-600 text-white text-sm font-semibold hover:bg-rose-700 disabled:opacity-60"
+                className="px-5 py-2 rounded-full bg-status-danger text-white text-sm font-semibold hover:opacity-90 disabled:opacity-60 transition-opacity"
               >
                 Xác nhận xóa
               </button>

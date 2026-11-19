@@ -20,6 +20,9 @@ const STEPS = [
   { id: 3, title: "Album ảnh & Xuất bản" },
 ];
 
+const INPUT_CLASS =
+  "w-full px-4 py-2.5 rounded-xl bg-surface-muted/70 text-ink-primary text-sm placeholder:text-ink-subtle focus:bg-surface-elevated focus:outline-none focus:ring-2 focus:ring-brand-primary/30 transition-all";
+
 export default function ServiceFormStepper({
   initialService = null,
   categories = [],
@@ -234,90 +237,77 @@ export default function ServiceFormStepper({
   };
 
   return (
-    <div className="bg-surface-card border border-border-default rounded-2xl shadow-card overflow-hidden">
+    <div className="bg-surface-elevated rounded-3xl shadow-[0_8px_30px_rgb(15,23,42,0.06)] overflow-hidden">
       {/* Stepper Header */}
-      <div className="px-6 py-5 border-b border-border-default bg-surface-subtle/50">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            {STEPS.map((step, index) => {
-              const isDone = currentStep > step.id;
-              const isActive = currentStep === step.id;
-              return (
-                <React.Fragment key={step.id}>
-                  <button
-                    type="button"
-                    onClick={() => setCurrentStep(step.id)}
-                    className={`flex items-center gap-2 text-sm font-medium transition-colors ${
-                      isActive
-                        ? "text-brand-primary"
-                        : isDone
-                          ? "text-emerald-600"
-                          : "text-ink-subtle"
-                    }`}
-                  >
-                    <span
-                      className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold border ${
-                        isActive
-                          ? "bg-brand-primary text-white border-brand-primary"
-                          : isDone
-                            ? "bg-emerald-600 text-white border-emerald-600"
-                            : "bg-white text-ink-subtle border-border-default"
-                      }`}
-                    >
-                      {isDone ? <Check className="w-3.5 h-3.5" /> : step.id}
-                    </span>
-                    <span className="hidden md:inline">{step.title}</span>
-                  </button>
-                  {index < STEPS.length - 1 && (
-                    <div className="w-6 sm:w-10 h-px bg-border-default" />
-                  )}
-                </React.Fragment>
-              );
-            })}
-          </div>
-          <button
-            type="button"
-            onClick={onCancel}
-            className="text-sm font-medium text-ink-subtle hover:text-ink-primary self-start sm:self-auto"
-          >
-            Quay lại danh sách
-          </button>
+      <div className="px-6 py-5 bg-brand-subtle/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
+          {STEPS.map((step) => {
+            const isDone = currentStep > step.id;
+            const isActive = currentStep === step.id;
+            return (
+              <button
+                key={step.id}
+                type="button"
+                onClick={() => setCurrentStep(step.id)}
+                className={`inline-flex items-center gap-2.5 px-3.5 py-2 rounded-full text-sm font-medium transition-all ${
+                  isActive
+                    ? "bg-brand-primary text-white shadow-sm"
+                    : isDone
+                      ? "bg-status-success-bg text-status-success"
+                      : "bg-surface-elevated text-ink-subtle hover:text-ink-primary"
+                }`}
+              >
+                <span className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold bg-white/20">
+                  {isDone ? <Check className="w-3.5 h-3.5" /> : step.id}
+                </span>
+                <span>{step.title}</span>
+              </button>
+            );
+          })}
         </div>
+
+        <button
+          type="button"
+          onClick={onCancel}
+          className="text-sm font-semibold text-ink-subtle hover:text-brand-primary self-start sm:self-auto transition-colors"
+        >
+          ← Quay lại danh sách
+        </button>
       </div>
 
       {/* Form Error */}
       {formError && (
-        <div className="mx-6 mt-5 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-sm flex items-center gap-2">
+        <div className="mx-6 mt-5 p-3.5 rounded-2xl bg-status-danger-bg text-status-danger text-sm flex items-center gap-2">
           <AlertCircle className="w-4 h-4 shrink-0" />
           <span>{formError}</span>
         </div>
       )}
 
       {/* Step Content */}
-      <div className="p-6">
+      <div className="p-6 sm:p-8">
         {currentStep === 1 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-ink-primary mb-1.5">
-                Tên dịch vụ <span className="text-rose-500">*</span>
+              <label className="block text-sm font-semibold text-ink-primary mb-2">
+                Tên dịch vụ <span className="text-status-danger">*</span>
               </label>
               <input
                 type="text"
                 value={formData.name}
                 onChange={(e) => handleFieldChange("name", e.target.value)}
                 placeholder="VD: Tour Lặn Ngắm San Hô Cù Lao Chàm 1 Ngày"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-border-default bg-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary"
+                className={INPUT_CLASS}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-ink-primary mb-1.5">
-                Loại hình dịch vụ <span className="text-rose-500">*</span>
+              <label className="block text-sm font-semibold text-ink-primary mb-2">
+                Loại hình dịch vụ <span className="text-status-danger">*</span>
               </label>
               <select
                 value={formData.type}
                 onChange={(e) => handleFieldChange("type", e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-border-default bg-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary/30"
+                className={INPUT_CLASS}
               >
                 {SERVICE_TYPE_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>
@@ -328,11 +318,13 @@ export default function ServiceFormStepper({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-ink-primary mb-1.5">Danh mục</label>
+              <label className="block text-sm font-semibold text-ink-primary mb-2">
+                Danh mục trải nghiệm
+              </label>
               <select
                 value={formData.category_id}
                 onChange={(e) => handleFieldChange("category_id", e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-border-default bg-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary/30"
+                className={INPUT_CLASS}
               >
                 <option value="">-- Chọn danh mục --</option>
                 {categories.map((cat) => (
@@ -344,13 +336,13 @@ export default function ServiceFormStepper({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-ink-primary mb-1.5">
+              <label className="block text-sm font-semibold text-ink-primary mb-2">
                 Điểm đến / Khu vực
               </label>
               <select
                 value={formData.location_id}
                 onChange={(e) => handleFieldChange("location_id", e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-border-default bg-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary/30"
+                className={INPUT_CLASS}
               >
                 <option value="">-- Chọn điểm đến --</option>
                 {locations.map((loc) => (
@@ -363,8 +355,8 @@ export default function ServiceFormStepper({
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-medium text-ink-primary mb-1.5">
-                  Giá cơ sở (VND) <span className="text-rose-500">*</span>
+                <label className="block text-sm font-semibold text-ink-primary mb-2">
+                  Giá cơ sở (VND) <span className="text-status-danger">*</span>
                 </label>
                 <input
                   type="number"
@@ -372,26 +364,26 @@ export default function ServiceFormStepper({
                   value={formData.base_price}
                   onChange={(e) => handleFieldChange("base_price", e.target.value)}
                   placeholder="650000"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-border-default bg-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary/30"
+                  className={INPUT_CLASS}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-ink-primary mb-1.5">
-                  Đơn vị tính <span className="text-rose-500">*</span>
+                <label className="block text-sm font-semibold text-ink-primary mb-2">
+                  Đơn vị tính <span className="text-status-danger">*</span>
                 </label>
                 <input
                   type="text"
                   value={formData.price_unit}
                   onChange={(e) => handleFieldChange("price_unit", e.target.value)}
                   placeholder="người / phòng"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-border-default bg-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary/30"
+                  className={INPUT_CLASS}
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-3 gap-3">
               <div>
-                <label className="block text-sm font-medium text-ink-primary mb-1.5">
+                <label className="block text-sm font-semibold text-ink-primary mb-2">
                   Số khách tối đa
                 </label>
                 <input
@@ -399,72 +391,69 @@ export default function ServiceFormStepper({
                   min="1"
                   value={formData.max_guests}
                   onChange={(e) => handleFieldChange("max_guests", e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-border-default bg-white text-sm"
+                  className={INPUT_CLASS}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-ink-primary mb-1.5">Số ngày</label>
+                <label className="block text-sm font-semibold text-ink-primary mb-2">Số ngày</label>
                 <input
                   type="number"
                   min="1"
                   value={formData.duration_days}
                   onChange={(e) => handleFieldChange("duration_days", e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-border-default bg-white text-sm"
+                  className={INPUT_CLASS}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-ink-primary mb-1.5">Số đêm</label>
+                <label className="block text-sm font-semibold text-ink-primary mb-2">Số đêm</label>
                 <input
                   type="number"
                   min="0"
                   value={formData.duration_nights}
                   onChange={(e) => handleFieldChange("duration_nights", e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-border-default bg-white text-sm"
+                  className={INPUT_CLASS}
                 />
               </div>
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-ink-primary mb-1.5">
-                Địa chỉ đón khách / Cơ sở
+              <label className="block text-sm font-semibold text-ink-primary mb-2">
+                Địa chỉ đón khách / Cơ sở lưu trú
               </label>
               <input
                 type="text"
                 value={formData.address}
                 onChange={(e) => handleFieldChange("address", e.target.value)}
                 placeholder="VD: Cảng Cửa Đại, Hội An, Quảng Nam"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-border-default bg-white text-sm"
+                className={INPUT_CLASS}
               />
             </div>
           </div>
         )}
 
         {currentStep === 2 && (
-          <div className="space-y-6">
+          <div className="space-y-7">
             <div>
-              <label className="block text-sm font-medium text-ink-primary mb-1.5">
-                Mô tả chi tiết dịch vụ
+              <label className="block text-sm font-semibold text-ink-primary mb-2">
+                Mô tả câu chuyện & điểm nhấn trải nghiệm
               </label>
               <textarea
                 rows={4}
                 value={formData.description}
                 onChange={(e) => handleFieldChange("description", e.target.value)}
-                placeholder="Giới thiệu điểm nổi bật, trải nghiệm và lưu ý quan trọng cho khách hàng..."
-                className="w-full px-3.5 py-2.5 rounded-xl border border-border-default bg-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary/30"
+                placeholder="Giới thiệu những khoảnh khắc đáng nhớ, cảnh quan nổi bật và lưu ý quan trọng cho du khách..."
+                className={INPUT_CLASS}
               />
             </div>
 
             {/* Tag Lists */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
               {[
                 { key: "amenities", label: "Tiện ích nổi bật", placeholder: "VD: Wifi miễn phí" },
                 { key: "includes", label: "Giá đã bao gồm", placeholder: "VD: Vé tham quan" },
                 { key: "excludes", label: "Không bao gồm", placeholder: "VD: Thuế VAT" },
               ].map((group) => (
-                <div
-                  key={group.key}
-                  className="p-4 rounded-xl border border-border-default bg-surface-subtle/40 space-y-3"
-                >
+                <div key={group.key} className="p-4 rounded-2xl bg-surface-muted/60 space-y-3">
                   <label className="block text-sm font-semibold text-ink-primary">
                     {group.label}
                   </label>
@@ -482,12 +471,12 @@ export default function ServiceFormStepper({
                         }
                       }}
                       placeholder={group.placeholder}
-                      className="flex-1 px-3 py-1.5 rounded-lg border border-border-default bg-white text-xs"
+                      className="flex-1 px-3 py-2 rounded-xl bg-surface-elevated text-xs focus:outline-none focus:ring-2 focus:ring-brand-primary/30"
                     />
                     <button
                       type="button"
                       onClick={() => handleAddTag(group.key)}
-                      className="px-2.5 py-1.5 rounded-lg bg-brand-primary text-white text-xs font-medium hover:opacity-90"
+                      className="px-3 py-2 rounded-xl bg-brand-primary text-white text-xs font-semibold hover:bg-brand-hover transition-colors"
                     >
                       Thêm
                     </button>
@@ -496,13 +485,13 @@ export default function ServiceFormStepper({
                     {formData[group.key].map((tag, idx) => (
                       <span
                         key={`${group.key}-${tag}`}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white border border-border-default text-xs text-ink-primary"
+                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-elevated text-xs font-medium text-ink-primary shadow-xs"
                       >
                         {tag}
                         <button
                           type="button"
                           onClick={() => handleRemoveTag(group.key, idx)}
-                          className="text-ink-subtle hover:text-rose-600"
+                          className="text-ink-subtle hover:text-status-danger"
                         >
                           ×
                         </button>
@@ -514,7 +503,7 @@ export default function ServiceFormStepper({
             </div>
 
             {/* Tour Schedules */}
-            <div className="space-y-3">
+            <div className="space-y-3.5">
               <div className="flex items-center justify-between">
                 <div>
                   <Typography variant="body-md" className="font-semibold text-ink-primary">
@@ -527,7 +516,7 @@ export default function ServiceFormStepper({
                 <button
                   type="button"
                   onClick={handleAddScheduleDay}
-                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-brand-primary text-brand-primary text-xs font-semibold hover:bg-brand-primary/5"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-brand-light text-brand-primary text-xs font-semibold hover:bg-brand-primary hover:text-white transition-colors"
                 >
                   <Plus className="w-4 h-4" />
                   Thêm ngày
@@ -537,16 +526,16 @@ export default function ServiceFormStepper({
               {formData.schedules.map((item, idx) => (
                 <div
                   key={`day-${item.day_number}-${idx}`}
-                  className="p-4 rounded-xl border border-border-default bg-white space-y-3"
+                  className="p-4 rounded-2xl bg-surface-muted/50 space-y-3"
                 >
                   <div className="flex items-center justify-between gap-3">
-                    <span className="px-2.5 py-1 rounded-lg bg-brand-primary/10 text-brand-primary text-xs font-bold">
+                    <span className="px-3 py-1 rounded-full bg-brand-primary text-white text-xs font-bold">
                       Ngày {item.day_number}
                     </span>
                     <button
                       type="button"
                       onClick={() => handleRemoveScheduleDay(idx)}
-                      className="text-rose-600 hover:text-rose-700 p-1"
+                      className="text-status-danger hover:opacity-80 p-1"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -556,14 +545,14 @@ export default function ServiceFormStepper({
                     value={item.title}
                     onChange={(e) => handleUpdateSchedule(idx, "title", e.target.value)}
                     placeholder="Tiêu đề lịch trình ngày (VD: Cảng Cửa Đại - Bãi Ông)"
-                    className="w-full px-3 py-2 rounded-lg border border-border-default text-sm"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-surface-elevated text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary/30"
                   />
                   <textarea
                     rows={2}
                     value={item.description}
                     onChange={(e) => handleUpdateSchedule(idx, "description", e.target.value)}
                     placeholder="Mô tả chi tiết hoạt động trong ngày..."
-                    className="w-full px-3 py-2 rounded-lg border border-border-default text-sm"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-surface-elevated text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary/30"
                   />
                 </div>
               ))}
@@ -591,7 +580,7 @@ export default function ServiceFormStepper({
                   type="button"
                   disabled={isSubmitting}
                   onClick={handleUploadOnlyNow}
-                  className="px-4 py-2 rounded-xl border border-brand-primary text-brand-primary text-sm font-semibold hover:bg-brand-primary/5"
+                  className="px-4 py-2 rounded-full bg-brand-light text-brand-primary text-sm font-semibold hover:bg-brand-primary hover:text-white transition-colors"
                 >
                   Tải ngay {pendingFiles.length} tệp lên album
                 </button>
@@ -602,13 +591,13 @@ export default function ServiceFormStepper({
       </div>
 
       {/* Footer Actions */}
-      <div className="px-6 py-4 border-t border-border-default bg-surface-subtle/40 flex flex-wrap items-center justify-between gap-3">
+      <div className="px-6 py-4 bg-surface-muted/50 flex flex-wrap items-center justify-between gap-3">
         <div>
           {currentStep > 1 && (
             <button
               type="button"
               onClick={() => setCurrentStep((prev) => prev - 1)}
-              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-border-default bg-white text-sm font-medium text-ink-primary hover:bg-surface-subtle"
+              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full bg-surface-elevated text-sm font-semibold text-ink-primary hover:bg-surface-muted shadow-xs transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
               Bước trước
@@ -621,7 +610,7 @@ export default function ServiceFormStepper({
             <button
               type="button"
               onClick={handleNextStep}
-              className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-brand-primary text-white text-sm font-semibold hover:opacity-95"
+              className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-brand-primary text-white text-sm font-semibold hover:bg-brand-hover shadow-sm transition-colors"
             >
               Tiếp tục
               <ArrowRight className="w-4 h-4" />
@@ -632,7 +621,7 @@ export default function ServiceFormStepper({
                 type="button"
                 disabled={isSubmitting}
                 onClick={() => handleSubmit("draft")}
-                className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-border-default bg-white text-ink-primary text-sm font-semibold hover:bg-surface-subtle disabled:opacity-60"
+                className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-surface-elevated text-ink-primary text-sm font-semibold hover:bg-surface-muted shadow-xs disabled:opacity-60 transition-colors"
               >
                 {isSubmitting ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -645,7 +634,7 @@ export default function ServiceFormStepper({
                 type="button"
                 disabled={isSubmitting}
                 onClick={() => handleSubmit("pending_review")}
-                className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-brand-primary text-white text-sm font-semibold hover:opacity-95 disabled:opacity-60"
+                className="inline-flex items-center gap-1.5 px-6 py-2.5 rounded-full bg-secondary-warm text-white text-sm font-semibold hover:bg-secondary-warm-hover shadow-sm disabled:opacity-60 transition-colors"
               >
                 {isSubmitting ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
