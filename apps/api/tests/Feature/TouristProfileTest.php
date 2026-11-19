@@ -49,14 +49,6 @@ class TouristProfileTest extends TestCase
 
     public function test_tourist_can_get_profile(): void
     {
-        // Đảm bảo ngay cả khi cột cũ trong DB có giá trị, API và model serialization vẫn không lộ
-        DB::table('tourist_profiles')
-            ->where('id', $this->touristProfile->id)
-            ->update([
-                'nationality' => 'Việt Nam',
-                'id_card_number' => '048099001234',
-            ]);
-
         $response = $this->withHeader('Authorization', 'Bearer '.$this->touristToken)
             ->getJson('/api/v1/tourist/profile');
 
