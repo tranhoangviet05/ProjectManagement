@@ -49,7 +49,7 @@
 | :-------------------------------------------------------------- | :--------------: | :------: | :------: | :------: | :---------- | :----------- | :--------- | :---------- |
 | **[EPIC #15] Quản lý Dịch vụ**                                  |  **API / Web**   | **Todo** |  **P0**  |  **10**  | **Booking** | **provider** | 02/11      | 07/11       |
 | ↳ CRUD Dịch vụ du lịch (Tour / Khách sạn) + Quản lý album ảnh   |       Web        |   Done   |    P0    |    5     | Booking     | provider     | 02/11      | 05/11       |
-| ↳ Cấu hình Lịch phục vụ (Availability) & Bảng giá theo ngày     |       Web        |   Todo   |    P0    |    3     | Booking     | provider     | 05/11      | 06/11       |
+| ↳ Cấu hình Lịch phục vụ (Availability) & Bảng giá theo ngày     |       Web        |   Done   |    P0    |    3     | Booking     | provider     | 05/11      | 06/11       |
 | ↳ Admin Dashboard: Kiểm duyệt & Phê duyệt/Từ chối Dịch vụ [#46] |    Web / API     |   Todo   |    P0    |    2     | Admin       | admin        | 06/11      | 07/11       |
 | **[EPIC] Khám phá & Tìm kiếm Dịch vụ (Tourist)**                | **API / Mobile** | **Todo** |  **P0**  |  **6**   | **Booking** | **user**     | 05/11      | 08/11       |
 | ↳ Trang chủ & Tìm kiếm (Theo điểm đến, từ khóa, khoảng giá)     |    Mobile/Web    |   Todo   |    P0    |    3     | Booking     | user         | 05/11      | 07/11       |
