@@ -206,4 +206,33 @@ class ProviderProfileTest extends TestCase
         $this->providerProfile->refresh();
         $this->assertNotNull($this->providerProfile->avatar_url);
     }
+
+    public function test_public_endpoint_returns_business_types_and_provider_can_update_business_type(): void
+    {
+        $catalogResponse = $this->getJson('/api/v1/public/business-types');
+        $catalogResponse->assertStatus(200)
+            ->assertJsonPath('success', true);
+
+        $anotherBusinessType = BusinessType::where('id', '!=', $this->providerProfile->business_type_id)->first();
+        $this->assertNotNull($anotherBusinessType);
+
+        $updateResponse = $this->withHeader('Authorization', 'Bearer '.$this->providerToken)
+            ->putJson('/api/v1/provider/profile', [
+                'business_name' => $this->providerProfile->business_name,
+                'business_type_id' => $anotherBusinessType->id,
+            ]);
+
+        $updateResponse->assertStatus(200)
+            ->assertJsonPath('data.business_type_id', $anotherBusinessType->id)
+            ->assertJsonPath('data.business_type.id', $anotherBusinessType->id);
+
+        $invalidResponse = $this->withHeader('Authorization', 'Bearer '.$this->providerToken)
+            ->putJson('/api/v1/provider/profile', [
+                'business_name' => $this->providerProfile->business_name,
+                'business_type_id' => 999999,
+            ]);
+
+        $invalidResponse->assertStatus(422)
+            ->assertJsonValidationErrors(['business_type_id']);
+    }
 }
