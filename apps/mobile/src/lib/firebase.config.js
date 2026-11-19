@@ -14,11 +14,17 @@ const firebaseConfig = {
 
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
-export const auth =
-  getApps().length === 0
-    ? initializeAuth(app, {
-        persistence: getReactNativePersistence(ReactNativeAsyncStorage),
-      })
-    : getAuth(app);
+function getOrCreateAuth(firebaseApp) {
+  try {
+    return initializeAuth(firebaseApp, {
+      persistence: getReactNativePersistence(ReactNativeAsyncStorage),
+    });
+  } catch (_err) {
+    // Khi Hot Reload / Fast Refresh trong môi trường dev, lấy instance auth đã có sẵn
+    return getAuth(firebaseApp);
+  }
+}
+
+export const auth = getOrCreateAuth(app);
 
 export default app;

@@ -8,7 +8,7 @@ import { Platform } from "react-native";
  */
 function resolveApiBaseUrl() {
   const envUrl = process.env.EXPO_PUBLIC_API_BASE_URL;
-  if (envUrl && !envUrl.includes("YOUR_LAN_IP")) {
+  if (envUrl) {
     return envUrl;
   }
   if (Platform.OS === "android") {
