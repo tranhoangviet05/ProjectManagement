@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Enums\UserRole;
 use App\Enums\UserStatus;
+use App\Http\Middleware\FirebaseAuthMiddleware;
 use App\Models\SocialProfile;
 use App\Models\User;
 use App\Models\Wallet;
@@ -128,9 +129,10 @@ class FirebaseGoogleSyncTest extends TestCase
      */
     public function test_sync_endpoint_rejects_missing_uid(): void
     {
-        $response = $this->postJson('/api/v1/auth/sync', [
-            'email' => 'invalid_sync@gmail.com',
-        ]);
+        $response = $this->withoutMiddleware(FirebaseAuthMiddleware::class)
+            ->postJson('/api/v1/auth/sync', [
+                'email' => 'invalid_sync@gmail.com',
+            ]);
 
         $response->assertStatus(400)
             ->assertJsonPath('success', false)
