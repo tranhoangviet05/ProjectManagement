@@ -225,6 +225,21 @@ export const providerProfileService = {
       user: updatedUser,
     };
   },
+
+  /**
+   * Lấy danh sách Loại hình kinh doanh từ bảng business_types (GET /api/v1/public/business-types)
+   */
+  async fetchBusinessTypes() {
+    try {
+      const res = await apiClient.get("/public/business-types");
+      if (Array.isArray(res?.data)) {
+        return res.data;
+      }
+    } catch (err) {
+      console.warn("[providerProfileService] fetchBusinessTypes fallback:", err.message);
+    }
+    return null;
+  },
 };
 
 export default providerProfileService;
