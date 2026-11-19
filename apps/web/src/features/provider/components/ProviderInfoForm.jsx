@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Loader2, CheckCircle2, AlertCircle, RefreshCw } from "lucide-react";
 import Typography from "../../../components/ui/Typography";
+import providerProfileService from "../services/providerProfileService";
+import { BUSINESS_TYPES as FALLBACK_BUSINESS_TYPES } from "../models/providerOnboardingModel";
 
 const VN_PHONE_REGEX = /(84|0[3|5|7|8|9])+([0-9]{8})\b/;
 
@@ -9,9 +11,18 @@ const VN_PHONE_REGEX = /(84|0[3|5|7|8|9])+([0-9]{8})\b/;
  * Nhận dữ liệu qua props, phát sự kiện onSubmit ngược lên Orchestrator (Props Down, Events Up)
  */
 export default function ProviderInfoForm({ user, isSubmitting, onSubmit, feedback }) {
+  const [businessTypes, setBusinessTypes] = useState(
+    FALLBACK_BUSINESS_TYPES.map((item) => ({
+      id: item.id,
+      type: item.group,
+      name: item.name,
+    })),
+  );
+
   const [formData, setFormData] = useState({
     representative_name: "",
     business_name: "",
+    business_type_id: "",
     phone: "",
     address: "",
     description: "",
@@ -19,12 +30,23 @@ export default function ProviderInfoForm({ user, isSubmitting, onSubmit, feedbac
 
   const [fieldError, setFieldError] = useState("");
 
+  useEffect(() => {
+    providerProfileService.fetchBusinessTypes().then((list) => {
+      if (Array.isArray(list) && list.length > 0) {
+        setBusinessTypes(list);
+      }
+    });
+  }, []);
+
   // Đồng bộ dữ liệu khi user thay đổi
   useEffect(() => {
     if (user) {
       setFormData({
         representative_name: user.provider_profile?.representative_name || user.name || "",
         business_name: user.provider_profile?.business_name || user.name || "",
+        business_type_id: user.provider_profile?.business_type_id
+          ? String(user.provider_profile.business_type_id)
+          : "",
         phone: user.phone || user.provider_profile?.phone || "",
         address: user.provider_profile?.address || "",
         description: user.provider_profile?.description || user.tourist_profile?.bio || "",
@@ -52,17 +74,22 @@ export default function ProviderInfoForm({ user, isSubmitting, onSubmit, feedbac
       return;
     }
 
+    if (!formData.business_type_id) {
+      setFieldError("Vui lòng chọn loại hình kinh doanh của doanh nghiệp.");
+      return;
+    }
+
     if (formData.phone && !VN_PHONE_REGEX.test(formData.phone.replace(/\s+/g, ""))) {
       setFieldError("Số điện thoại không đúng định dạng di động Việt Nam (ví dụ: 0912345678).");
       return;
     }
 
     onSubmit?.({
-      name: formData.name.trim(),
+      representative_name: formData.representative_name.trim(),
       business_name: formData.business_name.trim(),
+      business_type_id: Number(formData.business_type_id),
       phone: formData.phone.trim(),
       address: formData.address.trim(),
-      bio: formData.description.trim(),
       description: formData.description.trim(),
     });
   };
@@ -70,8 +97,11 @@ export default function ProviderInfoForm({ user, isSubmitting, onSubmit, feedbac
   const handleReset = () => {
     if (user) {
       setFormData({
-        name: user.name || user.provider_profile?.representative_name || "",
+        representative_name: user.provider_profile?.representative_name || user.name || "",
         business_name: user.provider_profile?.business_name || user.name || "",
+        business_type_id: user.provider_profile?.business_type_id
+          ? String(user.provider_profile.business_type_id)
+          : "",
         phone: user.phone || user.provider_profile?.phone || "",
         address: user.provider_profile?.address || "",
         description: user.provider_profile?.description || user.tourist_profile?.bio || "",
@@ -101,7 +131,7 @@ export default function ProviderInfoForm({ user, isSubmitting, onSubmit, feedbac
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
         {/* Tên cơ sở kinh doanh */}
-        <div className="sm:col-span-2">
+        <div>
           <Typography variant="label" as="label" htmlFor="business_name" className="block mb-1.5">
             Tên cơ sở kinh doanh / Thương hiệu du lịch <span className="text-status-danger">*</span>
           </Typography>
@@ -116,14 +146,45 @@ export default function ProviderInfoForm({ user, isSubmitting, onSubmit, feedbac
           />
         </div>
 
+        {/* Loại hình kinh doanh (business_type_id) */}
+        <div>
+          <Typography
+            variant="label"
+            as="label"
+            htmlFor="business_type_id"
+            className="block mb-1.5"
+          >
+            Loại hình kinh doanh <span className="text-status-danger">*</span>
+          </Typography>
+          <select
+            id="business_type_id"
+            name="business_type_id"
+            value={formData.business_type_id}
+            onChange={handleChange}
+            className="w-full px-3.5 py-2.5 rounded-lg border border-border-subtle bg-surface-elevated text-sm text-ink-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary cursor-pointer"
+          >
+            <option value="">-- Chọn loại hình kinh doanh --</option>
+            {businessTypes.map((item) => (
+              <option key={item.id} value={String(item.id)}>
+                {item.name} ({item.type})
+              </option>
+            ))}
+          </select>
+        </div>
+
         {/* Họ tên người đại diện */}
         <div>
-          <Typography variant="label" as="label" htmlFor="name" className="block mb-1.5">
+          <Typography
+            variant="label"
+            as="label"
+            htmlFor="representative_name"
+            className="block mb-1.5"
+          >
             Họ và tên người đại diện pháp luật <span className="text-status-danger">*</span>
           </Typography>
           <input
-            id="name"
-            name="name"
+            id="representative_name"
+            name="representative_name"
             type="text"
             value={formData.representative_name}
             onChange={handleChange}
