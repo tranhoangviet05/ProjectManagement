@@ -3,7 +3,6 @@
 namespace App\Http\Requests\Provider;
 
 use App\Enums\ServiceStatus;
-use App\Enums\ServiceType;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -18,31 +17,39 @@ class UpdateServiceRequest extends FormRequest
     {
         return [
             'name' => ['sometimes', 'required', 'string', 'max:255'],
-            'type' => ['sometimes', 'required', 'string', Rule::in(ServiceType::values())],
-            'category_id' => ['nullable', 'integer', 'exists:categories,id'],
-            'location_id' => ['nullable', 'integer', 'exists:locations,id'],
+            'category_id' => ['sometimes', 'required', 'integer', 'exists:categories,id'],
+            'location_id' => ['sometimes', 'required', 'integer', 'exists:locations,id'],
             'status' => ['nullable', 'string', Rule::in(ServiceStatus::providerMutableValues())],
-            'description' => ['nullable', 'string'],
+            'description' => ['sometimes', 'required', 'string'],
             'base_price' => ['sometimes', 'required', 'numeric', 'min:0'],
-            'price_unit' => ['sometimes', 'required', 'string', 'max:50'],
-            'max_guests' => ['sometimes', 'required', 'integer', 'min:1'],
-            'duration_days' => ['nullable', 'integer', 'min:1'],
-            'duration_nights' => ['nullable', 'integer', 'min:0'],
-            'address' => ['nullable', 'string', 'max:1000'],
-            'latitude' => ['nullable', 'numeric', 'between:-90,90'],
-            'longitude' => ['nullable', 'numeric', 'between:-180,180'],
+            'address' => ['sometimes', 'required', 'string', 'max:1000'],
             'amenities' => ['nullable', 'array'],
             'amenities.*' => ['string', 'max:255'],
             'includes' => ['nullable', 'array'],
             'includes.*' => ['string', 'max:255'],
             'excludes' => ['nullable', 'array'],
             'excludes.*' => ['string', 'max:255'],
+
             'schedules' => ['nullable', 'array'],
             'schedules.*.day_number' => ['required_with:schedules', 'integer', 'min:1'],
             'schedules.*.title' => ['required_with:schedules', 'string', 'max:255'],
             'schedules.*.description' => ['nullable', 'string'],
             'schedules.*.activities' => ['nullable', 'array'],
             'schedules.*.activities.*' => ['string', 'max:500'],
+
+            'room_types' => ['nullable', 'array'],
+            'room_types.*.id' => ['nullable', 'integer'],
+            'room_types.*.name' => ['required_with:room_types', 'string', 'max:255'],
+            'room_types.*.rank' => ['nullable', 'string', 'max:100'],
+            'room_types.*.description' => ['nullable', 'string'],
+            'room_types.*.base_price' => ['required_with:room_types', 'numeric', 'min:0'],
+            'room_types.*.total_rooms' => ['required_with:room_types', 'integer', 'min:1'],
+            'room_types.*.inventory' => ['nullable', 'integer', 'min:0'],
+            'room_types.*.capacity_adults' => ['required_with:room_types', 'integer', 'min:1'],
+            'room_types.*.capacity_children' => ['nullable', 'integer', 'min:0'],
+            'room_types.*.amenities' => ['nullable', 'array'],
+            'room_types.*.amenities.*' => ['string', 'max:255'],
+            'room_types.*.status' => ['nullable', 'string', Rule::in(['active', 'inactive'])],
         ];
     }
 
@@ -51,7 +58,6 @@ class UpdateServiceRequest extends FormRequest
         return [
             'status.in' => 'Provider chỉ có thể chuyển dịch vụ về bản nháp (draft) hoặc gửi duyệt (pending_review).',
             'base_price.min' => 'Giá cơ sở không được âm.',
-            'max_guests.min' => 'Sức chứa tối đa phải lớn hơn hoặc bằng 1.',
         ];
     }
 }

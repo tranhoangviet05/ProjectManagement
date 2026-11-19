@@ -4,10 +4,12 @@ namespace App\Http\Controllers\Api\V1\Provider;
 
 use App\Enums\ProviderStatus;
 use App\Enums\ServiceStatus;
+use App\Enums\ServiceType;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Provider\StoreServiceRequest;
 use App\Http\Requests\Provider\UpdateServiceRequest;
 use App\Http\Requests\Provider\UploadServiceMediaRequest;
+use App\Models\BusinessType;
 use App\Models\ProviderProfile;
 use App\Models\Service;
 use App\Models\ServiceMedia;
@@ -16,6 +18,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class ServiceController extends Controller
 {
@@ -35,7 +38,7 @@ class ServiceController extends Controller
 
         $query = Service::query()
             ->where('provider_id', $provider->id)
-            ->with(['category', 'location', 'media'])
+            ->with(['category', 'location', 'media', 'roomTypes'])
             ->latest();
 
         if ($request->filled('status')) {
@@ -69,7 +72,7 @@ class ServiceController extends Controller
     }
 
     /**
-     * Tạo mới dịch vụ (tour / khách sạn / homestay / phương tiện) kèm lịch trình.
+     * Tạo mới dịch vụ (tự động ánh xạ type & price_unit theo business_type của Provider).
      */
     public function store(StoreServiceRequest $request): JsonResponse
     {
@@ -78,6 +81,7 @@ class ServiceController extends Controller
             return $this->forbiddenProviderResponse();
         }
 
+        $mapping = $this->resolveServiceTypeMapping($provider);
         $validated = $request->validated();
         $targetStatus = $validated['status'] ?? ServiceStatus::Draft->value;
 
@@ -88,37 +92,42 @@ class ServiceController extends Controller
             ], 403);
         }
 
-        $service = DB::transaction(function () use ($provider, $validated, $targetStatus) {
+        if ($mapping['group'] === 'accommodation' && empty($validated['room_types'])) {
+            throw ValidationException::withMessages([
+                'room_types' => ['Dịch vụ Chỗ ở phải có ít nhất 1 loại phòng.'],
+            ]);
+        }
+
+        $service = DB::transaction(function () use ($provider, $validated, $targetStatus, $mapping) {
             $service = Service::create([
                 'provider_id' => $provider->id,
-                'category_id' => $validated['category_id'] ?? null,
-                'location_id' => $validated['location_id'] ?? null,
+                'category_id' => $validated['category_id'],
+                'location_id' => $validated['location_id'],
                 'name' => $validated['name'],
                 'slug' => $this->generateUniqueSlug($validated['name']),
-                'description' => $validated['description'] ?? null,
-                'type' => $validated['type'],
+                'description' => $validated['description'],
+                'type' => $mapping['type'],
                 'status' => $targetStatus,
                 'base_price' => $validated['base_price'],
-                'price_unit' => $validated['price_unit'],
-                'max_guests' => $validated['max_guests'],
-                'duration_days' => $validated['duration_days'] ?? 1,
-                'duration_nights' => $validated['duration_nights'] ?? 0,
-                'address' => $validated['address'] ?? null,
-                'latitude' => $validated['latitude'] ?? null,
-                'longitude' => $validated['longitude'] ?? null,
+                'price_unit' => $mapping['price_unit'],
+                'address' => $validated['address'],
                 'amenities' => $validated['amenities'] ?? [],
                 'includes' => $validated['includes'] ?? [],
                 'excludes' => $validated['excludes'] ?? [],
             ]);
 
-            if (! empty($validated['schedules'])) {
+            if ($mapping['group'] === 'accommodation' && ! empty($validated['room_types'])) {
+                $this->syncRoomTypes($service, $validated['room_types']);
+            }
+
+            if ($mapping['group'] === 'tour' && ! empty($validated['schedules'])) {
                 $this->syncSchedules($service, $validated['schedules']);
             }
 
             return $service;
         });
 
-        $service->load(['category', 'location', 'media', 'schedules']);
+        $service->load(['category', 'location', 'media', 'schedules', 'roomTypes']);
 
         return response()->json([
             'success' => true,
@@ -139,7 +148,7 @@ class ServiceController extends Controller
 
         $service = Service::query()
             ->where('provider_id', $provider->id)
-            ->with(['category', 'location', 'media', 'schedules'])
+            ->with(['category', 'location', 'media', 'schedules', 'roomTypes'])
             ->find($id);
 
         if (! $service) {
@@ -156,7 +165,7 @@ class ServiceController extends Controller
     }
 
     /**
-     * Cập nhật thông tin dịch vụ và lịch trình.
+     * Cập nhật thông tin dịch vụ, loại phòng / lịch 15 ngày / lịch trình.
      */
     public function update(UpdateServiceRequest $request, int $id): JsonResponse
     {
@@ -173,6 +182,7 @@ class ServiceController extends Controller
             ], 404);
         }
 
+        $mapping = $this->resolveServiceTypeMapping($provider);
         $validated = $request->validated();
 
         if (
@@ -186,8 +196,13 @@ class ServiceController extends Controller
             ], 403);
         }
 
-        DB::transaction(function () use ($service, $validated) {
-            $updateData = collect($validated)->except(['schedules'])->toArray();
+        DB::transaction(function () use ($service, $validated, $mapping) {
+            $updateData = collect($validated)
+                ->except(['schedules', 'room_types'])
+                ->toArray();
+
+            $updateData['type'] = $mapping['type'];
+            $updateData['price_unit'] = $mapping['price_unit'];
 
             if (isset($updateData['name']) && $updateData['name'] !== $service->name) {
                 $updateData['slug'] = $this->generateUniqueSlug($updateData['name'], $service->id);
@@ -199,12 +214,16 @@ class ServiceController extends Controller
 
             $service->update($updateData);
 
-            if (array_key_exists('schedules', $validated)) {
+            if ($mapping['group'] === 'accommodation' && array_key_exists('room_types', $validated)) {
+                $this->syncRoomTypes($service, $validated['room_types'] ?? []);
+            }
+
+            if ($mapping['group'] === 'tour' && array_key_exists('schedules', $validated)) {
                 $this->syncSchedules($service, $validated['schedules'] ?? []);
             }
         });
 
-        $service->load(['category', 'location', 'media', 'schedules']);
+        $service->load(['category', 'location', 'media', 'schedules', 'roomTypes']);
 
         return response()->json([
             'success' => true,
@@ -365,7 +384,6 @@ class ServiceController extends Controller
         $this->mediaService->deleteFile($targetMedia->url, 'public');
         $targetMedia->delete();
 
-        // Nếu vừa xóa ảnh bìa, tự động chọn ảnh đầu tiên còn lại làm ảnh bìa mới
         if ($wasCover) {
             $fallback = $service->media()->where('type', 'image')->orderBy('sort_order')->first();
             if ($fallback) {
@@ -394,6 +412,47 @@ class ServiceController extends Controller
         ], 403);
     }
 
+    /**
+     * Suy ra type dịch vụ và đơn vị tính cố định từ Loại hình kinh doanh của Provider.
+     *
+     * @return array{type: string, price_unit: string, group: string}
+     */
+    protected function resolveServiceTypeMapping(ProviderProfile $provider): array
+    {
+        $provider->loadMissing('businessType');
+        /** @var BusinessType|null $businessType */
+        $businessType = $provider->businessType;
+
+        if (! $businessType) {
+            throw ValidationException::withMessages([
+                'business_type_id' => ['Vui lòng cập nhật Loại hình kinh doanh trong Hồ sơ đối tác trước khi tạo dịch vụ.'],
+            ]);
+        }
+
+        return match ($businessType->slug) {
+            'khach-san', 'resort' => [
+                'type' => ServiceType::Hotel->value,
+                'price_unit' => $businessType->slug === 'resort' ? 'đêm' : 'phòng/đêm',
+                'group' => 'accommodation',
+            ],
+            'homestay', 'villa', 'homestay-villa' => [
+                'type' => ServiceType::Homestay->value,
+                'price_unit' => $businessType->slug === 'villa' ? 'đêm' : 'phòng/đêm',
+                'group' => 'accommodation',
+            ],
+            'phuong-tien-di-chuyen', 've-tau' => [
+                'type' => ServiceType::Vehicle->value,
+                'price_unit' => $businessType->slug === 've-tau' ? 'vé' : 'ngày',
+                'group' => 'vehicle',
+            ],
+            default => [
+                'type' => ServiceType::Tour->value,
+                'price_unit' => 'người',
+                'group' => 'tour',
+            ],
+        };
+    }
+
     protected function generateUniqueSlug(string $name, ?int $ignoreServiceId = null): string
     {
         $baseSlug = Str::slug($name) ?: 'service';
@@ -411,6 +470,44 @@ class ServiceController extends Controller
         }
 
         return $slug;
+    }
+
+    protected function syncRoomTypes(Service $service, array $roomTypes): void
+    {
+        $keptIds = [];
+
+        foreach ($roomTypes as $room) {
+            $totalRooms = (int) $room['total_rooms'];
+            $inventory = isset($room['inventory']) ? min((int) $room['inventory'], $totalRooms) : $totalRooms;
+
+            $attributes = [
+                'name' => $room['name'],
+                'rank' => $room['rank'] ?? 'standard',
+                'description' => $room['description'] ?? null,
+                'base_price' => $room['base_price'],
+                'total_rooms' => $totalRooms,
+                'inventory' => $inventory,
+                'capacity_adults' => (int) $room['capacity_adults'],
+                'capacity_children' => (int) ($room['capacity_children'] ?? 0),
+                'amenities' => $room['amenities'] ?? [],
+                'status' => $room['status'] ?? 'active',
+            ];
+
+            if (! empty($room['id'])) {
+                $existing = $service->roomTypes()->find($room['id']);
+                if ($existing) {
+                    $existing->update($attributes);
+                    $keptIds[] = $existing->id;
+
+                    continue;
+                }
+            }
+
+            $created = $service->roomTypes()->create($attributes);
+            $keptIds[] = $created->id;
+        }
+
+        $service->roomTypes()->whereNotIn('id', $keptIds)->delete();
     }
 
     protected function syncSchedules(Service $service, array $schedules): void
@@ -444,11 +541,9 @@ class ServiceController extends Controller
             'status' => $service->status,
             'base_price' => $service->base_price,
             'price_unit' => $service->price_unit,
-            'max_guests' => $service->max_guests,
-            'duration_days' => $service->duration_days,
-            'duration_nights' => $service->duration_nights,
             'cover_image' => $coverMedia?->url,
             'media_count' => $service->media->count(),
+            'room_types_count' => $service->roomTypes->count(),
             'rating_avg' => $service->rating_avg,
             'total_bookings' => $service->total_bookings,
             'rejection_reason' => $service->rejection_reason,

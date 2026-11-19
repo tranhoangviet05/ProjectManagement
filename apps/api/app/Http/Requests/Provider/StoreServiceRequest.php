@@ -3,7 +3,6 @@
 namespace App\Http\Requests\Provider;
 
 use App\Enums\ServiceStatus;
-use App\Enums\ServiceType;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -18,31 +17,40 @@ class StoreServiceRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'type' => ['required', 'string', Rule::in(ServiceType::values())],
-            'category_id' => ['nullable', 'integer', 'exists:categories,id'],
-            'location_id' => ['nullable', 'integer', 'exists:locations,id'],
+            'category_id' => ['required', 'integer', 'exists:categories,id'],
+            'location_id' => ['required', 'integer', 'exists:locations,id'],
             'status' => ['nullable', 'string', Rule::in(ServiceStatus::providerMutableValues())],
-            'description' => ['nullable', 'string'],
+            'description' => ['required', 'string'],
             'base_price' => ['required', 'numeric', 'min:0'],
-            'price_unit' => ['required', 'string', 'max:50'],
-            'max_guests' => ['required', 'integer', 'min:1'],
-            'duration_days' => ['nullable', 'integer', 'min:1'],
-            'duration_nights' => ['nullable', 'integer', 'min:0'],
-            'address' => ['nullable', 'string', 'max:1000'],
-            'latitude' => ['nullable', 'numeric', 'between:-90,90'],
-            'longitude' => ['nullable', 'numeric', 'between:-180,180'],
+            'address' => ['required', 'string', 'max:1000'],
             'amenities' => ['nullable', 'array'],
             'amenities.*' => ['string', 'max:255'],
             'includes' => ['nullable', 'array'],
             'includes.*' => ['string', 'max:255'],
             'excludes' => ['nullable', 'array'],
             'excludes.*' => ['string', 'max:255'],
+
+            // Dành cho Tour: lịch trình theo ngày
             'schedules' => ['nullable', 'array'],
             'schedules.*.day_number' => ['required_with:schedules', 'integer', 'min:1'],
             'schedules.*.title' => ['required_with:schedules', 'string', 'max:255'],
             'schedules.*.description' => ['nullable', 'string'],
             'schedules.*.activities' => ['nullable', 'array'],
             'schedules.*.activities.*' => ['string', 'max:500'],
+
+            // Dành cho Chỗ ở: danh sách loại phòng (hotel_room_types)
+            'room_types' => ['nullable', 'array'],
+            'room_types.*.name' => ['required_with:room_types', 'string', 'max:255'],
+            'room_types.*.rank' => ['nullable', 'string', 'max:100'],
+            'room_types.*.description' => ['nullable', 'string'],
+            'room_types.*.base_price' => ['required_with:room_types', 'numeric', 'min:0'],
+            'room_types.*.total_rooms' => ['required_with:room_types', 'integer', 'min:1'],
+            'room_types.*.inventory' => ['nullable', 'integer', 'min:0'],
+            'room_types.*.capacity_adults' => ['required_with:room_types', 'integer', 'min:1'],
+            'room_types.*.capacity_children' => ['nullable', 'integer', 'min:0'],
+            'room_types.*.amenities' => ['nullable', 'array'],
+            'room_types.*.amenities.*' => ['string', 'max:255'],
+            'room_types.*.status' => ['nullable', 'string', Rule::in(['active', 'inactive'])],
         ];
     }
 
@@ -50,14 +58,13 @@ class StoreServiceRequest extends FormRequest
     {
         return [
             'name.required' => 'Tên dịch vụ không được để trống.',
-            'type.required' => 'Vui lòng chọn loại hình dịch vụ.',
-            'type.in' => 'Loại hình dịch vụ không hợp lệ.',
+            'category_id.required' => 'Vui lòng chọn danh mục dịch vụ.',
+            'location_id.required' => 'Vui lòng chọn điểm đến / khu vực.',
+            'description.required' => 'Vui lòng nhập mô tả chi tiết dịch vụ.',
+            'address.required' => 'Vui lòng nhập địa chỉ cơ sở / điểm đón khách.',
             'status.in' => 'Trạng thái tạo mới chỉ chấp nhận bản nháp (draft) hoặc chờ duyệt (pending_review).',
             'base_price.required' => 'Giá cơ sở không được để trống.',
             'base_price.min' => 'Giá cơ sở không được âm.',
-            'price_unit.required' => 'Đơn vị tính giá không được để trống.',
-            'max_guests.required' => 'Sức chứa tối đa không được để trống.',
-            'max_guests.min' => 'Sức chứa tối đa phải lớn hơn hoặc bằng 1.',
         ];
     }
 }
