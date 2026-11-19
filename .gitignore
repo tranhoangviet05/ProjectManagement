@@ -15,4 +15,3 @@ Thumbs.db
 *firebase-adminsdk*.json
 service-account*.json
 apps/api/storage/app/firebase/
-.agent/
