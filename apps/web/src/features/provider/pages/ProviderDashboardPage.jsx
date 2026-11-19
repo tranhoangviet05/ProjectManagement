@@ -1,25 +1,8 @@
 import React, { useState } from "react";
-import {
-  LayoutDashboard,
-  Compass,
-  CalendarCheck,
-  QrCode,
-  Wallet,
-  MessageSquare,
-  CheckCircle2,
-} from "lucide-react";
-import PortalShell from "../../../layouts/PortalShell";
+import { QrCode, CheckCircle2 } from "lucide-react";
+import ProviderLayout from "../layouts/ProviderLayout";
 import Typography from "../../../components/ui/Typography";
 import { useAuth } from "../../../hooks/useAuth";
-
-const PROVIDER_NAV = [
-  { id: "overview", label: "Bảng điều hành đối tác", icon: LayoutDashboard },
-  { id: "services", label: "Tour & Hạng phòng", icon: Compass, badge: "6" },
-  { id: "bookings", label: "Đơn đặt chỗ của khách", icon: CalendarCheck, badge: "12" },
-  { id: "qr-checkin", label: "Đối soát vé QR Check-in", icon: QrCode },
-  { id: "wallet", label: "Ví doanh thu & Quyết toán", icon: Wallet },
-  { id: "reviews", label: "Đánh giá từ du khách", icon: MessageSquare },
-];
 
 const UPCOMING_BOOKINGS = [
   {
@@ -60,13 +43,7 @@ export default function ProviderDashboardPage() {
   };
 
   return (
-    <PortalShell
-      portalTitle="Cổng Đối tác Lữ hành"
-      portalBadge="Nhà cung cấp (Provider)"
-      navItems={PROVIDER_NAV}
-      activeTab={activeTab}
-      onSelectTab={setActiveTab}
-    >
+    <ProviderLayout activeTab={activeTab} onSelectTab={setActiveTab}>
       <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <Typography variant="h1">{businessName}</Typography>
@@ -140,57 +117,59 @@ export default function ProviderDashboardPage() {
           />
           <button
             type="submit"
-            className="px-5 py-2.5 rounded-lg bg-brand-primary hover:bg-brand-hover text-white text-sm font-semibold cursor-pointer"
+            className="px-5 py-2.5 rounded-lg bg-brand-primary hover:bg-brand-hover text-white text-sm font-semibold transition-colors cursor-pointer"
           >
-            Xác nhận khách nhận chỗ
+            Kiểm tra vé
           </button>
         </form>
 
         {qrFeedback && (
-          <div className="mt-3 p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-xs font-medium text-emerald-800">
-            {qrFeedback}
+          <div className="mt-4 p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-xs text-status-success font-medium flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 shrink-0" />
+            <span>{qrFeedback}</span>
           </div>
         )}
       </section>
 
-      {/* Danh sách đơn đặt chỗ sắp khởi hành */}
+      {/* Danh sách đơn đặt chỗ chuẩn bị diễn ra */}
       <section className="bg-surface-elevated border border-border-subtle rounded-xl overflow-hidden">
-        <div className="px-6 py-4 border-b border-border-subtle">
-          <Typography variant="h3">Đơn đặt chỗ sắp khởi hành</Typography>
+        <div className="px-6 py-4 border-b border-border-subtle flex items-center justify-between">
+          <Typography variant="h3">Lịch đón khách sắp tới</Typography>
+          <span className="text-xs text-brand-hover font-semibold cursor-pointer">
+            Xem toàn bộ đơn đặt chỗ →
+          </span>
         </div>
 
         <div className="divide-y divide-border-subtle">
-          {UPCOMING_BOOKINGS.map((bk) => (
+          {UPCOMING_BOOKINGS.map((booking) => (
             <div
-              key={bk.code}
+              key={booking.code}
               className="px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
             >
               <div>
-                <div className="flex items-center gap-2">
-                  <span className="px-2 py-0.5 rounded bg-surface-muted border border-border-subtle text-xs font-mono font-semibold text-ink-primary">
-                    {bk.code}
-                  </span>
-                  <Typography variant="body" className="font-semibold text-ink-primary">
-                    {bk.serviceName}
-                  </Typography>
-                </div>
-                <Typography variant="caption" className="block mt-1">
-                  Khách hàng: {bk.guestName} ({bk.guests}) · Ngày nhận chỗ: {bk.checkInDate}
+                <span className="text-xs font-mono text-brand-primary font-semibold">
+                  {booking.code}
+                </span>
+                <Typography variant="body" className="font-semibold text-ink-primary mt-0.5">
+                  {booking.serviceName}
+                </Typography>
+                <Typography variant="caption" className="block mt-0.5">
+                  Khách: {booking.guestName} · {booking.guests} · Ngày: {booking.checkInDate}
                 </Typography>
               </div>
 
               <div className="flex items-center gap-3">
-                <Typography variant="body-sm" className="font-bold text-ink-primary">
-                  {bk.totalAmount}
-                </Typography>
-                <span className="px-2.5 py-1 rounded-full bg-brand-light text-brand-hover text-xs font-semibold">
-                  {bk.status}
+                <span className="font-semibold text-ink-primary text-sm">
+                  {booking.totalAmount}
+                </span>
+                <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">
+                  {booking.status}
                 </span>
               </div>
             </div>
           ))}
         </div>
       </section>
-    </PortalShell>
+    </ProviderLayout>
   );
 }

@@ -248,6 +248,7 @@ class AuthService
                     'business_name' => $extra['business_name'] ?? ($resolvedName.' Travel'),
                     'representative_name' => $extra['representative_name'] ?? $resolvedName,
                     'business_type_id' => $extra['business_type_id'] ?? null,
+                    'avatar_url' => $extra['avatar_url'] ?? null,
                     'phone' => $extra['phone'] ?? null,
                     'address' => $extra['address'] ?? null,
                     'status' => ProviderStatus::Approved->value,
@@ -260,7 +261,6 @@ class AuthService
                 [
                     'name' => $resolvedName,
                     'phone_number' => $extra['phone'] ?? null,
-                    'nationality' => 'Việt Nam',
                 ]
             );
         }
@@ -323,7 +323,8 @@ class AuthService
                 'id' => $user->touristProfile->id,
                 'name' => $user->touristProfile->name,
                 'phone_number' => $user->touristProfile->phone_number,
-                'nationality' => $user->touristProfile->nationality,
+                'gender' => $user->touristProfile->gender,
+                'date_of_birth' => $user->touristProfile->date_of_birth?->format('Y-m-d'),
             ] : null,
             'provider_profile' => $user->providerProfile ? [
                 'id' => $user->providerProfile->id,
@@ -336,6 +337,7 @@ class AuthService
                     'name' => $user->providerProfile->businessType->name,
                     'slug' => $user->providerProfile->businessType->slug,
                 ] : null,
+                'avatar_url' => $user->providerProfile->avatar_url,
                 'phone' => $user->providerProfile->phone,
                 'address' => $user->providerProfile->address,
                 'business_license_url' => $user->providerProfile->business_license_url,

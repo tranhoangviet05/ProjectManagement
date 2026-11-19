@@ -23,6 +23,8 @@ Route::prefix('auth')->group(function () {
         Route::post('/sync', [AuthController::class, 'sync']);
         Route::get('/me', [AuthController::class, 'me']);
         Route::post('/logout', [AuthController::class, 'logout']);
+        Route::post('/change-password', [AuthController::class, 'changePassword']);
+        Route::post('/avatar', [AuthController::class, 'uploadAvatar']);
     });
 });
 
