@@ -35,8 +35,6 @@ CREATE TABLE IF NOT EXISTS tourist_profiles (
     phone_number VARCHAR(20) NULL,
     gender VARCHAR(20) NULL,
     date_of_birth DATE NULL,
-    nationality VARCHAR(100) NULL,
-    id_card_number VARCHAR(30) NULL, -- CCCD / Hộ chiếu
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

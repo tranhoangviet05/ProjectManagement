@@ -18,11 +18,6 @@ class TouristProfile extends Model
         'date_of_birth',
     ];
 
-    protected $hidden = [
-        'nationality',
-        'id_card_number',
-    ];
-
     protected function casts(): array
     {
         return [
