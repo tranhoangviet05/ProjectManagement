@@ -9,7 +9,9 @@ use App\Models\ProviderProfile;
 use App\Models\User;
 use App\Models\Wallet;
 use Database\Seeders\DatabaseSeeder;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class ProviderProfileTest extends TestCase
@@ -183,9 +185,9 @@ class ProviderProfileTest extends TestCase
 
     public function test_user_can_upload_avatar(): void
     {
-        \Illuminate\Support\Facades\Storage::fake('public');
+        Storage::fake('public');
 
-        $file = \Illuminate\Http\UploadedFile::fake()->create('avatar.png', 100, 'image/png');
+        $file = UploadedFile::fake()->create('avatar.png', 100, 'image/png');
 
         $response = $this->withHeader('Authorization', 'Bearer '.$this->providerToken)
             ->postJson('/api/v1/auth/avatar', [

@@ -6,7 +6,6 @@ use App\Enums\UserRole;
 use App\Models\TouristProfile;
 use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
