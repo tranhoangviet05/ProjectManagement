@@ -1,7 +1,9 @@
 <?php
 
+use App\Http\Controllers\Api\V1\Provider\HotelRoomTypeController;
 use App\Http\Controllers\Api\V1\Provider\KycController;
 use App\Http\Controllers\Api\V1\Provider\ProviderProfileController;
+use App\Http\Controllers\Api\V1\Provider\ServiceAvailabilityController;
 use App\Http\Controllers\Api\V1\Provider\ServiceController;
 use Illuminate\Support\Facades\Route;
 
@@ -32,4 +34,13 @@ Route::prefix('services')->group(function () {
     Route::post('/{id}/media', [ServiceController::class, 'uploadMedia']);
     Route::patch('/{id}/media/{mediaId}/cover', [ServiceController::class, 'setCoverMedia']);
     Route::delete('/{id}/media/{mediaId}', [ServiceController::class, 'deleteMedia']);
+
+    // ── Service Availability & Hotel Room Types (Task #17) ─────────
+    Route::get('/{serviceId}/availability', [ServiceAvailabilityController::class, 'index']);
+    Route::put('/{serviceId}/availability', [ServiceAvailabilityController::class, 'upsert']);
+
+    Route::get('/{serviceId}/room-types', [HotelRoomTypeController::class, 'index']);
+    Route::post('/{serviceId}/room-types', [HotelRoomTypeController::class, 'store']);
+    Route::put('/{serviceId}/room-types/{roomTypeId}', [HotelRoomTypeController::class, 'update']);
+    Route::delete('/{serviceId}/room-types/{roomTypeId}', [HotelRoomTypeController::class, 'destroy']);
 });
