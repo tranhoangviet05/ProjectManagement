@@ -16,4 +16,4 @@ Thumbs.db
 service-account*.json
 apps/api/storage/app/firebase/
 logs/
-
+.agent/
