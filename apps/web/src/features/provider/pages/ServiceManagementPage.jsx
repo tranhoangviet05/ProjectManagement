@@ -8,8 +8,7 @@ import {
   Image as ImageIcon,
   AlertCircle,
   CheckCircle2,
-  Users,
-  Clock,
+  BedDouble,
   MapPin,
 } from "lucide-react";
 import ProviderLayout from "../layouts/ProviderLayout";
@@ -17,11 +16,7 @@ import Typography from "../../../components/ui/Typography";
 import { ServiceGridSkeleton } from "../../../components/ui/Skeleton";
 import ServiceFormStepper from "../components/ServiceFormStepper";
 import providerServiceApi from "../services/providerServiceApi";
-import {
-  SERVICE_STATUS_CONFIG,
-  SERVICE_TYPE_OPTIONS,
-  formatCurrencyVnd,
-} from "../models/serviceFormModel";
+import { SERVICE_STATUS_CONFIG, formatCurrencyVnd } from "../models/serviceFormModel";
 
 export default function ServiceManagementPage() {
   const [services, setServices] = useState([]);
@@ -34,7 +29,6 @@ export default function ServiceManagementPage() {
 
   // Filters
   const [statusFilter, setStatusFilter] = useState("all");
-  const [typeFilter, setTypeFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
 
   // Mode: 'list' | 'create' | 'edit'
@@ -47,7 +41,6 @@ export default function ServiceManagementPage() {
     try {
       const res = await providerServiceApi.listServices({
         status: statusFilter,
-        type: typeFilter,
         q: searchQuery,
       });
       setServices(res?.data || []);
@@ -59,7 +52,7 @@ export default function ServiceManagementPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [statusFilter, typeFilter, searchQuery]);
+  }, [statusFilter, searchQuery]);
 
   useEffect(() => {
     loadServices();
@@ -187,12 +180,13 @@ export default function ServiceManagementPage() {
   return (
     <ProviderLayout serviceBadge={String(services.length)}>
       <div className="space-y-6">
-        {/* Page Header (Travel Editorial Style, No Outer Border) */}
+        {/* Page Header */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div>
-            <Typography variant="h1">Tour & Hạng phòng</Typography>
+            <Typography variant="h1">Quản lý dịch vụ</Typography>
             <Typography variant="body-sm" className="text-ink-subtle mt-1">
-              Thiết kế trải nghiệm du lịch, quản lý album ảnh và theo dõi trạng thái kiểm duyệt.
+              Đăng bán dịch vụ theo ngành nghề kinh doanh, cấu hình lịch phục vụ hoặc loại phòng và
+              theo dõi duyệt bài.
             </Typography>
           </div>
 
@@ -251,23 +245,10 @@ export default function ServiceManagementPage() {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Tìm kiếm tour, khách sạn, homestay..."
+                  placeholder="Tìm kiếm theo tên dịch vụ..."
                   className="w-full pl-10 pr-4 py-2 rounded-xl bg-surface-muted/70 text-ink-primary text-sm placeholder:text-ink-subtle focus:bg-surface-elevated focus:outline-none focus:ring-2 focus:ring-brand-primary/30 transition-all"
                 />
               </div>
-
-              <select
-                value={typeFilter}
-                onChange={(e) => setTypeFilter(e.target.value)}
-                className="px-3.5 py-2 rounded-xl bg-surface-muted/70 text-ink-primary text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary/30"
-              >
-                <option value="all">Tất cả loại hình</option>
-                {SERVICE_TYPE_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
 
               <select
                 value={statusFilter}
@@ -295,8 +276,8 @@ export default function ServiceManagementPage() {
                     Chưa có dịch vụ nào được đăng bán
                   </Typography>
                   <Typography variant="body-sm" className="text-ink-subtle max-w-md mx-auto">
-                    Bắt đầu hành trình kinh doanh bằng cách tạo tour du lịch, khách sạn hoặc
-                    homestay đầu tiên của bạn.
+                    Bắt đầu hành trình kinh doanh bằng cách tạo dịch vụ đầu tiên theo đúng ngành
+                    nghề doanh nghiệp của bạn.
                   </Typography>
                 </div>
                 <button
@@ -313,6 +294,8 @@ export default function ServiceManagementPage() {
                 {services.map((service) => {
                   const statusInfo =
                     SERVICE_STATUS_CONFIG[service.status] || SERVICE_STATUS_CONFIG.draft;
+                  const isAccommodation = service.type === "hotel" || service.type === "homestay";
+
                   return (
                     <div
                       key={service.id}
@@ -365,14 +348,12 @@ export default function ServiceManagementPage() {
                           </Typography>
 
                           <div className="flex items-center gap-4 text-xs text-ink-subtle">
-                            <span className="inline-flex items-center gap-1">
-                              <Users className="w-3.5 h-3.5" />
-                              Tối đa {service.max_guests} khách
-                            </span>
-                            <span className="inline-flex items-center gap-1">
-                              <Clock className="w-3.5 h-3.5" />
-                              {service.duration_days}N{service.duration_nights}Đ
-                            </span>
+                            {isAccommodation && (
+                              <span className="inline-flex items-center gap-1">
+                                <BedDouble className="w-3.5 h-3.5 text-brand-primary" />
+                                {service.room_types_count || 0} loại phòng
+                              </span>
+                            )}
                           </div>
 
                           {service.status === "rejected" && service.rejection_reason && (
