@@ -22,10 +22,13 @@ class ProviderKycSubmissionTest extends TestCase
 
     protected User $touristUser;
 
+    protected int $businessTypeId;
+
     protected function setUp(): void
     {
         parent::setUp();
         $this->seed(DatabaseSeeder::class);
+        $this->businessTypeId = (int) BusinessType::query()->value('id');
 
         /** @var User $provider */
         $provider = User::updateOrCreate(
@@ -163,7 +166,7 @@ class ProviderKycSubmissionTest extends TestCase
         $payload = [
             'business_name' => 'Bà Nà Hills Eco Travel',
             'representative_name' => 'Võ Văn Nam',
-            'business_type_id' => 1,
+            'business_type_id' => $this->businessTypeId,
             'phone' => '0911223344',
             'address' => 'Hòa Vang, Đà Nẵng',
             'business_license_url' => 'https://example.com/giay-phep-kinh-doanh.pdf',
@@ -192,7 +195,7 @@ class ProviderKycSubmissionTest extends TestCase
         $payload = [
             'business_name' => 'Hội An Heritage Travel',
             'representative_name' => 'Lê Thị Thu',
-            'business_type_id' => 1,
+            'business_type_id' => $this->businessTypeId,
             'phone' => '0987654321',
             'address' => 'Trần Phú, Phố Cổ Hội An',
             'business_license_url' => [$base64Png],
@@ -222,7 +225,7 @@ class ProviderKycSubmissionTest extends TestCase
         $payload = [
             'business_name' => 'Over Five Images Travel',
             'representative_name' => 'Tester',
-            'business_type_id' => 1,
+            'business_type_id' => $this->businessTypeId,
             'phone' => '0901234567',
             'address' => 'Đà Nẵng',
             'business_licenses' => $images,
@@ -240,7 +243,7 @@ class ProviderKycSubmissionTest extends TestCase
         $payload = [
             'business_name' => 'Blob URL Travel',
             'representative_name' => 'Tester',
-            'business_type_id' => 1,
+            'business_type_id' => $this->businessTypeId,
             'phone' => '0901234567',
             'address' => 'Đà Nẵng',
             'business_license_url' => ['blob:http://localhost:5173/d80f4cf3-dfca-4495-a646-a9119ff0dd04'],
@@ -275,7 +278,7 @@ class ProviderKycSubmissionTest extends TestCase
         $payload = [
             'business_name' => 'Test Travel',
             'representative_name' => 'Tester',
-            'business_type_id' => 1,
+            'business_type_id' => $this->businessTypeId,
             'phone' => '0901234567',
             'address' => 'Hà Nội',
             'business_license' => $tooLargeFile,
@@ -297,7 +300,7 @@ class ProviderKycSubmissionTest extends TestCase
             ->post('/api/v1/provider/kyc/submit', [
                 'business_name' => 'Kiểm Tra Trạng Thái Travel',
                 'representative_name' => 'Trần Văn Trạng',
-                'business_type_id' => 1,
+                'business_type_id' => $this->businessTypeId,
                 'phone' => '0933445566',
                 'address' => 'Hải Châu, Đà Nẵng',
                 'business_license' => $licenseFile,

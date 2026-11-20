@@ -34,6 +34,12 @@ const ADMIN_NAV_LINKS = [
     hasKycBadge: true,
   },
   {
+    id: "services",
+    label: "Kiểm duyệt Dịch vụ",
+    path: "/admin/services",
+    icon: Compass,
+  },
+  {
     id: "users",
     label: "Quản lý tài khoản",
     path: "/admin/users",
