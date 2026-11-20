@@ -5,6 +5,7 @@ Xây dựng chức năng **Quản lý Mã ưu đãi toàn sàn (`/admin/coupons`
 - Tạo mới, chỉnh sửa, theo dõi lượt sử dụng (`used_count / usage_limit`) và xóa mã ưu đãi (nếu chưa có lượt sử dụng).
 - Hỗ trợ 2 hình thức giảm giá theo schema: Phần trăm (`percent`) và Số tiền cố định (`fixed`).
 - Kiểm soát chặt chẽ điều kiện áp dụng (`min_order_amount`, `per_user_limit`, `valid_from`, `valid_until`).
+- **Tặng mã ưu đãi cho Tourist (`user_coupons`)**: Admin chọn nhiều tài khoản Khách du lịch (`role = tourist`) và gửi tặng mã ưu đãi trực tiếp kèm lời nhắn.
 
 ---
 
