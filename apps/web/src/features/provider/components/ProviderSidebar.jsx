@@ -28,7 +28,7 @@ const PROVIDER_NAV_LINKS = [
   },
   {
     id: "services",
-    label: "Tour & Hạng phòng",
+    label: "Quản lý dịch vụ",
     path: "/provider/services",
     icon: Compass,
     badge: "6",

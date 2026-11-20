@@ -9,6 +9,7 @@ import AdminDashboardPage from "../features/admin/pages/AdminDashboardPage";
 import AdminProviderKycPage from "../features/admin/pages/AdminProviderKycPage";
 import ProviderDashboardPage from "../features/provider/pages/ProviderDashboardPage";
 import ProviderProfilePage from "../features/provider/pages/ProviderProfilePage";
+import ServiceManagementPage from "../features/provider/pages/ServiceManagementPage";
 import NotFoundPage from "../features/common/pages/NotFoundPage";
 import Typography from "../components/ui/Typography";
 
@@ -205,7 +206,17 @@ export default function AppRouter() {
           }
         />
 
-        {/* 2. Bảng điều hành tổng quan */}
+        {/* 2. Quản lý Tour & Dịch vụ du lịch (task16) */}
+        <Route
+          path="/provider/services"
+          element={
+            <ProtectedRoute allowedRoles={["provider", "admin"]}>
+              <ServiceManagementPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* 3. Bảng điều hành tổng quan */}
         <Route
           path="/provider/dashboard"
           element={
