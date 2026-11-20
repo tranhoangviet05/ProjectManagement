@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\V1\Auth\AuthController;
 use App\Http\Controllers\Api\V1\Media\MediaController;
+use App\Http\Controllers\Api\V1\Public\CatalogController;
 use Illuminate\Support\Facades\Route;
 
 // Public & authentication routes: /api/v1/...
@@ -33,4 +34,11 @@ Route::prefix('media')->middleware('firebase.auth')->group(function () {
     Route::post('/upload', [MediaController::class, 'upload']);
     Route::post('/upload-private', [MediaController::class, 'uploadPrivate']);
     Route::get('/private/{path}', [MediaController::class, 'showPrivate'])->where('path', '.*');
+});
+
+// ── Public Catalog Endpoints ──────────────────────────────────────
+Route::prefix('public')->group(function () {
+    Route::get('/categories', [CatalogController::class, 'categories']);
+    Route::get('/locations', [CatalogController::class, 'locations']);
+    Route::get('/business-types', [CatalogController::class, 'businessTypes']);
 });
