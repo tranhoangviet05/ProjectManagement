@@ -8,6 +8,7 @@ import ProviderOnboardingPage from "../features/provider/pages/ProviderOnboardin
 import AdminDashboardPage from "../features/admin/pages/AdminDashboardPage";
 import AdminProviderKycPage from "../features/admin/pages/AdminProviderKycPage";
 import AdminCouponsPage from "../features/admin/pages/AdminCouponsPage";
+import AdminSettingsPage from "../features/admin/pages/AdminSettingsPage";
 import AdminServiceModerationPage from "../features/admin/pages/AdminServiceModerationPage";
 import AdminUsersPage from "../features/admin/pages/AdminUsersPage";
 import ProviderDashboardPage from "../features/provider/pages/ProviderDashboardPage";
@@ -181,6 +182,16 @@ export default function AppRouter() {
           }
         />
 
+        {/* 3. Kiểm duyệt Dịch vụ du lịch (Task #46) */}
+        <Route
+          path="/admin/services"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminServiceModerationPage />
+            </ProtectedRoute>
+          }
+        />
+
         {/* 4. Quản lý Tài khoản Người dùng (Task #52) */}
         <Route
           path="/admin/users"
@@ -201,12 +212,12 @@ export default function AppRouter() {
           }
         />
 
-        {/* 6. Kiểm duyệt & Phê duyệt/Từ chối Dịch vụ (Task #46) */}
+        {/* 6. Cấu hình Hệ thống: Điểm đến, Danh mục & Loại hình kinh doanh (Task #54) */}
         <Route
-          path="/admin/services"
+          path="/admin/settings"
           element={
             <ProtectedRoute allowedRoles={["admin"]}>
-              <AdminServiceModerationPage />
+              <AdminSettingsPage />
             </ProtectedRoute>
           }
         />
