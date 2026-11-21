@@ -11,6 +11,7 @@ import AdminServiceModerationPage from "../features/admin/pages/AdminServiceMode
 import AdminUsersPage from "../features/admin/pages/AdminUsersPage";
 import AdminCouponsPage from "../features/admin/pages/AdminCouponsPage";
 import AdminSettingsPage from "../features/admin/pages/AdminSettingsPage";
+import AdminReportsPage from "../features/admin/pages/AdminReportsPage";
 import ProviderDashboardPage from "../features/provider/pages/ProviderDashboardPage";
 import ProviderProfilePage from "../features/provider/pages/ProviderProfilePage";
 import ServiceManagementPage from "../features/provider/pages/ServiceManagementPage";
@@ -218,6 +219,16 @@ export default function AppRouter() {
           element={
             <ProtectedRoute allowedRoles={["admin"]}>
               <AdminSettingsPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* 7. Kiểm duyệt Nội dung & Báo cáo Cộng đồng (Task #55) */}
+        <Route
+          path="/admin/reports"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminReportsPage />
             </ProtectedRoute>
           }
         />
