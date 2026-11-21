@@ -6,6 +6,7 @@ use App\Enums\ServiceStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\RejectServiceRequest;
 use App\Models\Service;
+use App\Models\ServiceAvailability;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -94,16 +95,20 @@ class AdminServiceController extends Controller
      */
     public function show(int $id): JsonResponse
     {
+        $relations = [
+            'provider.businessType',
+            'category',
+            'location',
+            'media',
+            'schedules',
+            'roomTypes',
+        ];
+        if (class_exists(ServiceAvailability::class)) {
+            $relations[] = 'availability';
+        }
+
         $service = Service::query()
-            ->with([
-                'provider.businessType',
-                'category',
-                'location',
-                'media',
-                'schedules',
-                'roomTypes',
-                'availability',
-            ])
+            ->with($relations)
             ->find($id);
 
         if (! $service) {
