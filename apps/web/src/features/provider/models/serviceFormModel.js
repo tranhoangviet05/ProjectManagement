@@ -68,6 +68,26 @@ export function resolveProviderServiceConfig(businessType) {
   };
 }
 
+export function generate15DayAvailability(defaultSlots = 15) {
+  const days = [];
+  const today = new Date();
+  for (let i = 0; i < 15; i += 1) {
+    const date = new Date(today.getFullYear(), today.getMonth(), today.getDate() + i);
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, "0");
+    const dd = String(date.getDate()).padStart(2, "0");
+    const weekdayLabels = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
+    days.push({
+      available_date: `${yyyy}-${mm}-${dd}`,
+      displayLabel: `${weekdayLabels[date.getDay()]}, ${dd}/${mm}/${yyyy}`,
+      total_slots: String(defaultSlots),
+      price_override: "",
+      is_blocked: false,
+    });
+  }
+  return days;
+}
+
 export function createEmptyRoomType() {
   return {
     name: "",
@@ -84,6 +104,26 @@ export function createEmptyRoomType() {
 }
 
 export function createInitialServiceForm(service = null, group = "tour") {
+  const existingAvail =
+    Array.isArray(service?.availability) && service.availability.length > 0
+      ? service.availability.map((item) => {
+          const d = new Date(item.available_date);
+          const weekdayLabels = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
+          const dd = String(d.getDate()).padStart(2, "0");
+          const mm = String(d.getMonth() + 1).padStart(2, "0");
+          const yyyy = d.getFullYear();
+          return {
+            available_date: item.available_date,
+            displayLabel: Number.isNaN(d.getTime())
+              ? item.available_date
+              : `${weekdayLabels[d.getDay()]}, ${dd}/${mm}/${yyyy}`,
+            total_slots: String(item.total_slots ?? 0),
+            price_override: item.price_override ? String(Number(item.price_override)) : "",
+            is_blocked: Boolean(item.is_blocked),
+          };
+        })
+      : generate15DayAvailability(15);
+
   const existingRooms =
     Array.isArray(service?.room_types) && service.room_types.length > 0
       ? service.room_types.map((room) => ({
@@ -110,9 +150,11 @@ export function createInitialServiceForm(service = null, group = "tour") {
     description: service?.description || "",
     base_price: service?.base_price ? String(Number(service.base_price)) : "",
     address: service?.address || "",
+    daily_slots: "15",
     amenities: Array.isArray(service?.amenities) ? service.amenities : [],
     includes: Array.isArray(service?.includes) ? service.includes : [],
     excludes: Array.isArray(service?.excludes) ? service.excludes : [],
+    availabilities: existingAvail,
     room_types: existingRooms,
     schedules: Array.isArray(service?.schedules)
       ? service.schedules.map((item) => ({

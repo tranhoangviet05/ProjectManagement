@@ -12,8 +12,10 @@ use App\Http\Requests\Provider\UploadServiceMediaRequest;
 use App\Models\BusinessType;
 use App\Models\ProviderProfile;
 use App\Models\Service;
+use App\Models\ServiceAvailability;
 use App\Models\ServiceMedia;
 use App\Services\MediaService;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -38,7 +40,7 @@ class ServiceController extends Controller
 
         $query = Service::query()
             ->where('provider_id', $provider->id)
-            ->with(['category', 'location', 'media', 'roomTypes'])
+            ->with(['category', 'location', 'media', 'roomTypes', 'availability'])
             ->latest();
 
         if ($request->filled('status')) {
@@ -120,14 +122,22 @@ class ServiceController extends Controller
                 $this->syncRoomTypes($service, $validated['room_types']);
             }
 
-            if ($mapping['group'] === 'tour' && ! empty($validated['schedules'])) {
-                $this->syncSchedules($service, $validated['schedules']);
+            if ($mapping['group'] === 'tour') {
+                $availabilities = ! empty($validated['availabilities'])
+                    ? $validated['availabilities']
+                    : $this->buildDefault15DaysAvailability((int) ($validated['daily_slots'] ?? 15));
+
+                $this->syncAvailabilities($service, $availabilities);
+
+                if (! empty($validated['schedules'])) {
+                    $this->syncSchedules($service, $validated['schedules']);
+                }
             }
 
             return $service;
         });
 
-        $service->load(['category', 'location', 'media', 'schedules', 'roomTypes']);
+        $service->load(['category', 'location', 'media', 'schedules', 'roomTypes', 'availability']);
 
         return response()->json([
             'success' => true,
@@ -148,7 +158,7 @@ class ServiceController extends Controller
 
         $service = Service::query()
             ->where('provider_id', $provider->id)
-            ->with(['category', 'location', 'media', 'schedules', 'roomTypes'])
+            ->with(['category', 'location', 'media', 'schedules', 'roomTypes', 'availability'])
             ->find($id);
 
         if (! $service) {
@@ -198,7 +208,7 @@ class ServiceController extends Controller
 
         DB::transaction(function () use ($service, $validated, $mapping) {
             $updateData = collect($validated)
-                ->except(['schedules', 'room_types'])
+                ->except(['schedules', 'room_types', 'availabilities'])
                 ->toArray();
 
             $updateData['type'] = $mapping['type'];
@@ -218,12 +228,18 @@ class ServiceController extends Controller
                 $this->syncRoomTypes($service, $validated['room_types'] ?? []);
             }
 
-            if ($mapping['group'] === 'tour' && array_key_exists('schedules', $validated)) {
-                $this->syncSchedules($service, $validated['schedules'] ?? []);
+            if ($mapping['group'] === 'tour') {
+                if (array_key_exists('availabilities', $validated) && ! empty($validated['availabilities'])) {
+                    $this->syncAvailabilities($service, $validated['availabilities']);
+                }
+
+                if (array_key_exists('schedules', $validated)) {
+                    $this->syncSchedules($service, $validated['schedules'] ?? []);
+                }
             }
         });
 
-        $service->load(['category', 'location', 'media', 'schedules', 'roomTypes']);
+        $service->load(['category', 'location', 'media', 'schedules', 'roomTypes', 'availability']);
 
         return response()->json([
             'success' => true,
@@ -472,6 +488,49 @@ class ServiceController extends Controller
         return $slug;
     }
 
+    protected function buildDefault15DaysAvailability(int $dailySlots): array
+    {
+        $days = [];
+        $start = Carbon::today();
+        for ($i = 0; $i < 15; $i++) {
+            $days[] = [
+                'available_date' => $start->copy()->addDays($i)->toDateString(),
+                'total_slots' => $dailySlots,
+                'price_override' => null,
+                'is_blocked' => false,
+            ];
+        }
+
+        return $days;
+    }
+
+    protected function syncAvailabilities(Service $service, array $availabilities): void
+    {
+        foreach ($availabilities as $item) {
+            $date = Carbon::parse($item['available_date'])->toDateString();
+            $totalSlots = (int) $item['total_slots'];
+
+            /** @var ServiceAvailability|null $existing */
+            $existing = $service->availability()->whereDate('available_date', $date)->first();
+
+            if ($existing && $totalSlots < $existing->booked_slots) {
+                throw ValidationException::withMessages([
+                    'availabilities' => ["Ngày {$date} đã có {$existing->booked_slots} khách đặt, không thể giảm số lượng thấp hơn."],
+                ]);
+            }
+
+            $service->availability()->updateOrCreate(
+                ['available_date' => $date],
+                [
+                    'total_slots' => $totalSlots,
+                    'booked_slots' => $existing?->booked_slots ?? 0,
+                    'price_override' => isset($item['price_override']) && $item['price_override'] !== '' ? $item['price_override'] : null,
+                    'is_blocked' => (bool) ($item['is_blocked'] ?? false),
+                ]
+            );
+        }
+    }
+
     protected function syncRoomTypes(Service $service, array $roomTypes): void
     {
         $keptIds = [];
@@ -544,6 +603,7 @@ class ServiceController extends Controller
             'cover_image' => $coverMedia?->url,
             'media_count' => $service->media->count(),
             'room_types_count' => $service->roomTypes->count(),
+            'availability_count' => $service->availability->count(),
             'rating_avg' => $service->rating_avg,
             'total_bookings' => $service->total_bookings,
             'rejection_reason' => $service->rejection_reason,
