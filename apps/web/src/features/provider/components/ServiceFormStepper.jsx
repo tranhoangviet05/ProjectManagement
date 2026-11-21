@@ -10,6 +10,7 @@ import {
   Loader2,
   AlertCircle,
   BedDouble,
+  CalendarDays,
   Sparkles,
 } from "lucide-react";
 import Typography from "../../../components/ui/Typography";
@@ -20,6 +21,7 @@ import {
   resolveProviderServiceConfig,
   createEmptyRoomType,
   createInitialServiceForm,
+  generate15DayAvailability,
 } from "../models/serviceFormModel";
 
 const INPUT_CLASS =
@@ -52,8 +54,9 @@ export default function ServiceFormStepper({
     if (isTour) {
       return [
         { id: 1, title: "Thông tin cơ bản" },
-        { id: 2, title: "Tiện ích & Lịch trình" },
-        { id: 3, title: "Album ảnh & Xuất bản" },
+        { id: 2, title: "Lịch phục vụ (15 ngày)" },
+        { id: 3, title: "Tiện ích & Lịch trình" },
+        { id: 4, title: "Album ảnh & Xuất bản" },
       ];
     }
     if (isAccommodation) {
@@ -169,7 +172,32 @@ export default function ServiceFormStepper({
     }));
   };
 
-  // --- Schedule helpers (Tour Step 2) ---
+  // --- Availability helpers (Tour Step 2) ---
+  const handleUpdateAvailabilityDay = (idx, field, value) => {
+    setFormError("");
+    setFormData((prev) => ({
+      ...prev,
+      availabilities: prev.availabilities.map((day, i) =>
+        i === idx ? { ...day, [field]: value } : day,
+      ),
+    }));
+  };
+
+  const handleApplyDefaultSlotsToAll = () => {
+    const slots = Math.max(1, Number(formData.daily_slots || 15));
+    setFormData((prev) => ({
+      ...prev,
+      availabilities:
+        prev.availabilities.length > 0
+          ? prev.availabilities.map((day) => ({
+              ...day,
+              total_slots: day.is_blocked ? day.total_slots : String(slots),
+            }))
+          : generate15DayAvailability(slots),
+    }));
+  };
+
+  // --- Schedule helpers (Tour Step 3) ---
   const handleAddScheduleDay = () => {
     setFormData((prev) => ({
       ...prev,
@@ -286,6 +314,10 @@ export default function ServiceFormStepper({
       setFormError("Vui lòng nhập mô tả chi tiết dịch vụ.");
       return false;
     }
+    if (isTour && (!formData.daily_slots || Number(formData.daily_slots) < 1)) {
+      setFormError("Vui lòng nhập số lượng khách mặc định mỗi ngày (>= 1).");
+      return false;
+    }
     return true;
   };
 
@@ -378,6 +410,13 @@ export default function ServiceFormStepper({
     }
 
     if (isTour) {
+      payload.daily_slots = Number(formData.daily_slots || 15);
+      payload.availabilities = formData.availabilities.map((day) => ({
+        available_date: day.available_date,
+        total_slots: day.is_blocked ? 0 : Number(day.total_slots || 0),
+        price_override: day.price_override !== "" ? Number(day.price_override) : null,
+        is_blocked: Boolean(day.is_blocked),
+      }));
       payload.schedules = formData.schedules
         .filter((s) => s.title.trim())
         .map((s) => ({
@@ -622,7 +661,34 @@ export default function ServiceFormStepper({
               />
             </div>
 
-            <div className="md:col-span-2">
+            {isTour && (
+              <div>
+                <label className="block text-sm font-semibold text-ink-primary mb-2">
+                  Số lượng khách tối đa mỗi ngày (mặc định 15 ngày tới){" "}
+                  <span className="text-status-danger">*</span>
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  value={formData.daily_slots}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setFormError("");
+                    setFormData((prev) => ({
+                      ...prev,
+                      daily_slots: val,
+                      availabilities: !initialService?.id
+                        ? generate15DayAvailability(Math.max(1, Number(val || 1)))
+                        : prev.availabilities,
+                    }));
+                  }}
+                  placeholder="15"
+                  className={INPUT_CLASS}
+                />
+              </div>
+            )}
+
+            <div className={isTour ? "" : "md:col-span-2"}>
               <label className="block text-sm font-semibold text-ink-primary mb-2">
                 Địa chỉ cơ sở / Điểm đón khách <span className="text-status-danger">*</span>
               </label>
@@ -904,8 +970,104 @@ export default function ServiceFormStepper({
           </div>
         )}
 
-        {/* BƯỚC 2 (TOUR / PHƯƠNG TIỆN): TIỆN ÍCH & LỊCH TRÌNH */}
-        {!isAccommodation && currentStep === 2 && (
+        {/* BƯỚC 2 (CHẾ ĐỘ TOUR): LỊCH PHỤC VỤ 15 NGÀY (service_availability) */}
+        {isTour && currentStep === 2 && (
+          <div className="space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <Typography variant="h3" className="text-ink-primary flex items-center gap-2">
+                  <CalendarDays className="w-5 h-5 text-brand-primary" />
+                  Lịch phục vụ 15 ngày tới
+                </Typography>
+                <Typography variant="body-sm" className="text-ink-subtle mt-0.5">
+                  Hệ thống tự tạo sẵn 15 ngày kể từ hôm nay. Bạn có thể điều chỉnh số khách tối đa,
+                  đánh dấu ngày nghỉ hoặc đổi giá riêng cho từng ngày.
+                </Typography>
+              </div>
+              <button
+                type="button"
+                onClick={handleApplyDefaultSlotsToAll}
+                className="px-4 py-2 rounded-full bg-brand-light text-brand-primary text-xs font-semibold hover:bg-brand-primary hover:text-white transition-colors self-start"
+              >
+                Áp dụng {formData.daily_slots || 15} khách cho ngày đang mở
+              </button>
+            </div>
+
+            <div className="overflow-x-auto rounded-2xl bg-surface-muted/40 p-2 sm:p-4">
+              <table className="w-full text-left border-collapse min-w-[640px]">
+                <thead>
+                  <tr className="text-xs font-semibold text-ink-subtle">
+                    <th className="py-2.5 px-3">Ngày khởi hành</th>
+                    <th className="py-2.5 px-3">Trạng thái</th>
+                    <th className="py-2.5 px-3">Số khách tối đa</th>
+                    <th className="py-2.5 px-3">Giá riêng ngày này (VND)</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border-subtle/50 text-sm">
+                  {formData.availabilities.map((day, idx) => (
+                    <tr
+                      key={day.available_date}
+                      className={day.is_blocked ? "opacity-60 bg-surface-muted/60" : ""}
+                    >
+                      <td className="py-2.5 px-3 font-medium text-ink-primary">
+                        {day.displayLabel || day.available_date}
+                      </td>
+                      <td className="py-2.5 px-3">
+                        <label className="inline-flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={!day.is_blocked}
+                            onChange={(e) =>
+                              handleUpdateAvailabilityDay(idx, "is_blocked", !e.target.checked)
+                            }
+                            className="rounded text-brand-primary focus:ring-brand-primary"
+                          />
+                          <span
+                            className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${
+                              day.is_blocked
+                                ? "bg-status-danger-bg text-status-danger"
+                                : "bg-status-success-bg text-status-success"
+                            }`}
+                          >
+                            {day.is_blocked ? "Ngày nghỉ" : "Mở bán"}
+                          </span>
+                        </label>
+                      </td>
+                      <td className="py-2.5 px-3">
+                        <input
+                          type="number"
+                          min="0"
+                          disabled={day.is_blocked}
+                          value={day.is_blocked ? "0" : day.total_slots}
+                          onChange={(e) =>
+                            handleUpdateAvailabilityDay(idx, "total_slots", e.target.value)
+                          }
+                          className="w-28 px-3 py-1.5 rounded-xl bg-surface-elevated text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary/30 disabled:opacity-50"
+                        />
+                      </td>
+                      <td className="py-2.5 px-3">
+                        <input
+                          type="number"
+                          min="0"
+                          disabled={day.is_blocked}
+                          value={day.price_override}
+                          onChange={(e) =>
+                            handleUpdateAvailabilityDay(idx, "price_override", e.target.value)
+                          }
+                          placeholder={`Mặc định (${Number(formData.base_price || 0).toLocaleString("vi-VN")})`}
+                          className="w-52 px-3 py-1.5 rounded-xl bg-surface-elevated text-sm placeholder:text-ink-subtle/70 focus:outline-none focus:ring-2 focus:ring-brand-primary/30 disabled:opacity-50"
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* BƯỚC 3 (TOUR) HOẶC BƯỚC 2 (PHƯƠNG TIỆN): TIỆN ÍCH & LỊCH TRÌNH */}
+        {((isTour && currentStep === 3) || (!isTour && !isAccommodation && currentStep === 2)) && (
           <div className="space-y-7">
             {renderTagSection()}
 

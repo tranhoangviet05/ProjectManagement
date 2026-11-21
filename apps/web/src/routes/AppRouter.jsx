@@ -7,11 +7,10 @@ import PlatformUnsupportedPage from "../features/auth/pages/PlatformUnsupportedP
 import ProviderOnboardingPage from "../features/provider/pages/ProviderOnboardingPage";
 import AdminDashboardPage from "../features/admin/pages/AdminDashboardPage";
 import AdminProviderKycPage from "../features/admin/pages/AdminProviderKycPage";
-import AdminCouponsPage from "../features/admin/pages/AdminCouponsPage";
-import AdminUsersPage from "../features/admin/pages/AdminUsersPage";
 import ProviderDashboardPage from "../features/provider/pages/ProviderDashboardPage";
 import ProviderProfilePage from "../features/provider/pages/ProviderProfilePage";
 import ServiceManagementPage from "../features/provider/pages/ServiceManagementPage";
+import ServiceAvailabilityPage from "../features/provider/pages/ServiceAvailabilityPage";
 import NotFoundPage from "../features/common/pages/NotFoundPage";
 import Typography from "../components/ui/Typography";
 
@@ -179,26 +178,6 @@ export default function AppRouter() {
           }
         />
 
-        {/* 4. Quản lý Tài khoản Người dùng (Task #52) */}
-        <Route
-          path="/admin/users"
-          element={
-            <ProtectedRoute allowedRoles={["admin"]}>
-              <AdminUsersPage />
-            </ProtectedRoute>
-          }
-        />
-
-        {/* 5. Quản lý Mã ưu đãi toàn sàn & Tặng mã (Task #53) */}
-        <Route
-          path="/admin/coupons"
-          element={
-            <ProtectedRoute allowedRoles={["admin"]}>
-              <AdminCouponsPage />
-            </ProtectedRoute>
-          }
-        />
-
         {/* Route mặc định cho /admin -> Chuyển về /admin/dashboard */}
         <Route
           path="/admin"
@@ -234,6 +213,16 @@ export default function AppRouter() {
           element={
             <ProtectedRoute allowedRoles={["provider", "admin"]}>
               <ServiceManagementPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* 2b. Cấu hình Lịch phục vụ & Bảng giá theo ngày (task17) */}
+        <Route
+          path="/provider/services/:id/availability"
+          element={
+            <ProtectedRoute allowedRoles={["provider", "admin"]}>
+              <ServiceAvailabilityPage />
             </ProtectedRoute>
           }
         />
