@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import {
   ArrowLeft,
   ChevronLeft,
@@ -32,16 +32,56 @@ function formatYmd(date) {
 export default function ServiceAvailabilityPage() {
   const { id: serviceId } = useParams();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const [currentMonth, setCurrentMonth] = useState(() => {
+  const activeTab = searchParams.get("tab") === "rooms" ? "rooms" : "calendar";
+  const monthParam = searchParams.get("month");
+
+  const currentMonth = useMemo(() => {
+    if (monthParam && /^\d{4}-\d{2}$/.test(monthParam)) {
+      const [y, m] = monthParam.split("-").map(Number);
+      return new Date(y, m - 1, 1);
+    }
     const now = new Date();
     return new Date(now.getFullYear(), now.getMonth(), 1);
-  });
+  }, [monthParam]);
+
+  useEffect(() => {
+    if (!searchParams.has("tab") || !searchParams.has("month")) {
+      const ym = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, "0")}`;
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          if (!next.has("tab")) next.set("tab", "calendar");
+          if (!next.has("month")) next.set("month", ym);
+          return next;
+        },
+        { replace: true },
+      );
+    }
+  }, [searchParams, setSearchParams, currentMonth]);
+
+  const setActiveTab = (nextTab) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set("tab", nextTab || "calendar");
+      return next;
+    });
+  };
+
+  const handleShiftMonth = (offset) => {
+    const shifted = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + offset, 1);
+    const ym = `${shifted.getFullYear()}-${String(shifted.getMonth() + 1).padStart(2, "0")}`;
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set("month", ym);
+      return next;
+    });
+  };
 
   const [serviceInfo, setServiceInfo] = useState(null);
   const [availabilities, setAvailabilities] = useState([]);
   const [roomTypes, setRoomTypes] = useState([]);
-  const [activeTab, setActiveTab] = useState("calendar"); // 'calendar' | 'rooms'
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -279,22 +319,14 @@ export default function ServiceAvailabilityPage() {
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={() =>
-                      setCurrentMonth(
-                        (prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1),
-                      )
-                    }
+                    onClick={() => handleShiftMonth(-1)}
                     className="p-2 rounded-full bg-surface-muted hover:bg-brand-light text-ink-primary transition-colors"
                   >
                     <ChevronLeft className="w-4 h-4" />
                   </button>
                   <button
                     type="button"
-                    onClick={() =>
-                      setCurrentMonth(
-                        (prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1),
-                      )
-                    }
+                    onClick={() => handleShiftMonth(1)}
                     className="p-2 rounded-full bg-surface-muted hover:bg-brand-light text-ink-primary transition-colors"
                   >
                     <ChevronRight className="w-4 h-4" />

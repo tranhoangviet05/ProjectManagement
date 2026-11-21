@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
 import { CheckCircle2, AlertCircle } from "lucide-react";
 import AdminLayout from "../layouts/AdminLayout";
 import Typography from "../../../components/ui/Typography";
+import { useDebouncedUrlSearch } from "../../../hooks/useDebouncedUrlSearch";
 import AdminCouponsTable from "../components/AdminCouponsTable";
 import CouponFormModal from "../components/CouponFormModal";
 import CouponGrantModal from "../components/CouponGrantModal";
@@ -11,10 +13,40 @@ import adminCouponApi from "../services/adminCouponApi";
  * Screen Orchestrator: Trang Quản lý Mã ưu đãi toàn sàn & Tặng mã cho Tourist (Route: /admin/coupons)
  */
 export default function AdminCouponsPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const statusFilter = searchParams.get("status") || "all";
+  const [searchInput, setSearchInput, searchQuery] = useDebouncedUrlSearch(
+    searchParams,
+    setSearchParams,
+  );
+
   const [coupons, setCoupons] = useState([]);
   const [counts, setCounts] = useState({ all: 0, active: 0, upcoming: 0, expired: 0 });
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    if (!searchParams.has("status")) {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.set("status", "all");
+          return next;
+        },
+        { replace: true },
+      );
+    }
+  }, [searchParams, setSearchParams]);
+
+  const updateParam = (key, value, emptyWhen = null, replace = false) => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (emptyWhen !== null && value === emptyWhen) next.delete(key);
+        else next.set(key, value);
+        return next;
+      },
+      { replace },
+    );
+  };
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -133,9 +165,9 @@ export default function AdminCouponsPage() {
           coupons={coupons}
           isLoading={isLoading}
           statusFilter={statusFilter}
-          onStatusFilterChange={setStatusFilter}
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
+          onStatusFilterChange={(val) => updateParam("status", val || "all")}
+          searchQuery={searchInput}
+          onSearchChange={setSearchInput}
           counts={counts}
           onEdit={(c) => setFormTarget(c)}
           onDelete={handleDeleteCoupon}
