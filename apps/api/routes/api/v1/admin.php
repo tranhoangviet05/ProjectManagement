@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\Api\V1\Admin\AdminKycController;
-use App\Http\Controllers\Api\V1\Admin\AdminServiceController;
 use App\Http\Controllers\Api\V1\Admin\AdminUserController;
 use Illuminate\Support\Facades\Route;
 
@@ -16,14 +15,6 @@ Route::prefix('kyc')->group(function () {
     Route::get('/providers/{id}', [AdminKycController::class, 'show']);
     Route::post('/providers/{id}/approve', [AdminKycController::class, 'approve']);
     Route::post('/providers/{id}/reject', [AdminKycController::class, 'reject']);
-});
-
-// Phân hệ Kiểm duyệt & Phê duyệt/Từ chối Dịch vụ (Task #46)
-Route::prefix('services')->group(function () {
-    Route::get('/', [AdminServiceController::class, 'index']);
-    Route::get('/{id}', [AdminServiceController::class, 'show']);
-    Route::post('/{id}/approve', [AdminServiceController::class, 'approve']);
-    Route::post('/{id}/reject', [AdminServiceController::class, 'reject']);
 });
 
 // Phân hệ Quản lý Tài khoản Người dùng (Task #52)
