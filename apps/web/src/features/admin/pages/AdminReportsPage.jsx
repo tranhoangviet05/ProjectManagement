@@ -120,7 +120,7 @@ export default function AdminReportsPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-slate-700">{r.reason}</td>
-                    <td className="px-4 py-3 text-slate-600">{r.reporter?.name || "Người dùng"}</td>
+                    <td className="px-4 py-3 text-slate-600">{r.reporter?.email || "Người dùng"}</td>
                     <td className="px-4 py-3">
                       {r.status === "pending" ? (
                         <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800">

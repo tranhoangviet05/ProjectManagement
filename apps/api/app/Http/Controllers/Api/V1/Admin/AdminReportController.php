@@ -13,7 +13,7 @@ class AdminReportController extends Controller
     public function index(Request $request): JsonResponse
     {
         $query = ContentReport::query()
-            ->with(['reporter:id,name,email', 'reviewer:id,name,email'])
+            ->with(['reporter:id,email,role', 'reviewer:id,email,role'])
             ->latest('id');
 
         if ($request->filled('status')) {
@@ -37,7 +37,7 @@ class AdminReportController extends Controller
 
     public function show(int $id): JsonResponse
     {
-        $report = ContentReport::with(['reporter:id,name,email', 'reviewer:id,name,email'])->find($id);
+        $report = ContentReport::with(['reporter:id,email,role', 'reviewer:id,email,role'])->find($id);
 
         if (! $report) {
             return response()->json(['success' => false, 'message' => 'Không tìm thấy báo cáo vi phạm.'], 404);

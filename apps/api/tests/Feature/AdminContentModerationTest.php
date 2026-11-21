@@ -14,10 +14,14 @@ class AdminContentModerationTest extends TestCase
     {
         $this->getJson('/api/v1/admin/reports')->assertStatus(401);
 
-        $tourist = User::factory()->create([
-            'role' => UserRole::Tourist->value,
-            'password' => Hash::make('Password@123'),
-        ]);
+        $tourist = User::updateOrCreate(
+            ['email' => 'tourist.moderation.test@gmail.com'],
+            [
+                'password' => Hash::make('Password@123'),
+                'role' => UserRole::Tourist->value,
+                'status' => 'active',
+            ]
+        );
         $token = $tourist->createToken('tourist')->plainTextToken;
 
         $this->withHeader('Authorization', 'Bearer '.$token)
@@ -27,13 +31,22 @@ class AdminContentModerationTest extends TestCase
 
     public function test_admin_can_list_hide_content_and_dismiss_reports(): void
     {
-        $admin = User::factory()->create([
-            'role' => UserRole::Admin->value,
-            'password' => Hash::make('Password@123'),
-        ]);
-        $reporter = User::factory()->create([
-            'role' => UserRole::Tourist->value,
-        ]);
+        $admin = User::updateOrCreate(
+            ['email' => 'admin.moderation.test@gmail.com'],
+            [
+                'password' => Hash::make('Password@123'),
+                'role' => UserRole::Admin->value,
+                'status' => 'active',
+            ]
+        );
+        $reporter = User::updateOrCreate(
+            ['email' => 'reporter.moderation.test@gmail.com'],
+            [
+                'password' => Hash::make('Password@123'),
+                'role' => UserRole::Tourist->value,
+                'status' => 'active',
+            ]
+        );
 
         $report1 = ContentReport::create([
             'reporter_id' => $reporter->id,
