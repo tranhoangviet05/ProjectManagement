@@ -8,6 +8,7 @@ import ProviderOnboardingPage from "../features/provider/pages/ProviderOnboardin
 import AdminDashboardPage from "../features/admin/pages/AdminDashboardPage";
 import AdminProviderKycPage from "../features/admin/pages/AdminProviderKycPage";
 import AdminCouponsPage from "../features/admin/pages/AdminCouponsPage";
+import AdminReportsPage from "../features/admin/pages/AdminReportsPage";
 import AdminUsersPage from "../features/admin/pages/AdminUsersPage";
 import ProviderDashboardPage from "../features/provider/pages/ProviderDashboardPage";
 import ProviderProfilePage from "../features/provider/pages/ProviderProfilePage";
@@ -195,6 +196,16 @@ export default function AppRouter() {
           element={
             <ProtectedRoute allowedRoles={["admin"]}>
               <AdminCouponsPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* 6. Kiểm duyệt Nội dung & Báo cáo Cộng đồng (Task #55) */}
+        <Route
+          path="/admin/reports"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminReportsPage />
             </ProtectedRoute>
           }
         />
