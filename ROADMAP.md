@@ -45,21 +45,22 @@
 **Mục tiêu (Sprint Goal):** Provider đăng ký và cấu hình dịch vụ bán hàng, Admin hoàn thiện toàn bộ chức năng kiểm duyệt & quản trị sàn (Users, Coupons, Settings, Reports, Dashboard/Bookings) trước khi mở sang luồng Khách du lịch.
 **Thời gian:** 02/11 - 28/11 | **Tổng Estimate:** 32 Points
 
-| Tên Task (Issue / Sub-issues)                                                 |     Platform     |  Status  | Priority | Estimate | Module      | Role         | Start date | Date target |
-| :---------------------------------------------------------------------------- | :--------------: | :------: | :------: | :------: | :---------- | :----------- | :--------- | :---------- |
-| **[EPIC] Quản lý Dịch vụ (#15)**                                              |  **API / Web**   | **Done** |  **P0**  |  **10**  | **Booking** | **provider** | 02/11      | 07/11       |
-| ↳ CRUD Dịch vụ du lịch (Tour / Khách sạn) + Quản lý album ảnh                 |       Web        |   Done   |    P0    |    5     | Booking     | provider     | 02/11      | 05/11       |
-| ↳ Cấu hình Lịch phục vụ (Availability) & Bảng giá theo ngày                   |       Web        |   Done   |    P0    |    3     | Booking     | provider     | 05/11      | 06/11       |
-| ↳ Admin Dashboard: Kiểm duyệt & Phê duyệt/Từ chối Dịch vụ [#46]               |    Web / API     |   Done   |    P0    |    2     | Admin       | admin        | 06/11      | 07/11       |
-| **[EPIC] Quản trị Hệ thống & Điều hành Sàn (Admin Operations - #51)**         |  **API / Web**   | **Todo** |  **P0**  |  **16**  | **Admin**   | **admin**    | 21/11      | 28/11       |
-| ↳ Quản lý Tài khoản Người dùng (Lọc vai trò, xem hồ sơ, khóa/mở khóa) [#52]   |    Web / API     |   Todo   |    P0    |    3     | Admin       | admin        | 21/11      | 22/11       |
-| ↳ Quản lý Mã ưu đãi toàn sàn (CRUD Coupons, giới hạn & hiệu lực) [#53]        |    Web / API     |   Todo   |    P1    |    3     | Admin       | admin        | 22/11      | 23/11       |
-| ↳ Cấu hình Hệ thống (CRUD Điểm đến, Danh mục & Loại hình kinh doanh) [#54]    |    Web / API     |   Todo   |    P0    |    3     | Admin       | admin        | 24/11      | 25/11       |
-| ↳ Kiểm duyệt Nội dung & Báo cáo Cộng đồng (Bài viết, bình luận vi phạm) [#55] |    Web / API     |   Todo   |    P1    |    3     | Admin       | admin        | 25/11      | 26/11       |
-| ↳ Tổng quan Vận hành Thực tế & Giám sát Đơn đặt chỗ / Đối soát Ví [#56]       |    Web / API     |   Todo   |    P0    |    4     | Admin       | admin        | 27/11      | 28/11       |
-| **[EPIC] Khám phá & Tìm kiếm Dịch vụ (Tourist)**                              | **API / Mobile** | **Todo** |  **P0**  |  **6**   | **Booking** | **user**     | 29/11      | 01/12       |
-| ↳ Trang chủ & Tìm kiếm (Theo điểm đến, từ khóa, khoảng giá)                   |    Mobile/Web    |   Todo   |    P0    |    3     | Booking     | user         | 29/11      | 30/11       |
-| ↳ Màn hình Chi tiết Dịch vụ (Thông tin, ảnh, chính sách, giá)                 |      Mobile      |   Todo   |    P0    |    3     | Booking     | user         | 30/11      | 01/12       |
+| Tên Task (Issue / Sub-issues)                                                      |     Platform     |     Status      | Priority | Estimate | Module      | Role         | Start date | Date target |
+| :--------------------------------------------------------------------------------- | :--------------: | :-------------: | :------: | :------: | :---------- | :----------- | :--------- | :---------- |
+| **[EPIC] Quản lý Dịch vụ (#15)**                                                   |  **API / Web**   |    **Done**     |  **P0**  |  **10**  | **Booking** | **provider** | 02/11      | 07/11       |
+| ↳ CRUD Dịch vụ du lịch (Tour / Khách sạn) + Quản lý album ảnh                      |       Web        |      Done       |    P0    |    5     | Booking     | provider     | 02/11      | 05/11       |
+| ↳ Cấu hình Lịch phục vụ (Availability) & Bảng giá theo ngày                        |       Web        |      Done       |    P0    |    3     | Booking     | provider     | 05/11      | 06/11       |
+| ↳ Admin Dashboard: Kiểm duyệt & Phê duyệt/Từ chối Dịch vụ [#46]                    |    Web / API     |      Done       |    P0    |    2     | Admin       | admin        | 06/11      | 07/11       |
+| **[EPIC] Quản trị Hệ thống & Điều hành Sàn (Admin Operations - #51)**              |  **API / Web**   | **In Progress** |  **P0**  |  **18**  | **Admin**   | **admin**    | 21/11      | 28/11       |
+| ↳ Quản lý Tài khoản Người dùng (Lọc vai trò, xem hồ sơ, khóa/mở khóa) [#52]        |    Web / API     |      Done       |    P0    |    3     | Admin       | admin        | 21/11      | 22/11       |
+| ↳ Quản lý Mã ưu đãi toàn sàn (CRUD Coupons, giới hạn & hiệu lực) [#53]             |    Web / API     |      Done       |    P1    |    3     | Admin       | admin        | 22/11      | 23/11       |
+| ↳ Cấu hình Hệ thống (CRUD Điểm đến, Danh mục & Loại hình kinh doanh) [#54]         |    Web / API     |      Done       |    P0    |    3     | Admin       | admin        | 24/11      | 25/11       |
+| ↳ Tái cấu trúc đồng bộ trạng thái URL (useSearchParams) cho Provider & Admin [#59] |       Web        |      Todo       |    P1    |    2     | Admin       | general      | 25/11      | 25/11       |
+| ↳ Kiểm duyệt Nội dung & Báo cáo Cộng đồng (Bài viết, bình luận vi phạm) [#55]      |    Web / API     |      Todo       |    P1    |    3     | Admin       | admin        | 25/11      | 26/11       |
+| ↳ Tổng quan Vận hành Thực tế & Giám sát Đơn đặt chỗ / Đối soát Ví [#56]            |    Web / API     |      Todo       |    P0    |    4     | Admin       | admin        | 27/11      | 28/11       |
+| **[EPIC] Khám phá & Tìm kiếm Dịch vụ (Tourist)**                                   | **API / Mobile** |    **Todo**     |  **P0**  |  **6**   | **Booking** | **user**     | 29/11      | 01/12       |
+| ↳ Trang chủ & Tìm kiếm (Theo điểm đến, từ khóa, khoảng giá)                        |    Mobile/Web    |      Todo       |    P0    |    3     | Booking     | user         | 29/11      | 30/11       |
+| ↳ Màn hình Chi tiết Dịch vụ (Thông tin, ảnh, chính sách, giá)                      |      Mobile      |      Todo       |    P0    |    3     | Booking     | user         | 30/11      | 01/12       |
 
 ---
 
