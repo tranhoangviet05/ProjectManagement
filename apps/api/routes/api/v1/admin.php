@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\V1\Admin\AdminCouponController;
 use App\Http\Controllers\Api\V1\Admin\AdminKycController;
+use App\Http\Controllers\Api\V1\Admin\AdminUserController;
 use Illuminate\Support\Facades\Route;
 
 // Admin routes: /api/v1/admin/...
@@ -15,6 +16,13 @@ Route::prefix('kyc')->group(function () {
     Route::get('/providers/{id}', [AdminKycController::class, 'show']);
     Route::post('/providers/{id}/approve', [AdminKycController::class, 'approve']);
     Route::post('/providers/{id}/reject', [AdminKycController::class, 'reject']);
+});
+
+// Phân hệ Quản lý Tài khoản Người dùng (Task #52)
+Route::prefix('users')->group(function () {
+    Route::get('/', [AdminUserController::class, 'index']);
+    Route::get('/{id}', [AdminUserController::class, 'show']);
+    Route::patch('/{id}/status', [AdminUserController::class, 'updateStatus']);
 });
 
 // Phân hệ Quản lý Mã ưu đãi toàn sàn & Tặng mã cho Tourist (Task #53)
