@@ -17,10 +17,11 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // 0. Seed dữ liệu danh mục & loại hình kinh doanh
+        // 0. Seed dữ liệu danh mục, địa điểm & loại hình kinh doanh
         $this->call([
             BusinessTypeSeeder::class,
             CategorySeeder::class,
+            LocationSeeder::class,
         ]);
 
         $authService = app(AuthService::class);
