@@ -30,8 +30,8 @@ Xây dựng trang **Cấu hình Danh mục & Điểm đến Hệ thống (`/admi
   - Tạo `AdminCategoryController` (`index`, `store`, `update`, `destroy`):
     - Tự sinh `slug` duy nhất; hỗ trợ `icon`, `icon_url`, `description`.
     - Chặn xóa `category` nếu đang có `services` gắn kết (`422`).
-  - Tạo `AdminBusinessTypeController` (`index`, `store`, `update`):
-    - Quản lý `name`, `slug`, `type` (`Chỗ ở`, `Giải trí`, `Di chuyển`), `is_active`.
+  - Tạo `AdminBusinessTypeController` (`index`, `store`, `update`, `destroy`):
+    - Quản lý `name`, `slug`, `type` (`Chỗ ở`, `Giải trí`, `Phương tiện`, `Ăn uống`); chặn xóa nếu có `provider_profiles` tham chiếu.
 
 #### B. Frontend Web Portal (`apps/web`)
 
