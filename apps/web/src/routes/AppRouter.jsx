@@ -7,6 +7,7 @@ import PlatformUnsupportedPage from "../features/auth/pages/PlatformUnsupportedP
 import ProviderOnboardingPage from "../features/provider/pages/ProviderOnboardingPage";
 import AdminDashboardPage from "../features/admin/pages/AdminDashboardPage";
 import AdminProviderKycPage from "../features/admin/pages/AdminProviderKycPage";
+import AdminCouponsPage from "../features/admin/pages/AdminCouponsPage";
 import AdminUsersPage from "../features/admin/pages/AdminUsersPage";
 import ProviderDashboardPage from "../features/provider/pages/ProviderDashboardPage";
 import ProviderProfilePage from "../features/provider/pages/ProviderProfilePage";
@@ -178,12 +179,22 @@ export default function AppRouter() {
           }
         />
 
-        {/* 3. Quản lý Tài khoản Người dùng (Task #52) */}
+        {/* 4. Quản lý Tài khoản Người dùng (Task #52) */}
         <Route
           path="/admin/users"
           element={
             <ProtectedRoute allowedRoles={["admin"]}>
               <AdminUsersPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* 5. Quản lý Mã ưu đãi toàn sàn & Tặng mã (Task #53) */}
+        <Route
+          path="/admin/coupons"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminCouponsPage />
             </ProtectedRoute>
           }
         />

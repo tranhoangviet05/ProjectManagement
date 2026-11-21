@@ -40,4 +40,9 @@ class Coupon extends Model
     {
         return $this->hasMany(Booking::class);
     }
+
+    public function grants(): HasMany
+    {
+        return $this->hasMany(UserCoupon::class);
+    }
 }
