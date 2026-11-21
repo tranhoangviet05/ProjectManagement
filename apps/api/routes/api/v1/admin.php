@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\V1\Admin\AdminCouponController;
 use App\Http\Controllers\Api\V1\Admin\AdminKycController;
+use App\Http\Controllers\Api\V1\Admin\AdminServiceController;
 use App\Http\Controllers\Api\V1\Admin\AdminUserController;
 use Illuminate\Support\Facades\Route;
 
@@ -33,4 +34,12 @@ Route::prefix('coupons')->group(function () {
     Route::delete('/{id}', [AdminCouponController::class, 'destroy']);
     Route::get('/{id}/grants', [AdminCouponController::class, 'grants']);
     Route::post('/{id}/grant', [AdminCouponController::class, 'grant']);
+});
+
+// Phân hệ Kiểm duyệt & Phê duyệt/Từ chối Dịch vụ (Task #46)
+Route::prefix('services')->group(function () {
+    Route::get('/', [AdminServiceController::class, 'index']);
+    Route::get('/{id}', [AdminServiceController::class, 'show']);
+    Route::post('/{id}/approve', [AdminServiceController::class, 'approve']);
+    Route::post('/{id}/reject', [AdminServiceController::class, 'reject']);
 });

@@ -7,6 +7,9 @@ import PlatformUnsupportedPage from "../features/auth/pages/PlatformUnsupportedP
 import ProviderOnboardingPage from "../features/provider/pages/ProviderOnboardingPage";
 import AdminDashboardPage from "../features/admin/pages/AdminDashboardPage";
 import AdminProviderKycPage from "../features/admin/pages/AdminProviderKycPage";
+import AdminCouponsPage from "../features/admin/pages/AdminCouponsPage";
+import AdminServiceModerationPage from "../features/admin/pages/AdminServiceModerationPage";
+import AdminUsersPage from "../features/admin/pages/AdminUsersPage";
 import ProviderDashboardPage from "../features/provider/pages/ProviderDashboardPage";
 import ProviderProfilePage from "../features/provider/pages/ProviderProfilePage";
 import ServiceManagementPage from "../features/provider/pages/ServiceManagementPage";
@@ -174,6 +177,36 @@ export default function AppRouter() {
           element={
             <ProtectedRoute allowedRoles={["admin"]}>
               <AdminProviderKycPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* 4. Quản lý Tài khoản Người dùng (Task #52) */}
+        <Route
+          path="/admin/users"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminUsersPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* 5. Quản lý Mã ưu đãi toàn sàn & Tặng mã (Task #53) */}
+        <Route
+          path="/admin/coupons"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminCouponsPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* 6. Kiểm duyệt & Phê duyệt/Từ chối Dịch vụ (Task #46) */}
+        <Route
+          path="/admin/services"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminServiceModerationPage />
             </ProtectedRoute>
           }
         />
