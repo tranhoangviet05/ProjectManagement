@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Plus,
   Search,
@@ -9,6 +10,7 @@ import {
   AlertCircle,
   CheckCircle2,
   BedDouble,
+  CalendarDays,
   MapPin,
 } from "lucide-react";
 import ProviderLayout from "../layouts/ProviderLayout";
@@ -19,6 +21,7 @@ import providerServiceApi from "../services/providerServiceApi";
 import { SERVICE_STATUS_CONFIG, formatCurrencyVnd } from "../models/serviceFormModel";
 
 export default function ServiceManagementPage() {
+  const navigate = useNavigate();
   const [services, setServices] = useState([]);
   const [categories, setCategories] = useState([]);
   const [locations, setLocations] = useState([]);
@@ -348,10 +351,15 @@ export default function ServiceManagementPage() {
                           </Typography>
 
                           <div className="flex items-center gap-4 text-xs text-ink-subtle">
-                            {isAccommodation && (
+                            {isAccommodation ? (
                               <span className="inline-flex items-center gap-1">
                                 <BedDouble className="w-3.5 h-3.5 text-brand-primary" />
                                 {service.room_types_count || 0} loại phòng
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1">
+                                <CalendarDays className="w-3.5 h-3.5 text-brand-primary" />
+                                {service.availability_count || 0} ngày khả dụng
                               </span>
                             )}
                           </div>
@@ -374,6 +382,17 @@ export default function ServiceManagementPage() {
                           </div>
 
                           <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                navigate(`/provider/services/${service.id}/availability`)
+                              }
+                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-brand-subtle text-brand-primary text-xs font-semibold hover:bg-brand-primary hover:text-white shadow-xs transition-colors"
+                              title="Cấu hình Lịch & Giá"
+                            >
+                              <CalendarDays className="w-3.5 h-3.5" />
+                              Lịch & Giá
+                            </button>
                             <button
                               type="button"
                               onClick={() => handleOpenEdit(service)}

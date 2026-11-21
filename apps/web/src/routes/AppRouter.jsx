@@ -13,6 +13,7 @@ import AdminUsersPage from "../features/admin/pages/AdminUsersPage";
 import ProviderDashboardPage from "../features/provider/pages/ProviderDashboardPage";
 import ProviderProfilePage from "../features/provider/pages/ProviderProfilePage";
 import ServiceManagementPage from "../features/provider/pages/ServiceManagementPage";
+import ServiceAvailabilityPage from "../features/provider/pages/ServiceAvailabilityPage";
 import NotFoundPage from "../features/common/pages/NotFoundPage";
 import Typography from "../components/ui/Typography";
 
@@ -245,6 +246,16 @@ export default function AppRouter() {
           element={
             <ProtectedRoute allowedRoles={["provider", "admin"]}>
               <ServiceManagementPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* 2b. Cấu hình Lịch phục vụ & Bảng giá theo ngày (task17) */}
+        <Route
+          path="/provider/services/:id/availability"
+          element={
+            <ProtectedRoute allowedRoles={["provider", "admin"]}>
+              <ServiceAvailabilityPage />
             </ProtectedRoute>
           }
         />
