@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
 import { CheckCircle2, AlertCircle } from "lucide-react";
 import AdminLayout from "../layouts/AdminLayout";
 import Typography from "../../../components/ui/Typography";
+import { useDebouncedUrlSearch } from "../../../hooks/useDebouncedUrlSearch";
 import ServiceModerationTable from "../components/ServiceModerationTable";
 import ServiceDetailReviewModal from "../components/ServiceDetailReviewModal";
 import ServiceRejectDialog from "../components/ServiceRejectDialog";
@@ -12,11 +14,42 @@ import adminServiceModerationApi from "../services/adminServiceModerationApi";
  * Đồng bộ cấu trúc & ngôn ngữ thiết kế với AdminProviderKycPage.
  */
 export default function AdminServiceModerationPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const statusFilter = searchParams.get("status") || "pending_review";
+  const typeFilter = searchParams.get("type") || "all";
+  const [searchInput, setSearchInput, searchQuery] = useDebouncedUrlSearch(
+    searchParams,
+    setSearchParams,
+  );
+
   const [services, setServices] = useState([]);
   const [counts, setCounts] = useState({ pending_review: 0, active: 0, rejected: 0 });
-  const [statusFilter, setStatusFilter] = useState("pending_review");
-  const [typeFilter, setTypeFilter] = useState("all");
-  const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    if (!searchParams.has("status") || !searchParams.has("type")) {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          if (!next.has("status")) next.set("status", "pending_review");
+          if (!next.has("type")) next.set("type", "all");
+          return next;
+        },
+        { replace: true },
+      );
+    }
+  }, [searchParams, setSearchParams]);
+
+  const updateParam = (key, value, emptyWhen = null, replace = false) => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (emptyWhen !== null && value === emptyWhen) next.delete(key);
+        else next.set(key, value);
+        return next;
+      },
+      { replace },
+    );
+  };
 
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingDetail, setIsLoadingDetail] = useState(false);
@@ -142,11 +175,11 @@ export default function AdminServiceModerationPage() {
           services={services}
           isLoading={isLoading}
           statusFilter={statusFilter}
-          onStatusFilterChange={setStatusFilter}
+          onStatusFilterChange={(val) => updateParam("status", val || "pending_review")}
           typeFilter={typeFilter}
-          onTypeFilterChange={setTypeFilter}
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
+          onTypeFilterChange={(val) => updateParam("type", val || "all")}
+          searchQuery={searchInput}
+          onSearchChange={setSearchInput}
           counts={counts}
           onReviewDetail={handleReviewDetail}
           onQuickApprove={handleApprove}

@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
 import { CheckCircle2, AlertCircle } from "lucide-react";
 import AdminLayout from "../layouts/AdminLayout";
 import Typography from "../../../components/ui/Typography";
+import { useDebouncedUrlSearch } from "../../../hooks/useDebouncedUrlSearch";
 import CatalogCrudTable from "../components/CatalogCrudTable";
 import CatalogFormModal from "../components/CatalogFormModal";
 import adminCatalogApi from "../services/adminCatalogApi";
@@ -17,10 +19,28 @@ const ADD_BUTTON_LABELS = {
  * Quản lý Locations, Categories và BusinessTypes khớp 100% schema DB.
  */
 export default function AdminSettingsPage() {
-  const [activeTab, setActiveTab] = useState("locations");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get("tab") || "locations";
+  const [searchInput, setSearchInput, searchQuery] = useDebouncedUrlSearch(
+    searchParams,
+    setSearchParams,
+  );
+
   const [items, setItems] = useState([]);
   const [allLocations, setAllLocations] = useState([]);
-  const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    if (!searchParams.has("tab")) {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.set("tab", "locations");
+          return next;
+        },
+        { replace: true },
+      );
+    }
+  }, [searchParams, setSearchParams]);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -53,8 +73,13 @@ export default function AdminSettingsPage() {
   }, [loadData]);
 
   const handleTabChange = (nextTab) => {
-    setActiveTab(nextTab);
-    setSearchQuery("");
+    setSearchInput("");
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set("tab", nextTab || "locations");
+      next.delete("q");
+      return next;
+    });
   };
 
   const handleSave = async (payload, id) => {
@@ -128,8 +153,8 @@ export default function AdminSettingsPage() {
           onTabChange={handleTabChange}
           items={items}
           isLoading={isLoading}
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
+          searchQuery={searchInput}
+          onSearchChange={setSearchInput}
           onEdit={(row) => setModalTarget(row)}
           onDelete={handleDelete}
         />

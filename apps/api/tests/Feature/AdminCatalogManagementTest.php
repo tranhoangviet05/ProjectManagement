@@ -37,9 +37,11 @@ class AdminCatalogManagementTest extends TestCase
 
     public function test_admin_can_crud_locations_and_blocks_delete_when_referenced(): void
     {
+        $suffix = uniqid();
+        $parentName = 'Khu Vực Test '.$suffix;
         $parentRes = $this->withHeader('Authorization', 'Bearer '.$this->adminToken)
             ->postJson('/api/v1/admin/locations', [
-                'name' => 'Khánh Hòa',
+                'name' => $parentName,
                 'country_code' => 'vn',
                 'is_popular' => true,
                 'description' => 'Tỉnh ven biển Nam Trung Bộ.',
@@ -47,7 +49,7 @@ class AdminCatalogManagementTest extends TestCase
             ]);
 
         $parentRes->assertStatus(201)
-            ->assertJsonPath('data.slug', 'khanh-hoa')
+            ->assertJsonPath('data.slug', 'khu-vuc-test-'.$suffix)
             ->assertJsonPath('data.country_code', 'VN')
             ->assertJsonPath('data.is_popular', true);
 
@@ -55,21 +57,21 @@ class AdminCatalogManagementTest extends TestCase
 
         $childRes = $this->withHeader('Authorization', 'Bearer '.$this->adminToken)
             ->postJson('/api/v1/admin/locations', [
-                'name' => 'Vịnh Ninh Vân',
+                'name' => 'Vịnh Ninh Vân '.$suffix,
                 'parent_id' => $parentId,
                 'is_popular' => false,
             ]);
 
         $childRes->assertStatus(201)
             ->assertJsonPath('data.parent_id', $parentId)
-            ->assertJsonPath('data.parent.name', 'Khánh Hòa');
+            ->assertJsonPath('data.parent.name', $parentName);
 
         $childId = $childRes->json('data.id');
 
         // Không cho chọn chính mình làm parent_id
         $selfParent = $this->withHeader('Authorization', 'Bearer '.$this->adminToken)
             ->putJson('/api/v1/admin/locations/'.$parentId, [
-                'name' => 'Khánh Hòa',
+                'name' => $parentName,
                 'parent_id' => $parentId,
             ]);
         $selfParent->assertStatus(422);

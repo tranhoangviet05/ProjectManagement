@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Plus,
   Search,
@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import ProviderLayout from "../layouts/ProviderLayout";
 import Typography from "../../../components/ui/Typography";
+import { useDebouncedUrlSearch } from "../../../hooks/useDebouncedUrlSearch";
 import { ServiceGridSkeleton } from "../../../components/ui/Skeleton";
 import ServiceFormStepper from "../components/ServiceFormStepper";
 import providerServiceApi from "../services/providerServiceApi";
@@ -30,14 +31,78 @@ export default function ServiceManagementPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feedback, setFeedback] = useState(null);
 
-  // Filters
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [searchQuery, setSearchQuery] = useState("");
+  // Filters & Mode đồng bộ với URL
+  const [searchParams, setSearchParams] = useSearchParams();
+  const statusFilter = searchParams.get("status") || "all";
+  const [searchInput, setSearchInput, searchQuery] = useDebouncedUrlSearch(
+    searchParams,
+    setSearchParams,
+  );
+  const modeParam = searchParams.get("mode");
+  const editIdParam = searchParams.get("id");
+  const viewMode =
+    modeParam === "create" ? "create" : modeParam === "edit" && editIdParam ? "edit" : "list";
 
-  // Mode: 'list' | 'create' | 'edit'
-  const [viewMode, setViewMode] = useState("list");
   const [editingService, setEditingService] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
+
+  useEffect(() => {
+    if (viewMode === "list" && !searchParams.has("status")) {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.set("status", "all");
+          return next;
+        },
+        { replace: true },
+      );
+    }
+  }, [viewMode, searchParams, setSearchParams]);
+
+  useEffect(() => {
+    if (viewMode === "edit" && editIdParam && String(editingService?.id) !== String(editIdParam)) {
+      let mounted = true;
+      setIsSubmitting(true);
+      providerServiceApi
+        .getService(editIdParam)
+        .then((res) => {
+          if (mounted && res?.data) setEditingService(res.data);
+        })
+        .catch((err) => {
+          if (mounted) {
+            setFeedback({
+              type: "error",
+              message: err?.message || "Không thể tải chi tiết dịch vụ.",
+            });
+          }
+        })
+        .finally(() => {
+          if (mounted) setIsSubmitting(false);
+        });
+      return () => {
+        mounted = false;
+      };
+    }
+  }, [viewMode, editIdParam, editingService?.id]);
+
+  const handleStatusFilterChange = (nextStatus) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set("status", nextStatus || "all");
+      return next;
+    });
+  };
+
+  const returnToListUrl = () => {
+    setEditingService(null);
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.delete("mode");
+      next.delete("id");
+      if (!next.has("status")) next.set("status", "all");
+      return next;
+    });
+  };
 
   const loadServices = useCallback(async () => {
     setIsLoading(true);
@@ -74,16 +139,27 @@ export default function ServiceManagementPage() {
   const handleOpenCreate = () => {
     setFeedback(null);
     setEditingService(null);
-    setViewMode("create");
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set("mode", "create");
+      next.delete("id");
+      return next;
+    });
   };
 
   const handleOpenEdit = async (serviceSummary) => {
     setFeedback(null);
+    setEditingService(serviceSummary);
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set("mode", "edit");
+      next.set("id", String(serviceSummary.id));
+      return next;
+    });
     setIsSubmitting(true);
     try {
       const res = await providerServiceApi.getService(serviceSummary.id);
-      setEditingService(res?.data || serviceSummary);
-      setViewMode("edit");
+      if (res?.data) setEditingService(res.data);
     } catch (err) {
       setFeedback({
         type: "error",
@@ -122,8 +198,7 @@ export default function ServiceManagementPage() {
             ? "Đã lưu dịch vụ và gửi Admin kiểm duyệt thành công."
             : "Đã lưu bản nháp dịch vụ thành công.",
       });
-      setViewMode("list");
-      setEditingService(null);
+      returnToListUrl();
       await loadServices();
       return savedService;
     } finally {
@@ -233,10 +308,7 @@ export default function ServiceManagementPage() {
             onUploadMedia={handleUploadMedia}
             onSetExistingCover={handleSetExistingCover}
             onDeleteExistingMedia={handleDeleteExistingMedia}
-            onCancel={() => {
-              setViewMode("list");
-              setEditingService(null);
-            }}
+            onCancel={returnToListUrl}
           />
         ) : (
           <>
@@ -246,8 +318,8 @@ export default function ServiceManagementPage() {
                 <Search className="w-4 h-4 text-ink-subtle absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
                   placeholder="Tìm kiếm theo tên dịch vụ..."
                   className="w-full pl-10 pr-4 py-2 rounded-xl bg-surface-muted/70 text-ink-primary text-sm placeholder:text-ink-subtle focus:bg-surface-elevated focus:outline-none focus:ring-2 focus:ring-brand-primary/30 transition-all"
                 />
@@ -255,7 +327,7 @@ export default function ServiceManagementPage() {
 
               <select
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
+                onChange={(e) => handleStatusFilterChange(e.target.value)}
                 className="px-3.5 py-2 rounded-xl bg-surface-muted/70 text-ink-primary text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary/30"
               >
                 <option value="all">Tất cả trạng thái</option>
