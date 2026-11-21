@@ -15,6 +15,7 @@ import {
 import Typography from "../../../components/ui/Typography";
 import { useAuth } from "../../../hooks/useAuth";
 import adminKycService from "../services/adminKycService";
+import adminReportApi from "../services/adminReportApi";
 
 /**
  * Danh mục điều hướng chuẩn cho toàn bộ phân hệ Quản trị viên
@@ -56,7 +57,7 @@ const ADMIN_NAV_LINKS = [
     label: "Báo cáo cộng đồng",
     path: "/admin/reports",
     icon: ShieldAlert,
-    badge: "2",
+    hasReportBadge: true,
   },
   {
     id: "settings",
@@ -79,7 +80,26 @@ export default function AdminSidebar({ pendingCount: customPendingCount }) {
   const { user, logout } = useAuth();
 
   const [pendingCount, setPendingCount] = useState(customPendingCount ?? 0);
+  const [pendingReportsCount, setPendingReportsCount] = useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Nạp số lượng báo cáo cộng đồng chờ xử lý theo thời gian thực
+  useEffect(() => {
+    let isMounted = true;
+    adminReportApi
+      .listReports({ status: "pending", per_page: 1 })
+      .then((res) => {
+        if (!isMounted) return;
+        if (res?.counts?.pending !== undefined) {
+          setPendingReportsCount(res.counts.pending);
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      isMounted = false;
+    };
+  }, [location.pathname]);
 
   // Tự động nạp số lượng hồ sơ KYC chờ duyệt nếu cha không truyền vào
   useEffect(() => {
@@ -171,7 +191,11 @@ export default function AdminSidebar({ pendingCount: customPendingCount }) {
           {ADMIN_NAV_LINKS.map((item) => {
             const Icon = item.icon;
             const active = isLinkActive(item);
-            const badgeCount = item.hasKycBadge ? pendingCount : item.badge;
+            const badgeCount = item.hasKycBadge
+              ? pendingCount
+              : item.hasReportBadge
+                ? pendingReportsCount
+                : item.badge;
 
             return (
               <Link

@@ -18,12 +18,14 @@ class Comment extends Model
         'parent_id',
         'content',
         'likes_count',
+        'is_hidden',
     ];
 
     protected function casts(): array
     {
         return [
             'likes_count' => 'integer',
+            'is_hidden' => 'boolean',
         ];
     }
 

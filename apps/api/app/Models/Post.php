@@ -24,6 +24,7 @@ class Post extends Model
         'affiliate_code',
         'visibility',
         'is_pinned',
+        'is_hidden',
         'likes_count',
         'comments_count',
         'shares_count',
@@ -37,6 +38,7 @@ class Post extends Model
             'latitude' => 'float',
             'longitude' => 'float',
             'is_pinned' => 'boolean',
+            'is_hidden' => 'boolean',
             'likes_count' => 'integer',
             'comments_count' => 'integer',
             'shares_count' => 'integer',
@@ -48,6 +50,11 @@ class Post extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function service(): BelongsTo
+    {
+        return $this->belongsTo(Service::class);
     }
 
     public function media(): HasMany
