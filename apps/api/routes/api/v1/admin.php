@@ -1,7 +1,10 @@
 <?php
 
+use App\Http\Controllers\Api\V1\Admin\AdminBusinessTypeController;
+use App\Http\Controllers\Api\V1\Admin\AdminCategoryController;
 use App\Http\Controllers\Api\V1\Admin\AdminCouponController;
 use App\Http\Controllers\Api\V1\Admin\AdminKycController;
+use App\Http\Controllers\Api\V1\Admin\AdminLocationController;
 use App\Http\Controllers\Api\V1\Admin\AdminServiceController;
 use App\Http\Controllers\Api\V1\Admin\AdminUserController;
 use Illuminate\Support\Facades\Route;
@@ -42,4 +45,26 @@ Route::prefix('coupons')->group(function () {
     Route::delete('/{id}', [AdminCouponController::class, 'destroy']);
     Route::get('/{id}/grants', [AdminCouponController::class, 'grants']);
     Route::post('/{id}/grant', [AdminCouponController::class, 'grant']);
+});
+
+// Phân hệ Cấu hình Hệ thống: Điểm đến, Danh mục & Loại hình kinh doanh (Task #54)
+Route::prefix('locations')->group(function () {
+    Route::get('/', [AdminLocationController::class, 'index']);
+    Route::post('/', [AdminLocationController::class, 'store']);
+    Route::put('/{id}', [AdminLocationController::class, 'update']);
+    Route::delete('/{id}', [AdminLocationController::class, 'destroy']);
+});
+
+Route::prefix('categories')->group(function () {
+    Route::get('/', [AdminCategoryController::class, 'index']);
+    Route::post('/', [AdminCategoryController::class, 'store']);
+    Route::put('/{id}', [AdminCategoryController::class, 'update']);
+    Route::delete('/{id}', [AdminCategoryController::class, 'destroy']);
+});
+
+Route::prefix('business-types')->group(function () {
+    Route::get('/', [AdminBusinessTypeController::class, 'index']);
+    Route::post('/', [AdminBusinessTypeController::class, 'store']);
+    Route::put('/{id}', [AdminBusinessTypeController::class, 'update']);
+    Route::delete('/{id}', [AdminBusinessTypeController::class, 'destroy']);
 });

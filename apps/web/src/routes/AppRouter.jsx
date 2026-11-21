@@ -10,6 +10,7 @@ import AdminProviderKycPage from "../features/admin/pages/AdminProviderKycPage";
 import AdminServiceModerationPage from "../features/admin/pages/AdminServiceModerationPage";
 import AdminUsersPage from "../features/admin/pages/AdminUsersPage";
 import AdminCouponsPage from "../features/admin/pages/AdminCouponsPage";
+import AdminSettingsPage from "../features/admin/pages/AdminSettingsPage";
 import ProviderDashboardPage from "../features/provider/pages/ProviderDashboardPage";
 import ProviderProfilePage from "../features/provider/pages/ProviderProfilePage";
 import ServiceManagementPage from "../features/provider/pages/ServiceManagementPage";
@@ -207,6 +208,16 @@ export default function AppRouter() {
           element={
             <ProtectedRoute allowedRoles={["admin"]}>
               <AdminCouponsPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* 6. Cấu hình Hệ thống: Điểm đến, Danh mục, Loại hình (Task #54) */}
+        <Route
+          path="/admin/settings"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminSettingsPage />
             </ProtectedRoute>
           }
         />
