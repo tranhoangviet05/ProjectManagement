@@ -9,10 +9,13 @@ import AdminDashboardPage from "../features/admin/pages/AdminDashboardPage";
 import AdminProviderKycPage from "../features/admin/pages/AdminProviderKycPage";
 import AdminCouponsPage from "../features/admin/pages/AdminCouponsPage";
 import AdminReportsPage from "../features/admin/pages/AdminReportsPage";
+import AdminSettingsPage from "../features/admin/pages/AdminSettingsPage";
+import AdminServiceModerationPage from "../features/admin/pages/AdminServiceModerationPage";
 import AdminUsersPage from "../features/admin/pages/AdminUsersPage";
 import ProviderDashboardPage from "../features/provider/pages/ProviderDashboardPage";
 import ProviderProfilePage from "../features/provider/pages/ProviderProfilePage";
 import ServiceManagementPage from "../features/provider/pages/ServiceManagementPage";
+import ServiceAvailabilityPage from "../features/provider/pages/ServiceAvailabilityPage";
 import NotFoundPage from "../features/common/pages/NotFoundPage";
 import Typography from "../components/ui/Typography";
 
@@ -180,6 +183,16 @@ export default function AppRouter() {
           }
         />
 
+        {/* 3. Kiểm duyệt Dịch vụ du lịch (Task #46) */}
+        <Route
+          path="/admin/services"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminServiceModerationPage />
+            </ProtectedRoute>
+          }
+        />
+
         {/* 4. Quản lý Tài khoản Người dùng (Task #52) */}
         <Route
           path="/admin/users"
@@ -200,7 +213,17 @@ export default function AppRouter() {
           }
         />
 
-        {/* 6. Kiểm duyệt Nội dung & Báo cáo Cộng đồng (Task #55) */}
+        {/* 6. Cấu hình Hệ thống: Điểm đến, Danh mục & Loại hình kinh doanh (Task #54) */}
+        <Route
+          path="/admin/settings"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminSettingsPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* 7. Kiểm duyệt Nội dung & Báo cáo Cộng đồng (Task #55) */}
         <Route
           path="/admin/reports"
           element={
@@ -245,6 +268,16 @@ export default function AppRouter() {
           element={
             <ProtectedRoute allowedRoles={["provider", "admin"]}>
               <ServiceManagementPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* 2b. Cấu hình Lịch phục vụ & Bảng giá theo ngày (task17) */}
+        <Route
+          path="/provider/services/:id/availability"
+          element={
+            <ProtectedRoute allowedRoles={["provider", "admin"]}>
+              <ServiceAvailabilityPage />
             </ProtectedRoute>
           }
         />
