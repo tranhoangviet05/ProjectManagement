@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { CheckCircle2, Clock } from "lucide-react";
 import ProviderLayout from "../layouts/ProviderLayout";
 import Typography from "../../../components/ui/Typography";
@@ -18,9 +19,32 @@ import ProviderSecurityForm from "../components/ProviderSecurityForm";
  */
 export default function ProviderProfilePage() {
   const { user, updateUser } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  // Tab điều hướng: 'profile' | 'wallet' | 'security'
-  const [activeTab, setActiveTab] = useState("profile");
+  // Tab điều hướng đồng bộ URL: 'profile' | 'wallet' | 'security'
+  const tabParam = searchParams.get("tab");
+  const activeTab = ["profile", "wallet", "security"].includes(tabParam) ? tabParam : "profile";
+
+  useEffect(() => {
+    if (!searchParams.has("tab")) {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.set("tab", "profile");
+          return next;
+        },
+        { replace: true },
+      );
+    }
+  }, [searchParams, setSearchParams]);
+
+  const setActiveTab = (nextTab) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set("tab", nextTab || "profile");
+      return next;
+    });
+  };
 
   // Loading states
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
