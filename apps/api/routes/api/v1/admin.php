@@ -1,8 +1,10 @@
 <?php
 
+use App\Http\Controllers\Api\V1\Admin\AdminBookingController;
 use App\Http\Controllers\Api\V1\Admin\AdminBusinessTypeController;
 use App\Http\Controllers\Api\V1\Admin\AdminCategoryController;
 use App\Http\Controllers\Api\V1\Admin\AdminCouponController;
+use App\Http\Controllers\Api\V1\Admin\AdminDashboardController;
 use App\Http\Controllers\Api\V1\Admin\AdminKycController;
 use App\Http\Controllers\Api\V1\Admin\AdminLocationController;
 use App\Http\Controllers\Api\V1\Admin\AdminReportController;
@@ -75,4 +77,12 @@ Route::prefix('reports')->group(function () {
     Route::get('/', [AdminReportController::class, 'index']);
     Route::get('/{id}', [AdminReportController::class, 'show']);
     Route::post('/{id}/resolve', [AdminReportController::class, 'resolve']);
+});
+
+// Phân hệ Tổng quan Vận hành & Giám sát Đơn đặt chỗ / Đối soát Ví (Task #56)
+Route::get('/dashboard', [AdminDashboardController::class, 'overview']);
+Route::get('/dashboard/chart', [AdminDashboardController::class, 'chart']);
+Route::prefix('bookings')->group(function () {
+    Route::get('/', [AdminBookingController::class, 'index']);
+    Route::get('/{id}', [AdminBookingController::class, 'show']);
 });
