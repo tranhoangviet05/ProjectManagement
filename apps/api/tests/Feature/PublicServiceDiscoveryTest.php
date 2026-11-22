@@ -72,8 +72,26 @@ class PublicServiceDiscoveryTest extends TestCase
         $this->assertTrue($ids->contains($activeHoiAn->id));
         $this->assertFalse($ids->contains($pendingService->id));
 
-        // Xem chi tiết dịch vụ active -> 200, dịch vụ pending -> 404
-        $this->getJson('/api/v1/public/services/'.$activeHoiAn->id)->assertStatus(200);
+        // Xem chi tiết dịch vụ active -> 200 với đầy đủ thông tin, dịch vụ pending -> 404
+        $detailRes = $this->getJson('/api/v1/public/services/'.$activeHoiAn->id);
+        $detailRes->assertStatus(200)
+            ->assertJsonPath('success', true)
+            ->assertJsonStructure([
+                'data' => [
+                    'id',
+                    'name',
+                    'base_price',
+                    'reviews_count',
+                    'location',
+                    'category',
+                    'provider',
+                    'media',
+                    'schedules',
+                    'room_types',
+                    'availability',
+                    'reviews',
+                ],
+            ]);
         $this->getJson('/api/v1/public/services/'.$pendingService->id)->assertStatus(404);
     }
 

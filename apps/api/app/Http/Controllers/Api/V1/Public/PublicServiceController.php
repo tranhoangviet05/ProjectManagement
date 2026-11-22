@@ -165,16 +165,20 @@ class PublicServiceController extends Controller
             ->where('status', ServiceStatus::Active->value)
             ->whereHas('provider', fn ($p) => $p->where('status', ProviderStatus::Approved->value))
             ->with([
-                'location:id,name,slug',
+                'location:id,name,slug,parent_id',
+                'location.parent:id,name,slug',
                 'category:id,name,slug',
                 'provider:id,business_name,phone,address',
-                'media',
+                'media' => fn ($m) => $m->orderByDesc('is_cover')->orderBy('sort_order'),
                 'schedules',
-                'roomTypes',
+                'roomTypes' => fn ($r) => $r->where('status', 'active')->orderBy('base_price'),
                 'availability' => fn ($q) => $q->where('available_date', '>=', now()->toDateString())
+                    ->where('is_blocked', false)
                     ->orderBy('available_date')
                     ->limit(30),
+                'reviews' => fn ($rv) => $rv->with('user:id,name,avatar_url')->latest()->limit(10),
             ])
+            ->withCount('reviews')
             ->find($id);
 
         if (! $service) {
@@ -189,6 +193,10 @@ class PublicServiceController extends Controller
         return response()->json([
             'success' => true,
             'data' => array_merge($service->toArray(), [
+                'base_price' => (float) $service->base_price,
+                'rating_avg' => (float) ($service->rating_avg ?? 0),
+                'reviews_count' => (int) ($service->reviews_count ?? 0),
+                'total_bookings' => (int) ($service->total_bookings ?? 0),
                 'cover_image' => $cover?->url,
             ]),
         ]);
