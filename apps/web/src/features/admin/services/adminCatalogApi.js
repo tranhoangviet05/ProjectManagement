@@ -4,6 +4,7 @@ const ENDPOINTS = {
   locations: "/admin/locations",
   categories: "/admin/categories",
   businessTypes: "/admin/business-types",
+  policies: "/admin/policies",
 };
 
 const adminCatalogApi = {

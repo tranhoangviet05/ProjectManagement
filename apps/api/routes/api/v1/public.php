@@ -43,3 +43,9 @@ Route::prefix('catalog')->group(function () {
     Route::get('/policies', [CatalogController::class, 'policies']);
     Route::get('/campaigns', [CatalogController::class, 'campaigns']);
 });
+
+// ── Public Policies & Holiday Campaigns Endpoints ─────────────────
+Route::prefix('public')->group(function () {
+    Route::get('/policies', [CatalogController::class, 'policies']);
+    Route::get('/campaigns', [CatalogController::class, 'campaigns']);
+});

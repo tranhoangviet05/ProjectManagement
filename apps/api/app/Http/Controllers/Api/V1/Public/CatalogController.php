@@ -59,24 +59,24 @@ class CatalogController extends Controller
     }
 
     /**
-     * Lấy danh sách chính sách dịch vụ hệ thống (lọc theo service_type).
+     * Lấy danh sách chính sách dịch vụ hệ thống (lọc theo type/service_type).
      */
     public function policies(Request $request): JsonResponse
     {
-        $query = ServicePolicy::query()->where('is_active', true);
+        $type = trim((string) ($request->query('type') ?? $request->query('service_type') ?? ''));
 
-        if ($request->filled('service_type')) {
-            $query->where(function ($q) use ($request) {
-                $q->whereNull('applicable_service_type')
-                    ->orWhere('applicable_service_type', $request->query('service_type'));
-            });
+        $query = ServicePolicy::query()
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('name');
+
+        if ($type !== '') {
+            $query->whereJsonContains('applicable_types', $type);
         }
-
-        $policies = $query->orderBy('order')->orderBy('id')->get();
 
         return response()->json([
             'success' => true,
-            'data' => $policies,
+            'data' => $query->get(),
         ]);
     }
 
@@ -85,13 +85,10 @@ class CatalogController extends Controller
      */
     public function campaigns(): JsonResponse
     {
-        $now = now()->toDateString();
-
         $campaigns = HolidayCampaign::query()
-            ->where('is_active', true)
-            ->whereDate('start_date', '<=', $now)
-            ->whereDate('end_date', '>=', $now)
-            ->orderBy('start_date')
+            ->currentlyActive()
+            ->orderByDesc('priority')
+            ->orderByDesc('starts_at')
             ->get();
 
         return response()->json([

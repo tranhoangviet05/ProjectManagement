@@ -84,5 +84,7 @@ Route::prefix('campaigns')->group(function () {
     Route::post('/', [AdminHolidayCampaignController::class, 'store']);
     Route::get('/{id}', [AdminHolidayCampaignController::class, 'show']);
     Route::put('/{id}', [AdminHolidayCampaignController::class, 'update']);
+    Route::post('/{id}/reopen', [AdminHolidayCampaignController::class, 'reopen']);
     Route::delete('/{id}', [AdminHolidayCampaignController::class, 'destroy']);
 });
+

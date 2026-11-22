@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Loader2, X } from "lucide-react";
+import { Loader2, X, Check } from "lucide-react";
 import Typography from "../../../components/ui/Typography";
 
 const BUSINESS_GROUP_OPTIONS = ["Chỗ ở", "Giải trí", "Phương tiện", "Ăn uống"];
@@ -8,7 +8,23 @@ const TAB_TITLES = {
   locations: { create: "Thêm điểm đến mới", edit: "Cập nhật điểm đến" },
   categories: { create: "Thêm danh mục dịch vụ", edit: "Cập nhật danh mục dịch vụ" },
   businessTypes: { create: "Thêm loại hình kinh doanh", edit: "Cập nhật loại hình kinh doanh" },
+  policies: { create: "Thêm chính sách dịch vụ", edit: "Cập nhật chính sách dịch vụ" },
 };
+
+const SERVICE_TYPE_OPTIONS = [
+  { id: "hotel", label: "Khách sạn" },
+  { id: "homestay", label: "Homestay" },
+  { id: "tour", label: "Tour" },
+  { id: "vehicle", label: "Thuê xe" },
+  { id: "train", label: "Tàu hỏa" },
+];
+
+const POLICY_CATEGORIES = [
+  { id: "payment", label: "Thanh toán" },
+  { id: "cancellation", label: "Hủy & Đổi lịch" },
+  { id: "checkin", label: "Nhận & Trả chỗ" },
+  { id: "rules", label: "Quy định sử dụng" },
+];
 
 /**
  * Modal Form Tạo / Cập nhật đầy đủ các trường DB cho Locations, Categories & BusinessTypes.
@@ -32,10 +48,15 @@ export default function CatalogFormModal({
     country_code: item?.country_code || "VN",
     image_url: item?.image_url || "",
     is_popular: Boolean(item?.is_popular),
-    // Categories
-    icon: item?.icon || "",
+    // Categories & Policies
+    icon: item?.icon || (activeTab === "policies" ? "shield-check" : ""),
     icon_url: item?.icon_url || "",
-    // Shared description (Locations & Categories)
+    category: item?.category || "rules",
+    applicable_types:
+      Array.isArray(item?.applicable_types) && item.applicable_types.length > 0
+        ? item.applicable_types
+        : ["hotel", "homestay", "tour", "vehicle", "train"],
+    is_active: item?.is_active !== undefined ? Boolean(item.is_active) : true,
     description: item?.description || "",
     // BusinessTypes
     type: item?.type || "Chỗ ở",
@@ -49,6 +70,16 @@ export default function CatalogFormModal({
 
   const handleChange = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }));
+    if (error) setError("");
+  };
+
+  const handleToggleType = (typeId) => {
+    setForm((prev) => {
+      const current = prev.applicable_types || [];
+      const exists = current.includes(typeId);
+      const nextTypes = exists ? current.filter((t) => t !== typeId) : [...current, typeId];
+      return { ...prev, applicable_types: nextTypes };
+    });
     if (error) setError("");
   };
 
@@ -77,6 +108,20 @@ export default function CatalogFormModal({
         icon: form.icon.trim() || null,
         icon_url: form.icon_url.trim() || null,
         description: form.description.trim() || null,
+      };
+    } else if (activeTab === "policies") {
+      if (!form.applicable_types || form.applicable_types.length === 0) {
+        setError("Vui lòng chọn ít nhất một loại hình dịch vụ áp dụng.");
+        return;
+      }
+      payload = {
+        name: form.name.trim(),
+        slug: form.slug.trim() || undefined,
+        category: form.category || "rules",
+        applicable_types: form.applicable_types,
+        icon: form.icon.trim() || "shield-check",
+        description: form.description.trim() || null,
+        is_active: Boolean(form.is_active),
       };
     } else {
       if (!form.type.trim()) {
@@ -233,6 +278,21 @@ export default function CatalogFormModal({
                 />
               </div>
 
+              {activeTab === "policies" && (
+                <div>
+                  <label className="block text-xs font-semibold text-ink-primary mb-1">
+                    Mô tả chi tiết chính sách
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={form.description}
+                    onChange={(e) => handleChange("description", e.target.value)}
+                    placeholder="Giải thích rõ điều kiện áp dụng cho khách hàng và đối tác..."
+                    className="w-full px-3.5 py-2 rounded-lg border border-border-subtle bg-surface-base text-sm text-ink-primary outline-hidden focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
+                  />
+                </div>
+              )}
+
               <label className="inline-flex items-center gap-2.5 cursor-pointer select-none">
                 <input
                   type="checkbox"
@@ -292,6 +352,77 @@ export default function CatalogFormModal({
             </>
           )}
 
+          {activeTab === "policies" && (
+            <>
+              <div>
+                <label className="block text-xs font-semibold text-ink-primary mb-1">
+                  Nhóm chính sách <span className="text-status-danger">*</span>
+                </label>
+                <select
+                  value={form.category}
+                  onChange={(e) => handleChange("category", e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-lg border border-border-subtle bg-surface-base text-sm text-ink-primary outline-hidden focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
+                >
+                  {POLICY_CATEGORIES.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-ink-primary mb-1.5">
+                  Loại hình dịch vụ áp dụng <span className="text-status-danger">*</span>
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {SERVICE_TYPE_OPTIONS.map((opt) => {
+                    const checked = form.applicable_types.includes(opt.id);
+                    return (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => handleToggleType(opt.id)}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors cursor-pointer ${
+                          checked
+                            ? "bg-brand-subtle border-brand-primary text-brand-primary"
+                            : "bg-surface-base border-border-subtle text-ink-body hover:bg-slate-100"
+                        }`}
+                      >
+                        {checked && <Check className="w-3.5 h-3.5" />}
+                        {opt.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-ink-primary mb-1">
+                  Mô tả chi tiết chính sách
+                </label>
+                <textarea
+                  rows={3}
+                  value={form.description}
+                  onChange={(e) => handleChange("description", e.target.value)}
+                  placeholder="Giải thích rõ điều kiện áp dụng cho khách hàng và đối tác..."
+                  className="w-full px-3.5 py-2 rounded-lg border border-border-subtle bg-surface-base text-sm text-ink-primary outline-hidden focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
+                />
+              </div>
+
+              <label className="inline-flex items-center gap-2.5 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={form.is_active}
+                  onChange={(e) => handleChange("is_active", e.target.checked)}
+                  className="w-4 h-4 rounded border-border-subtle text-brand-primary focus:ring-brand-primary"
+                />
+                <span className="text-sm font-medium text-ink-primary">
+                  Kích hoạt hiển thị cho Nhà cung cấp chọn
+                </span>
+              </label>
+            </>
+          )}
           <div className="pt-3 border-t border-border-subtle flex items-center justify-end gap-2.5">
             <button
               type="button"
