@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\V1\Admin\AdminCategoryController;
 use App\Http\Controllers\Api\V1\Admin\AdminCouponController;
 use App\Http\Controllers\Api\V1\Admin\AdminKycController;
 use App\Http\Controllers\Api\V1\Admin\AdminLocationController;
+use App\Http\Controllers\Api\V1\Admin\AdminReportController;
 use App\Http\Controllers\Api\V1\Admin\AdminServiceController;
 use App\Http\Controllers\Api\V1\Admin\AdminUserController;
 use Illuminate\Support\Facades\Route;
@@ -67,4 +68,12 @@ Route::prefix('business-types')->group(function () {
     Route::post('/', [AdminBusinessTypeController::class, 'store']);
     Route::put('/{id}', [AdminBusinessTypeController::class, 'update']);
     Route::delete('/{id}', [AdminBusinessTypeController::class, 'destroy']);
+});
+
+// Phân hệ Kiểm duyệt Nội dung & Báo cáo Cộng đồng (Task #55)
+Route::prefix('reports')->group(function () {
+    Route::get('/', [AdminReportController::class, 'index']);
+    Route::get('/{id}', [AdminReportController::class, 'show']);
+    Route::post('/{id}/hide-content', [AdminReportController::class, 'hideContent']);
+    Route::post('/{id}/dismiss', [AdminReportController::class, 'dismiss']);
 });
