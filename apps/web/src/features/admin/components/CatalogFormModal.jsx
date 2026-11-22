@@ -96,9 +96,14 @@ export default function CatalogFormModal({
         is_popular: Boolean(form.is_popular),
       };
     } else if (activeTab === "categories") {
+      if (form.applicable_types.length === 0) {
+        setError("Vui lòng chọn ít nhất một loại hình dịch vụ áp dụng.");
+        return;
+      }
       payload = {
         name: form.name.trim(),
         slug: form.slug.trim() || undefined,
+        applicable_types: form.applicable_types,
         icon: form.icon.trim() || null,
         icon_url: form.icon_url.trim() || null,
         description: form.description.trim() || null,
@@ -301,6 +306,32 @@ export default function CatalogFormModal({
 
           {activeTab === "categories" && (
             <>
+              <div>
+                <label className="block text-xs font-semibold text-ink-primary mb-1.5">
+                  Loại hình dịch vụ áp dụng *
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {SERVICE_TYPE_OPTIONS.map((opt) => {
+                    const checked = form.applicable_types.includes(opt.id);
+                    return (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => handleToggleType(opt.id)}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors cursor-pointer ${
+                          checked
+                            ? "bg-brand-subtle border-brand-primary text-brand-primary"
+                            : "bg-surface-base border-border-subtle text-ink-body hover:bg-slate-100"
+                        }`}
+                      >
+                        {checked && <Check className="w-3.5 h-3.5" />}
+                        {opt.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-ink-primary mb-1">
