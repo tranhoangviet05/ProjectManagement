@@ -165,6 +165,17 @@ export default function ProviderCampaignsPage() {
                   (p) => p.is_active,
                 ).length;
 
+                // Map các dịch vụ đang tham gia chiến dịch khác để chặn trùng
+                const otherActiveByService = {};
+                campaigns.forEach((c) => {
+                  if (c.id === campaign.id) return;
+                  (c.participations || []).forEach((p) => {
+                    if (p.is_active) {
+                      otherActiveByService[p.service_id] = c.name;
+                    }
+                  });
+                });
+
                 return (
                   <div
                     key={campaign.id}
@@ -177,10 +188,10 @@ export default function ProviderCampaignsPage() {
                           <img
                             src={campaign.banner_url}
                             alt={campaign.name}
-                            className="w-20 h-14 rounded-xl object-cover border border-border-subtle shrink-0"
+                            className="w-28 aspect-video rounded-xl object-cover border border-border-subtle shrink-0"
                           />
                         ) : (
-                          <div className="w-14 h-14 rounded-xl bg-brand-subtle text-brand-primary flex items-center justify-center shrink-0">
+                          <div className="w-28 aspect-video rounded-xl bg-brand-subtle text-brand-primary flex items-center justify-center shrink-0">
                             <Sparkles className="w-6 h-6" />
                           </div>
                         )}
@@ -239,6 +250,7 @@ export default function ProviderCampaignsPage() {
                             (p) => p.service_id === svc.id,
                           );
                           const isJoined = Boolean(participation?.is_active);
+                          const otherCampaignName = !isJoined ? otherActiveByService[svc.id] : null;
                           const isApprovedService = svc.status === "active";
                           const statusCfg = SERVICE_STATUS_CONFIG[svc.status] || {
                             label: svc.status,
@@ -285,6 +297,10 @@ export default function ProviderCampaignsPage() {
                                 {!isApprovedService ? (
                                   <span className="text-xs font-medium text-ink-subtle bg-slate-100 px-3 py-1.5 rounded-lg">
                                     Chỉ dịch vụ đã duyệt mở bán mới được tham gia
+                                  </span>
+                                ) : otherCampaignName ? (
+                                  <span className="text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-lg">
+                                    Đang tham gia: {otherCampaignName}
                                   </span>
                                 ) : (
                                   <>
