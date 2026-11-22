@@ -12,6 +12,7 @@ import {
   X,
   BadgeCheck,
   Settings,
+  Sparkles,
 } from "lucide-react";
 import Typography from "../../../components/ui/Typography";
 import { useAuth } from "../../../hooks/useAuth";
@@ -32,6 +33,12 @@ const PROVIDER_NAV_LINKS = [
     path: "/provider/services",
     icon: Compass,
     badge: "6",
+  },
+  {
+    id: "campaigns",
+    label: "Chương trình khuyến mãi",
+    path: "/provider/campaigns",
+    icon: Sparkles,
   },
   {
     id: "bookings",

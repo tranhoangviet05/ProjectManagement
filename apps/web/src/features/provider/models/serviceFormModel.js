@@ -32,6 +32,7 @@ export function resolveProviderServiceConfig(businessType) {
   if (slug === "khach-san" || slug === "homestay" || slug === "homestay-villa") {
     return {
       group: "accommodation",
+      serviceType: slug === "khach-san" ? "hotel" : "homestay",
       fixedPriceUnit: "phòng/đêm",
       businessLabel: businessType?.name || "Khách sạn / Homestay",
     };
@@ -40,6 +41,7 @@ export function resolveProviderServiceConfig(businessType) {
   if (slug === "villa" || slug === "resort") {
     return {
       group: "accommodation",
+      serviceType: slug === "villa" ? "homestay" : "hotel",
       fixedPriceUnit: "đêm",
       businessLabel: businessType?.name || "Villa / Resort",
     };
@@ -48,6 +50,7 @@ export function resolveProviderServiceConfig(businessType) {
   if (groupName === "Chỗ ở") {
     return {
       group: "accommodation",
+      serviceType: "hotel",
       fixedPriceUnit: "phòng/đêm",
       businessLabel: businessType?.name || "Chỗ ở",
     };
@@ -56,6 +59,7 @@ export function resolveProviderServiceConfig(businessType) {
   if (slug === "ve-tau" || slug === "phuong-tien-di-chuyen" || groupName === "Phương tiện") {
     return {
       group: "vehicle",
+      serviceType: slug === "ve-tau" ? "train" : "vehicle",
       fixedPriceUnit: slug === "ve-tau" ? "vé" : "ngày",
       businessLabel: businessType?.name || "Phương tiện",
     };
@@ -63,6 +67,7 @@ export function resolveProviderServiceConfig(businessType) {
 
   return {
     group: "tour",
+    serviceType: "tour",
     fixedPriceUnit: "người",
     businessLabel: businessType?.name || "Tour du lịch & Trải nghiệm",
   };
@@ -154,6 +159,7 @@ export function createInitialServiceForm(service = null, group = "tour") {
     amenities: Array.isArray(service?.amenities) ? service.amenities : [],
     includes: Array.isArray(service?.includes) ? service.includes : [],
     excludes: Array.isArray(service?.excludes) ? service.excludes : [],
+    policy_ids: Array.isArray(service?.policies) ? service.policies.map((p) => p.id) : [],
     availabilities: existingAvail,
     room_types: existingRooms,
     schedules: Array.isArray(service?.schedules)
