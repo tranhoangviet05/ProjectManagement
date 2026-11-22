@@ -3,6 +3,8 @@
 use App\Http\Controllers\Api\V1\Auth\AuthController;
 use App\Http\Controllers\Api\V1\Media\MediaController;
 use App\Http\Controllers\Api\V1\Public\CatalogController;
+use App\Http\Controllers\Api\V1\Public\PublicPostController;
+use App\Http\Controllers\Api\V1\Public\PublicServiceController;
 use Illuminate\Support\Facades\Route;
 
 // Public & authentication routes: /api/v1/...
@@ -36,9 +38,16 @@ Route::prefix('media')->middleware('firebase.auth')->group(function () {
     Route::get('/private/{path}', [MediaController::class, 'showPrivate'])->where('path', '.*');
 });
 
-// ── Public Catalog Endpoints ──────────────────────────────────────
+// ── Public Catalog & Discovery Endpoints ──────────────────────────
 Route::prefix('public')->group(function () {
     Route::get('/categories', [CatalogController::class, 'categories']);
     Route::get('/locations', [CatalogController::class, 'locations']);
     Route::get('/business-types', [CatalogController::class, 'businessTypes']);
+
+    // Khám phá & Tìm kiếm Dịch vụ công khai (Task #19)
+    Route::get('/services', [PublicServiceController::class, 'index']);
+    Route::get('/services/{id}', [PublicServiceController::class, 'show']);
+
+    // Bài đăng cộng đồng nổi bật (Task #19)
+    Route::get('/posts/featured', [PublicPostController::class, 'featured']);
 });

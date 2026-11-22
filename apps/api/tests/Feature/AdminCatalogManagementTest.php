@@ -93,24 +93,26 @@ class AdminCatalogManagementTest extends TestCase
 
     public function test_admin_can_crud_categories_and_business_types_with_reference_guards(): void
     {
+        $suffix = substr(uniqid(), -6);
+
         $catRes = $this->withHeader('Authorization', 'Bearer '.$this->adminToken)
             ->postJson('/api/v1/admin/categories', [
-                'name' => 'Du lịch Sinh thái',
+                'name' => 'Du lịch Sinh thái '.$suffix,
                 'icon' => 'trees',
                 'icon_url' => 'https://example.com/eco.png',
                 'description' => 'Khám phá rừng nguyên sinh và biển đảo.',
             ]);
 
-        $catRes->assertStatus(201)->assertJsonPath('data.slug', 'du-lich-sinh-thai');
+        $catRes->assertStatus(201)->assertJsonPath('data.slug', 'du-lich-sinh-thai-'.$suffix);
         $catId = $catRes->json('data.id');
 
         $btRes = $this->withHeader('Authorization', 'Bearer '.$this->adminToken)
             ->postJson('/api/v1/admin/business-types', [
                 'type' => 'Giải trí',
-                'name' => 'Công viên chuyên đề',
+                'name' => 'Công viên chuyên đề '.$suffix,
             ]);
 
-        $btRes->assertStatus(201)->assertJsonPath('data.slug', 'cong-vien-chuyen-de');
+        $btRes->assertStatus(201)->assertJsonPath('data.slug', 'cong-vien-chuyen-de-'.$suffix);
         $btId = $btRes->json('data.id');
 
         // Tạo service tham chiếu category -> chặn xóa category
