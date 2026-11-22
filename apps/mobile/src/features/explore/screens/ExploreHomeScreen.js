@@ -6,6 +6,7 @@ import { colors } from "../../../theme/tokens";
 import { useExploreData } from "../context/ExploreDataContext";
 import ExploreHeroSearch, { ExploreStickyHeader } from "../components/ExploreHeroSearch";
 import FeaturedDestinationsCollage from "../components/FeaturedDestinationsCollage";
+import HolidayDealsSection from "../components/HolidayDealsSection";
 import CategoryShowcaseSection from "../components/CategoryShowcaseSection";
 import ThreadsMasonryFeed from "../components/ThreadsMasonryFeed";
 import AiPlannerBanner from "../components/AiPlannerBanner";
@@ -18,7 +19,8 @@ import WhyChooseUsSection from "../components/WhyChooseUsSection";
  */
 export default function ExploreHomeScreen({ navigation }) {
   const isFocused = useIsFocused();
-  const { locations, services, featuredPosts, isRefreshing, refreshExploreData } = useExploreData();
+  const { locations, services, featuredPosts, campaigns, isRefreshing, refreshExploreData } =
+    useExploreData();
   const [activeCategory, setActiveCategory] = useState("accommodation");
 
   const handleSubmitSearch = (params) => {
@@ -81,6 +83,15 @@ export default function ExploreHomeScreen({ navigation }) {
               locations={locations}
               onSelectLocation={handleSelectLocation}
               onPressSeeAll={() => navigation.navigate("AllLocations")}
+            />
+
+            <HolidayDealsSection
+              campaigns={campaigns}
+              services={services}
+              onSelectService={handleSelectService}
+              onOpenCampaigns={(campaignId) =>
+                navigation.navigate("HolidayCampaigns", { campaignId })
+              }
             />
 
             <CategoryShowcaseSection

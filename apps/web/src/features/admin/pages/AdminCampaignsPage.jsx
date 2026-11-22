@@ -249,10 +249,10 @@ export default function AdminCampaignsPage() {
                               <img
                                 src={c.banner_url}
                                 alt={c.name}
-                                className="w-14 h-10 rounded-lg object-cover border border-border-subtle shrink-0"
+                                className="w-20 aspect-video rounded-lg object-cover border border-border-subtle shrink-0"
                               />
                             ) : (
-                              <div className="w-14 h-10 rounded-lg bg-brand-subtle text-brand-primary flex items-center justify-center shrink-0">
+                              <div className="w-20 aspect-video rounded-lg bg-brand-subtle text-brand-primary flex items-center justify-center shrink-0">
                                 <Sparkles className="w-4 h-4" />
                               </div>
                             )}

@@ -40,7 +40,7 @@ class MediaService
         ],
         'banner' => [
             'directory' => 'banners',
-            'max_size' => 5120, // 5MB
+            'max_size' => 20480, // 20MB
             'mimes' => ['jpeg', 'jpg', 'png', 'webp'],
         ],
         'category' => [

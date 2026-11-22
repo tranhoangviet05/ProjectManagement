@@ -25,6 +25,8 @@ class UploadPublicMediaRequest extends FormRequest
     public function rules(): array
     {
         $allowedTypes = array_keys(MediaService::PUBLIC_TYPES);
+        $type = $this->input('type');
+        $maxKb = MediaService::PUBLIC_TYPES[$type]['max_size'] ?? 5120;
 
         return [
             'type' => ['required', 'string', Rule::in($allowedTypes)],
@@ -32,7 +34,7 @@ class UploadPublicMediaRequest extends FormRequest
                 'nullable',
                 'file',
                 'mimes:jpeg,jpg,png,webp',
-                'max:5120',
+                'max:'.$maxKb,
                 'required_without:files',
             ],
             'files' => [
@@ -43,7 +45,7 @@ class UploadPublicMediaRequest extends FormRequest
             'files.*' => [
                 'file',
                 'mimes:jpeg,jpg,png,webp',
-                'max:5120',
+                'max:'.$maxKb,
             ],
         ];
     }
@@ -93,6 +95,9 @@ class UploadPublicMediaRequest extends FormRequest
      */
     public function messages(): array
     {
+        $type = $this->input('type');
+        $maxMb = (MediaService::PUBLIC_TYPES[$type]['max_size'] ?? 5120) / 1024;
+
         return [
             'type.required' => 'Vui lòng xác định loại tài nguyên tải lên (type).',
             'type.in' => 'Loại tài nguyên không hợp lệ.',
@@ -100,10 +105,10 @@ class UploadPublicMediaRequest extends FormRequest
             'files.required_without' => 'Vui lòng chọn danh sách tệp tin cần tải lên.',
             'file.file' => 'Dữ liệu tải lên phải là một tệp tin hợp lệ.',
             'file.mimes' => 'Định dạng tệp tin không được hỗ trợ. Chỉ chấp nhận JPG, JPEG, PNG, WEBP.',
-            'file.max' => 'Dung lượng tệp tin không được vượt quá 5MB.',
+            'file.max' => "Dung lượng tệp tin không được vượt quá {$maxMb}MB.",
             'files.*.file' => 'Mỗi phần tử tải lên phải là một tệp tin hợp lệ.',
             'files.*.mimes' => 'Định dạng tệp tin trong danh sách không được hỗ trợ. Chỉ chấp nhận JPG, JPEG, PNG, WEBP.',
-            'files.*.max' => 'Dung lượng từng tệp tin trong album không được vượt quá 5MB.',
+            'files.*.max' => "Dung lượng từng tệp tin trong album không được vượt quá {$maxMb}MB.",
         ];
     }
 }

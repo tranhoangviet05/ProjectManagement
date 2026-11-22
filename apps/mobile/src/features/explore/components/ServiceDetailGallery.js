@@ -3,6 +3,7 @@ import { Dimensions, FlatList, Image, Pressable, Share, StyleSheet, View } from 
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ArrowLeft, Share2 } from "lucide-react-native";
 import AppText from "../../../components/common/AppText";
+import { resolveMediaUrl } from "../../../lib/apiClient";
 import { radius, spacing, touchTarget } from "../../../theme/tokens";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
@@ -18,9 +19,12 @@ export default function ServiceDetailGallery({ media = [], coverImage, serviceNa
   const [activeIndex, setActiveIndex] = useState(0);
 
   const images = React.useMemo(() => {
-    const urls = Array.isArray(media) ? media.map((m) => m.url).filter(Boolean) : [];
+    const urls = Array.isArray(media)
+      ? media.map((m) => resolveMediaUrl(m.url)).filter(Boolean)
+      : [];
     if (urls.length > 0) return urls;
-    if (coverImage) return [coverImage];
+    const resolvedCover = resolveMediaUrl(coverImage);
+    if (resolvedCover) return [resolvedCover];
     return [FALLBACK_IMAGE];
   }, [media, coverImage]);
 
@@ -50,9 +54,6 @@ export default function ServiceDetailGallery({ media = [], coverImage, serviceNa
           <Image source={{ uri: item }} style={styles.slideImage} resizeMode="cover" />
         )}
       />
-
-      {/* Lớp phủ tối nhẹ phía trên để nút nổi dễ nhìn */}
-      <View style={styles.topScrim} pointerEvents="none" />
 
       {/* Thanh nút điều hướng nổi */}
       <View style={[styles.topActions, { top: Math.max(insets.top, 12) + 4 }]}>
@@ -95,14 +96,6 @@ const styles = StyleSheet.create({
   slideImage: {
     width: SCREEN_WIDTH,
     height: GALLERY_HEIGHT,
-  },
-  topScrim: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 100,
-    backgroundColor: "rgba(15, 23, 42, 0.25)",
   },
   topActions: {
     position: "absolute",

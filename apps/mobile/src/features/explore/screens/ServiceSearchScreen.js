@@ -16,6 +16,7 @@ import {
   BadgeCheck,
   Building2,
   MapPin,
+  PawPrint,
   Search,
   ShieldCheck,
   SlidersHorizontal,
@@ -24,6 +25,7 @@ import {
 } from "lucide-react-native";
 import AppText from "../../../components/common/AppText";
 import Skeleton from "../../../components/common/Skeleton";
+import { resolveMediaUrl } from "../../../lib/apiClient";
 import { colors, radius, spacing, touchTarget } from "../../../theme/tokens";
 import exploreService from "../services/exploreService";
 import { useExploreData } from "../context/ExploreDataContext";
@@ -68,6 +70,7 @@ export default function ServiceSearchScreen({ navigation, route }) {
   const [locationName, setLocationName] = useState(initialParams.location_name || "");
   const [minPrice, setMinPrice] = useState(initialParams.min_price || "");
   const [maxPrice, setMaxPrice] = useState(initialParams.max_price || "");
+  const [hasPets, setHasPets] = useState(Boolean(initialParams.has_pets));
   const [sort, setSort] = useState(initialParams.sort || "newest");
 
   const [results, setResults] = useState([]);
@@ -84,6 +87,7 @@ export default function ServiceSearchScreen({ navigation, route }) {
         location_id: params.location_id || undefined,
         min_price: params.min_price || undefined,
         max_price: params.max_price || undefined,
+        has_pets: params.has_pets ? 1 : undefined,
         sort: params.sort || "newest",
         per_page: 25,
       });
@@ -104,6 +108,7 @@ export default function ServiceSearchScreen({ navigation, route }) {
       location_id: locationId,
       min_price: minPrice,
       max_price: maxPrice,
+      has_pets: hasPets,
       sort,
     };
     navigation.setParams({
@@ -123,6 +128,7 @@ export default function ServiceSearchScreen({ navigation, route }) {
     locationName,
     minPrice,
     maxPrice,
+    hasPets,
     sort,
     fetchResults,
     navigation,
@@ -135,6 +141,7 @@ export default function ServiceSearchScreen({ navigation, route }) {
     setLocationName("");
     setMinPrice("");
     setMaxPrice("");
+    setHasPets(false);
     setSort("newest");
   };
 
@@ -230,6 +237,16 @@ export default function ServiceSearchScreen({ navigation, route }) {
               </Pressable>
             );
           })}
+
+          <Pressable
+            style={[styles.chip, hasPets && styles.chipActive]}
+            onPress={() => setHasPets((prev) => !prev)}
+          >
+            <PawPrint size={13} color={hasPets ? "#FFFFFF" : colors.inkBody} />
+            <AppText style={[styles.chipText, hasPets && styles.chipTextActive]}>
+              Cho phép thú cưng
+            </AppText>
+          </Pressable>
         </ScrollView>
       </View>
 
@@ -239,7 +256,7 @@ export default function ServiceSearchScreen({ navigation, route }) {
           <AppText style={styles.summaryText}>
             {loading ? "Đang tìm dịch vụ phù hợp..." : `Tìm thấy ${totalCount} dịch vụ`}
           </AppText>
-          {(keyword || group || locationId || minPrice || maxPrice) && (
+          {(keyword || group || locationId || minPrice || maxPrice || hasPets) && (
             <Pressable onPress={handleResetFilters}>
               <AppText style={styles.resetText}>Xóa bộ lọc</AppText>
             </Pressable>
@@ -260,8 +277,7 @@ export default function ServiceSearchScreen({ navigation, route }) {
             renderItem={({ item }) => {
               const displayName = item.name || item.title || "Dịch vụ du lịch";
               const thumb =
-                item.cover_image ||
-                item.primary_image ||
+                resolveMediaUrl(item.cover_image || item.primary_image) ||
                 "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80";
               const ratingScore = Number(item.rating_avg || item.avg_rating || 0);
               const reviewsCount = Number(item.reviews_count || 0);
@@ -271,12 +287,27 @@ export default function ServiceSearchScreen({ navigation, route }) {
                   ? `${item.address}, ${item.location.name}`
                   : item.address
                 : item.location?.name || "Việt Nam";
-              const perks =
+              const displayedAmenities =
                 Array.isArray(item.amenities) && item.amenities.length > 0
-                  ? item.amenities.slice(0, 3)
+                  ? item.amenities.slice(0, 2)
                   : Array.isArray(item.includes) && item.includes.length > 0
-                    ? item.includes.slice(0, 3)
-                    : ["Hỗ trợ 24/7", "Xác nhận nhanh"];
+                    ? item.includes.slice(0, 2)
+                    : [];
+              const totalAmenities =
+                Array.isArray(item.amenities) && item.amenities.length > 0
+                  ? Number(item.amenities_count || item.amenities.length)
+                  : Array.isArray(item.includes)
+                    ? item.includes.length
+                    : 0;
+              const extraAmenities = Math.max(0, totalAmenities - displayedAmenities.length);
+
+              const displayedPolicies = Array.isArray(item.policies)
+                ? item.policies.slice(0, 1)
+                : [];
+              const extraPolicies = Math.max(
+                0,
+                Number(item.policies_count || displayedPolicies.length) - displayedPolicies.length,
+              );
 
               const categoryLabel = item.category?.name || getServiceTypeLabel(item.type);
 
@@ -290,10 +321,19 @@ export default function ServiceSearchScreen({ navigation, route }) {
                   </View>
 
                   <View style={styles.resultBody}>
-                    <View style={styles.categoryTag}>
-                      <AppText style={styles.categoryTagText} numberOfLines={1}>
-                        {categoryLabel}
-                      </AppText>
+                    <View style={styles.tagsRow}>
+                      <View style={styles.categoryTag}>
+                        <AppText style={styles.categoryTagText} numberOfLines={1}>
+                          {categoryLabel}
+                        </AppText>
+                      </View>
+                      {item.active_promotion ? (
+                        <View style={styles.promoTag}>
+                          <AppText style={styles.promoTagText} numberOfLines={1}>
+                            {item.active_promotion.badge_text}
+                          </AppText>
+                        </View>
+                      ) : null}
                     </View>
 
                     <AppText style={styles.resultTitle} numberOfLines={2}>
@@ -334,28 +374,66 @@ export default function ServiceSearchScreen({ navigation, route }) {
                       </View>
                     ) : null}
 
-                    <View style={styles.perksRow}>
-                      {perks.map((perk, idx) => (
-                        <View key={`${perk}-${idx}`} style={styles.perkChip}>
-                          <AppText style={styles.perkChipText} numberOfLines={1}>
-                            {perk}
-                          </AppText>
-                        </View>
-                      ))}
-                    </View>
+                    {displayedPolicies.length > 0 ? (
+                      <View style={styles.policiesRow}>
+                        {displayedPolicies.map((pol) => (
+                          <View key={pol.id} style={styles.policyChip}>
+                            <ShieldCheck size={11} color="#059669" />
+                            <AppText style={styles.policyChipText} numberOfLines={1}>
+                              {pol.name}
+                            </AppText>
+                          </View>
+                        ))}
+                        {extraPolicies > 0 ? (
+                          <View style={styles.moreChip}>
+                            <AppText style={styles.moreChipText}>
+                              +{extraPolicies} chính sách
+                            </AppText>
+                          </View>
+                        ) : null}
+                      </View>
+                    ) : null}
 
-                    {item.type === "hotel" || item.type === "homestay" ? (
-                      <View style={styles.escrowBadge}>
-                        <ShieldCheck size={11} color="#059669" />
-                        <AppText style={styles.escrowBadgeText}>Cọc an toàn 30%</AppText>
+                    {displayedAmenities.length > 0 ? (
+                      <View style={styles.perksRow}>
+                        {displayedAmenities.map((perk, idx) => (
+                          <View key={`${perk}-${idx}`} style={styles.perkChip}>
+                            <AppText style={styles.perkChipText} numberOfLines={1}>
+                              {perk}
+                            </AppText>
+                          </View>
+                        ))}
+                        {extraAmenities > 0 ? (
+                          <View style={styles.moreChip}>
+                            <AppText style={styles.moreChipText}>
+                              +{extraAmenities} tiện nghi
+                            </AppText>
+                          </View>
+                        ) : null}
                       </View>
                     ) : null}
 
                     <View style={styles.priceFooter}>
-                      <AppText style={styles.priceFromText}>Giá từ</AppText>
+                      <View>
+                        <AppText style={styles.priceFromText}>Giá từ</AppText>
+                        {item.active_promotion ? (
+                          <AppText style={styles.strikePriceText}>
+                            {formatCurrencyVnd(item.base_price)}
+                          </AppText>
+                        ) : null}
+                      </View>
                       <View style={styles.priceValueRow}>
-                        <AppText style={styles.resultPrice}>
-                          {formatCurrencyVnd(item.base_price)}
+                        <AppText
+                          style={[
+                            styles.resultPrice,
+                            item.active_promotion && { color: "#E11D48" },
+                          ]}
+                        >
+                          {formatCurrencyVnd(
+                            item.active_promotion
+                              ? item.active_promotion.discounted_price
+                              : item.base_price,
+                          )}
                         </AppText>
                         <AppText style={styles.priceUnitText}>
                           /{formatPriceUnit(item.price_unit, item.type)}
@@ -663,6 +741,29 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: colors.brandPrimary,
   },
+  tagsRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 5,
+  },
+  promoTag: {
+    backgroundColor: "#FFF1F2",
+    borderWidth: 1,
+    borderColor: "#FECDD3",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: radius.full,
+  },
+  promoTagText: {
+    fontSize: 10.5,
+    fontWeight: "700",
+    color: "#E11D48",
+  },
+  strikePriceText: {
+    fontSize: 11,
+    color: colors.inkSubtle,
+    textDecorationLine: "line-through",
+  },
   resultTitle: {
     fontSize: 15,
     fontWeight: "700",
@@ -713,6 +814,28 @@ const styles = StyleSheet.create({
     color: colors.inkSubtle,
     flexShrink: 1,
   },
+  policiesRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 4,
+    marginTop: 2,
+  },
+  policyChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    backgroundColor: "#ECFDF5",
+    paddingHorizontal: 6,
+    paddingVertical: 2.5,
+    borderRadius: 5,
+    maxWidth: 145,
+  },
+  policyChipText: {
+    fontSize: 10,
+    fontWeight: "600",
+    color: "#059669",
+    flexShrink: 1,
+  },
   perksRow: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -724,12 +847,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 7,
     paddingVertical: 2,
     borderRadius: 5,
-    maxWidth: 110,
+    maxWidth: 105,
   },
   perkChipText: {
     fontSize: 10.5,
     fontWeight: "600",
     color: colors.inkBody,
+  },
+  moreChip: {
+    backgroundColor: "#F0F9FF",
+    borderWidth: 1,
+    borderColor: "#BAE6FD",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 5,
+  },
+  moreChipText: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: colors.brandPrimary,
   },
   priceFooter: {
     flexDirection: "row",
@@ -739,21 +875,6 @@ const styles = StyleSheet.create({
     paddingTop: 6,
     borderTopWidth: 1,
     borderTopColor: "#F1F5F9",
-  },
-  escrowBadge: {
-    alignSelf: "flex-start",
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 3,
-    backgroundColor: "#ECFDF5",
-    paddingHorizontal: 6,
-    paddingVertical: 3,
-    borderRadius: 5,
-  },
-  escrowBadgeText: {
-    fontSize: 10,
-    fontWeight: "700",
-    color: "#059669",
   },
   priceFromText: {
     fontSize: 11,

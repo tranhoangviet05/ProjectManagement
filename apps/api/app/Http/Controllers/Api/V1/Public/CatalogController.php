@@ -160,14 +160,15 @@ class CatalogController extends Controller
     }
 
     /**
-     * Lấy danh sách chương trình khuyến mãi ngày lễ đang diễn ra.
+     * Lấy danh sách chương trình khuyến mãi ngày lễ đang mở trên sàn.
      */
     public function campaigns(): JsonResponse
     {
         $campaigns = HolidayCampaign::query()
-            ->currentlyActive()
+            ->where('status', 'active')
+            ->where('ends_at', '>=', now())
             ->orderByDesc('priority')
-            ->orderBy('ends_at')
+            ->orderBy('starts_at')
             ->get();
 
         return response()->json([

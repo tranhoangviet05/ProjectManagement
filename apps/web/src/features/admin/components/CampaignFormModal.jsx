@@ -1,6 +1,7 @@
-import React, { useState } from "react";
-import { Loader2, X } from "lucide-react";
+import React, { useRef, useState } from "react";
+import { ImagePlus, Loader2, Trash2, X } from "lucide-react";
 import Typography from "../../../components/ui/Typography";
+import apiClient from "../../../lib/apiClient";
 
 function toLocalDateInput(isoString) {
   if (!isoString) return "";
@@ -8,6 +9,59 @@ function toLocalDateInput(isoString) {
   if (Number.isNaN(d.getTime())) return "";
   const pad = (n) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+/**
+ * Tự động tối ưu ảnh banner dung lượng lớn (> 1.5MB) về độ phân giải Full HD (tối đa 1920px)
+ * để tải lên nhanh, không bị chặn bởi giới hạn upload_max_filesize của PHP và hiển thị mượt trên Mobile.
+ */
+async function optimizeBannerFile(file) {
+  if (file.size <= 1.5 * 1024 * 1024) return file;
+
+  return new Promise((resolve) => {
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      const maxWidth = 1920;
+      let { width, height } = img;
+      if (width > maxWidth) {
+        height = Math.round((height * maxWidth) / width);
+        width = maxWidth;
+      }
+
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        resolve(file);
+        return;
+      }
+
+      ctx.drawImage(img, 0, 0, width, height);
+      canvas.toBlob(
+        (blob) => {
+          if (!blob || blob.size >= file.size) {
+            resolve(file);
+            return;
+          }
+          const baseName = file.name.replace(/\.[^.]+$/, "");
+          resolve(new File([blob], `${baseName}.jpg`, { type: "image/jpeg" }));
+        },
+        "image/jpeg",
+        0.88,
+      );
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      resolve(file);
+    };
+
+    img.src = objectUrl;
+  });
 }
 
 export default function CampaignFormModal({
@@ -43,8 +97,49 @@ export default function CampaignFormModal({
     status: isReopen ? "active" : campaign?.status || "active",
   });
   const [error, setError] = useState("");
+  const [bannerError, setBannerError] = useState("");
+  const [isUploadingBanner, setIsUploadingBanner] = useState(false);
+  const fileInputRef = useRef(null);
 
   if (!isOpen) return null;
+
+  const handleBannerFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const validTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+    if (!validTypes.includes(file.type)) {
+      setBannerError("Chỉ hỗ trợ ảnh định dạng JPG, PNG hoặc WEBP.");
+      return;
+    }
+    if (file.size > 20 * 1024 * 1024) {
+      setBannerError("Dung lượng ảnh banner tối đa 20MB.");
+      return;
+    }
+
+    setBannerError("");
+    setError("");
+    setIsUploadingBanner(true);
+    try {
+      const uploadFile = await optimizeBannerFile(file);
+      const fd = new FormData();
+      fd.append("type", "banner");
+      fd.append("file", uploadFile);
+
+      const res = await apiClient.post("/media/upload", fd);
+      const uploadedUrl = res?.data?.url;
+      if (uploadedUrl) {
+        setForm((prev) => ({ ...prev, banner_url: uploadedUrl }));
+      } else {
+        setBannerError("Không nhận được đường dẫn ảnh từ máy chủ.");
+      }
+    } catch (err) {
+      setBannerError(err?.message || "Tải ảnh banner lên kho lưu trữ thất bại.");
+    } finally {
+      setIsUploadingBanner(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
 
   const handleChange = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -259,16 +354,72 @@ export default function CampaignFormModal({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-ink-primary mb-1">
-                  Đường dẫn ảnh Banner
+                <label className="block text-xs font-semibold text-ink-primary mb-1.5">
+                  Ảnh Banner chương trình (tải từ máy lên kho lưu trữ)
                 </label>
+
                 <input
-                  type="url"
-                  value={form.banner_url}
-                  onChange={(e) => handleChange("banner_url", e.target.value)}
-                  placeholder="https://..."
-                  className="w-full px-3.5 py-2 rounded-lg border border-border-subtle bg-surface-base text-sm text-ink-primary outline-hidden focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={handleBannerFileChange}
+                  className="hidden"
                 />
+
+                {form.banner_url ? (
+                  <div className="relative rounded-xl overflow-hidden border border-border-subtle bg-slate-100">
+                    <img
+                      src={form.banner_url}
+                      alt="Xem trước banner"
+                      className="w-full aspect-video object-cover"
+                    />
+                    <div className="absolute top-2 right-2 flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        disabled={isUploadingBanner}
+                        onClick={() => fileInputRef.current?.click()}
+                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-900/80 hover:bg-slate-900 text-white text-xs font-semibold cursor-pointer"
+                      >
+                        <ImagePlus className="w-3.5 h-3.5" />
+                        <span>Đổi ảnh</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleChange("banner_url", "")}
+                        className="p-1.5 rounded-lg bg-rose-600/90 hover:bg-rose-600 text-white cursor-pointer"
+                        title="Xóa ảnh banner"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    disabled={isUploadingBanner}
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full py-6 px-4 rounded-xl border-2 border-dashed border-border-subtle hover:border-brand-primary bg-surface-base hover:bg-brand-subtle/40 transition-colors flex flex-col items-center justify-center gap-1.5 cursor-pointer disabled:opacity-60"
+                  >
+                    {isUploadingBanner ? (
+                      <>
+                        <Loader2 className="w-6 h-6 text-brand-primary animate-spin" />
+                        <span className="text-xs font-semibold text-brand-primary">
+                          Đang tải ảnh lên máy chủ...
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <ImagePlus className="w-6 h-6 text-ink-subtle" />
+                        <span className="text-xs font-semibold text-ink-primary">
+                          Nhấn để chọn ảnh Banner từ máy tính
+                        </span>
+                        <span className="text-[11px] text-ink-subtle">
+                          Khuyên dùng tỷ lệ 16:9 · Hỗ trợ JPG, PNG, WEBP · Tối đa 20MB
+                        </span>
+                      </>
+                    )}
+                  </button>
+                )}
               </div>
 
               <div>
@@ -282,6 +433,9 @@ export default function CampaignFormModal({
                   placeholder="Mô tả thể lệ và ưu đãi cho Nhà cung cấp & Khách du lịch..."
                   className="w-full px-3.5 py-2 rounded-lg border border-border-subtle bg-surface-base text-sm text-ink-primary outline-hidden focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
                 />
+                {bannerError && (
+                  <p className="mt-1.5 text-xs font-medium text-status-danger">{bannerError}</p>
+                )}
               </div>
             </>
           )}

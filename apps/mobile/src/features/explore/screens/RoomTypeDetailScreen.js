@@ -2,15 +2,9 @@ import React, { useMemo, useState } from "react";
 import { Dimensions, FlatList, Image, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
-import {
-  ArrowLeft,
-  BedDouble,
-  CheckCircle2,
-  ShieldCheck,
-  Sparkles,
-  Users,
-} from "lucide-react-native";
+import { ArrowLeft, BedDouble, CheckCircle2, Sparkles, Users } from "lucide-react-native";
 import AppText from "../../../components/common/AppText";
+import { resolveMediaUrl } from "../../../lib/apiClient";
 import { colors, radius, spacing, touchTarget } from "../../../theme/tokens";
 import { formatCurrencyVnd } from "../models/exploreModel";
 
@@ -29,19 +23,25 @@ export default function RoomTypeDetailScreen({ navigation, route }) {
   const [activeIndex, setActiveIndex] = useState(0);
 
   const images = useMemo(() => {
-    const roomImgs = Array.isArray(room.images) ? room.images.filter(Boolean) : [];
+    const roomImgs = Array.isArray(room.images)
+      ? room.images.map((u) => resolveMediaUrl(u)).filter(Boolean)
+      : [];
     if (roomImgs.length > 0) return roomImgs;
     const svcMedia = Array.isArray(service.media)
-      ? service.media.map((m) => m.url).filter(Boolean)
+      ? service.media.map((m) => resolveMediaUrl(m.url)).filter(Boolean)
       : [];
     if (svcMedia.length > 0) return svcMedia;
-    if (service.cover_image) return [service.cover_image];
+    const resolvedCover = resolveMediaUrl(service.cover_image);
+    if (resolvedCover) return [resolvedCover];
     return [FALLBACK_ROOM_IMAGE];
   }, [room.images, service.media, service.cover_image]);
 
   const amenities = Array.isArray(room.amenities) ? room.amenities : [];
   const availableCount = room.inventory ?? room.total_rooms ?? 0;
   const price = Number(room.base_price || service.base_price || 0);
+  const hasDepositPolicy =
+    Array.isArray(service?.policies) &&
+    service.policies.some((p) => /đặt cọc giữ chỗ 30%/i.test(p.name || ""));
   const depositAmount = Math.round(price * 0.3);
 
   const handleSelectRoom = () => {
@@ -84,8 +84,6 @@ export default function RoomTypeDetailScreen({ navigation, route }) {
               <Image source={{ uri: item }} style={styles.slideImage} resizeMode="cover" />
             )}
           />
-
-          <View style={styles.topScrim} pointerEvents="none" />
 
           <Pressable
             onPress={() => navigation.goBack()}
@@ -166,18 +164,6 @@ export default function RoomTypeDetailScreen({ navigation, route }) {
               </AppText>
             )}
           </View>
-
-          {/* Chính sách Cọc an toàn 30% Escrow */}
-          <View style={styles.escrowCard}>
-            <ShieldCheck size={20} color="#059669" />
-            <View style={{ flex: 1, gap: 3 }}>
-              <AppText style={styles.escrowTitle}>Chính sách Cọc an toàn 30% (Escrow)</AppText>
-              <AppText style={styles.escrowDesc}>
-                Giữ phòng ngay chỉ với {formatCurrencyVnd(depositAmount)} (30% giá phòng). Số tiền
-                này được bảo vệ an toàn đến khi bạn quét mã QR check-in thành công.
-              </AppText>
-            </View>
-          </View>
         </View>
       </ScrollView>
 
@@ -189,9 +175,11 @@ export default function RoomTypeDetailScreen({ navigation, route }) {
             <AppText style={styles.priceValue}>{formatCurrencyVnd(price)}</AppText>
             <AppText style={styles.priceUnit}>/đêm</AppText>
           </View>
-          <AppText style={styles.depositHint}>
-            Cọc trước 30%: {formatCurrencyVnd(depositAmount)}
-          </AppText>
+          {hasDepositPolicy ? (
+            <AppText style={styles.depositHint}>
+              Cọc trước 30%: {formatCurrencyVnd(depositAmount)}
+            </AppText>
+          ) : null}
         </View>
 
         <Pressable
@@ -220,14 +208,6 @@ const styles = StyleSheet.create({
   slideImage: {
     width: SCREEN_WIDTH,
     height: GALLERY_HEIGHT,
-  },
-  topScrim: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 92,
-    backgroundColor: "rgba(15, 23, 42, 0.25)",
   },
   backBtn: {
     position: "absolute",

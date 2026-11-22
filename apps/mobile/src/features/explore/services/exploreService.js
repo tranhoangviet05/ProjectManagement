@@ -24,6 +24,7 @@ const exploreService = {
     if (params.max_price !== undefined && params.max_price !== "") {
       query.set("max_price", String(params.max_price));
     }
+    if (params.has_pets) query.set("has_pets", "1");
     if (params.sort) query.set("sort", params.sort);
     if (params.per_page) query.set("per_page", String(params.per_page));
 
@@ -37,6 +38,10 @@ const exploreService = {
 
   async fetchFeaturedPosts(limit = 12) {
     return apiClient.get(`/public/posts/featured?limit=${limit}`);
+  },
+
+  async fetchActiveCampaigns() {
+    return apiClient.get("/public/campaigns");
   },
 };
 

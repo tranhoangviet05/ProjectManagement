@@ -130,6 +130,28 @@ class ProviderCampaignController extends Controller
             ], 422);
         }
 
+        if ($validated['is_active']) {
+            $existingActivePromotion = ServicePromotion::query()
+                ->where('service_id', $service->id)
+                ->where('holiday_campaign_id', '!=', $campaign->id)
+                ->where('is_active', true)
+                ->whereHas('holidayCampaign', fn ($q) => $q
+                    ->where('status', '!=', 'ended')
+                    ->where('ends_at', '>=', now())
+                )
+                ->with('holidayCampaign:id,name')
+                ->first();
+
+            if ($existingActivePromotion) {
+                $otherName = $existingActivePromotion->holidayCampaign?->name ?? 'chương trình khác';
+
+                return response()->json([
+                    'success' => false,
+                    'message' => "Dịch vụ này đang tham gia \"{$otherName}\". Mỗi dịch vụ chỉ được tham gia tối đa 1 chương trình khuyến mãi tại một thời điểm.",
+                ], 422);
+            }
+        }
+
         $discountValue = isset($validated['discount_value'])
             ? (float) $validated['discount_value']
             : (float) $campaign->discount_value;
