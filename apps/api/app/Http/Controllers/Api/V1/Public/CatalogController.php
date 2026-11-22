@@ -15,15 +15,24 @@ use Illuminate\Http\Request;
 class CatalogController extends Controller
 {
     /**
-     * Lấy danh sách danh mục dịch vụ du lịch.
+     * Lấy danh sách danh mục dịch vụ du lịch (hỗ trợ lọc theo ?type=hotel|homestay|tour|vehicle|train).
      */
-    public function categories(): JsonResponse
+    public function categories(Request $request): JsonResponse
     {
-        $categories = Category::query()->orderBy('id')->get();
+        $type = trim((string) $request->query('type', ''));
+
+        $query = Category::query()->orderBy('id');
+
+        if ($type !== '') {
+            $query->where(function ($sub) use ($type) {
+                $sub->whereJsonContains('applicable_types', $type)
+                    ->orWhereJsonLength('applicable_types', 0);
+            });
+        }
 
         return response()->json([
             'success' => true,
-            'data' => $categories,
+            'data' => $query->get(),
         ]);
     }
 

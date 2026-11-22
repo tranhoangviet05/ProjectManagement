@@ -98,6 +98,7 @@ class AdminCatalogManagementTest extends TestCase
         $catRes = $this->withHeader('Authorization', 'Bearer '.$this->adminToken)
             ->postJson('/api/v1/admin/categories', [
                 'name' => 'Du lịch Sinh thái '.$suffix,
+                'applicable_types' => ['tour'],
                 'icon' => 'trees',
                 'icon_url' => 'https://example.com/eco.png',
                 'description' => 'Khám phá rừng nguyên sinh và biển đảo.',
@@ -105,6 +106,15 @@ class AdminCatalogManagementTest extends TestCase
 
         $catRes->assertStatus(201)->assertJsonPath('data.slug', 'du-lich-sinh-thai-'.$suffix);
         $catId = $catRes->json('data.id');
+
+        // Public API lọc danh mục theo ?type=
+        $tourCats = $this->getJson('/api/v1/public/categories?type=tour');
+        $tourCats->assertStatus(200);
+        $this->assertTrue(collect($tourCats->json('data'))->pluck('id')->contains($catId));
+
+        $vehicleCats = $this->getJson('/api/v1/public/categories?type=vehicle');
+        $vehicleCats->assertStatus(200);
+        $this->assertFalse(collect($vehicleCats->json('data'))->pluck('id')->contains($catId));
 
         $btRes = $this->withHeader('Authorization', 'Bearer '.$this->adminToken)
             ->postJson('/api/v1/admin/business-types', [
