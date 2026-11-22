@@ -81,6 +81,7 @@ class PublicServiceController extends Controller
         $group = trim((string) $request->query('group', ''));
         $minPrice = $request->query('min_price');
         $maxPrice = $request->query('max_price');
+        $hasPets = filter_var($request->query('has_pets', false), FILTER_VALIDATE_BOOLEAN);
         $sort = (string) $request->query('sort', 'newest');
         $perPage = min(max((int) $request->query('per_page', 15), 1), 50);
 
@@ -155,6 +156,10 @@ class PublicServiceController extends Controller
 
         if (is_numeric($maxPrice)) {
             $query->where('base_price', '<=', (float) $maxPrice);
+        }
+
+        if ($hasPets) {
+            $query->whereHas('policies', fn ($p) => $p->where('name', 'ilike', '%Cho phép mang theo thú cưng%'));
         }
 
         if ($sort === 'price_asc') {
