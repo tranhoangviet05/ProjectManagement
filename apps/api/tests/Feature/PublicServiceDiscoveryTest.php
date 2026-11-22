@@ -4,13 +4,19 @@ namespace Tests\Feature;
 
 use App\Enums\ProviderStatus;
 use App\Enums\ServiceStatus;
+use App\Models\Category;
+use App\Models\HolidayCampaign;
 use App\Models\Location;
 use App\Models\Post;
 use App\Models\PostMedia;
 use App\Models\ProviderProfile;
 use App\Models\Service;
+use App\Models\ServicePolicy;
+use App\Models\ServicePromotion;
 use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
+use Database\Seeders\HolidayCampaignSeeder;
+use Database\Seeders\ServicePolicySeeder;
 use Tests\TestCase;
 
 class PublicServiceDiscoveryTest extends TestCase
@@ -23,6 +29,8 @@ class PublicServiceDiscoveryTest extends TestCase
     {
         parent::setUp();
         $this->seed(DatabaseSeeder::class);
+        $this->seed(ServicePolicySeeder::class);
+        $this->seed(HolidayCampaignSeeder::class);
 
         $providerUser = User::where('email', 'tranhoangviet.provider@gmail.com')->firstOrFail();
         $this->approvedProvider = ProviderProfile::where('user_id', $providerUser->id)->firstOrFail();
@@ -90,9 +98,80 @@ class PublicServiceDiscoveryTest extends TestCase
                     'room_types',
                     'availability',
                     'reviews',
+                    'policies',
+                    'active_promotion',
                 ],
             ]);
         $this->getJson('/api/v1/public/services/'.$pendingService->id)->assertStatus(404);
+    }
+
+    public function test_promoted_service_with_higher_discount_is_prioritized_first(): void
+    {
+        $category = Category::firstOrFail();
+        $location = Location::firstOrFail();
+        $campaign = HolidayCampaign::where('status', 'active')->firstOrFail();
+        $policy = ServicePolicy::firstOrFail();
+
+        $standardSvc = Service::create([
+            'provider_id' => $this->approvedProvider->id,
+            'category_id' => $category->id,
+            'location_id' => $location->id,
+            'name' => 'Khách sạn Chuẩn '.substr(uniqid(), -5),
+            'slug' => 'khach-san-chuan-'.substr(uniqid(), -6),
+            'description' => 'Giảm theo chuẩn chiến dịch.',
+            'type' => 'hotel',
+            'status' => 'active',
+            'base_price' => 1000000,
+            'price_unit' => 'đêm',
+            'address' => 'Đà Nẵng',
+        ]);
+
+        $boostedSvc = Service::create([
+            'provider_id' => $this->approvedProvider->id,
+            'category_id' => $category->id,
+            'location_id' => $location->id,
+            'name' => 'Khách sạn Ưu Tiên '.substr(uniqid(), -5),
+            'slug' => 'khach-san-uu-tien-'.substr(uniqid(), -6),
+            'description' => 'Giảm sâu hơn chuẩn chiến dịch.',
+            'type' => 'hotel',
+            'status' => 'active',
+            'base_price' => 1000000,
+            'price_unit' => 'đêm',
+            'address' => 'Đà Nẵng',
+        ]);
+        $boostedSvc->policies()->sync([$policy->id]);
+
+        ServicePromotion::create([
+            'holiday_campaign_id' => $campaign->id,
+            'service_id' => $standardSvc->id,
+            'discount_type' => $campaign->discount_type,
+            'discount_value' => $campaign->discount_value,
+            'is_active' => true,
+        ]);
+
+        ServicePromotion::create([
+            'holiday_campaign_id' => $campaign->id,
+            'service_id' => $boostedSvc->id,
+            'discount_type' => $campaign->discount_type,
+            'discount_value' => $campaign->discount_value + 15,
+            'is_active' => true,
+        ]);
+
+        $res = $this->getJson('/api/v1/public/services?per_page=10');
+        $res->assertStatus(200);
+        $ids = collect($res->json('data'))->pluck('id')->values();
+
+        $boostedIndex = $ids->search($boostedSvc->id);
+        $standardIndex = $ids->search($standardSvc->id);
+
+        $this->assertNotFalse($boostedIndex);
+        $this->assertNotFalse($standardIndex);
+        $this->assertTrue($boostedIndex < $standardIndex);
+
+        $detail = $this->getJson('/api/v1/public/services/'.$boostedSvc->id);
+        $detail->assertStatus(200)
+            ->assertJsonPath('data.policies.0.id', $policy->id)
+            ->assertJsonPath('data.active_promotion.campaign_id', $campaign->id);
     }
 
     public function test_public_featured_posts_excludes_hidden_and_private_posts(): void
