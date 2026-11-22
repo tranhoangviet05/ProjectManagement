@@ -6,6 +6,7 @@ import PlatformUnsupportedScreen from "../features/auth/screens/PlatformUnsuppor
 import TouristTabsNavigator from "./TouristTabsNavigator";
 import ServiceSearchScreen from "../features/explore/screens/ServiceSearchScreen";
 import AllLocationsScreen from "../features/explore/screens/AllLocationsScreen";
+import RoomTypeDetailScreen from "../features/explore/screens/RoomTypeDetailScreen";
 import ToursScreen from "../features/tour/screens/ToursScreen";
 import DetailScreen from "../features/tour/screens/DetailScreen";
 
@@ -43,10 +44,11 @@ export default function RootNavigator() {
         component={ToursScreen}
         options={{ headerShown: true, title: "Danh sách Tour" }}
       />
+      <Stack.Screen name="Detail" component={DetailScreen} options={{ headerShown: false }} />
       <Stack.Screen
-        name="Detail"
-        component={DetailScreen}
-        options={{ headerShown: true, title: "Chi tiết Dịch vụ" }}
+        name="RoomTypeDetail"
+        component={RoomTypeDetailScreen}
+        options={{ headerShown: false }}
       />
       <Stack.Screen name="Auth" component={AuthScreen} />
     </Stack.Navigator>
