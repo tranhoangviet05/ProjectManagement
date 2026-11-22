@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\Admin\AdminAmenityController;
 use App\Http\Controllers\Api\V1\Admin\AdminBookingController;
 use App\Http\Controllers\Api\V1\Admin\AdminBusinessTypeController;
 use App\Http\Controllers\Api\V1\Admin\AdminCategoryController;
@@ -9,6 +10,7 @@ use App\Http\Controllers\Api\V1\Admin\AdminKycController;
 use App\Http\Controllers\Api\V1\Admin\AdminLocationController;
 use App\Http\Controllers\Api\V1\Admin\AdminReportController;
 use App\Http\Controllers\Api\V1\Admin\AdminServiceController;
+use App\Http\Controllers\Api\V1\Admin\AdminServiceInclusionController;
 use App\Http\Controllers\Api\V1\Admin\AdminUserController;
 use Illuminate\Support\Facades\Route;
 
@@ -70,6 +72,21 @@ Route::prefix('business-types')->group(function () {
     Route::post('/', [AdminBusinessTypeController::class, 'store']);
     Route::put('/{id}', [AdminBusinessTypeController::class, 'update']);
     Route::delete('/{id}', [AdminBusinessTypeController::class, 'destroy']);
+});
+
+// Phân hệ Quản lý Tiện nghi & Bao gồm/Không bao gồm (Task #60)
+Route::prefix('amenities')->group(function () {
+    Route::get('/', [AdminAmenityController::class, 'index']);
+    Route::post('/', [AdminAmenityController::class, 'store']);
+    Route::put('/{id}', [AdminAmenityController::class, 'update']);
+    Route::delete('/{id}', [AdminAmenityController::class, 'destroy']);
+});
+
+Route::prefix('inclusions')->group(function () {
+    Route::get('/', [AdminServiceInclusionController::class, 'index']);
+    Route::post('/', [AdminServiceInclusionController::class, 'store']);
+    Route::put('/{id}', [AdminServiceInclusionController::class, 'update']);
+    Route::delete('/{id}', [AdminServiceInclusionController::class, 'destroy']);
 });
 
 // Phân hệ Kiểm duyệt Nội dung & Báo cáo Cộng đồng (Task #55)
