@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+﻿import React, { useState, useRef, useEffect } from "react";
 import {
   StyleSheet,
   Animated,
@@ -7,9 +7,13 @@ import {
   ScrollView,
   Platform,
   Alert,
+  Pressable,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { colors, spacing } from "../../../theme/tokens";
+import { ArrowLeft } from "lucide-react-native";
+import { colors, radius, spacing, touchTarget } from "../../../theme/tokens";
+import AppText from "../../../components/common/AppText";
 import { useAuth } from "../../../hooks/useAuth";
 import MobileAuthHeader from "../components/MobileAuthHeader";
 import MobileLoginForm from "../components/MobileLoginForm";
@@ -23,10 +27,11 @@ import { validateLoginInput, validateRegisterInput, USER_ROLES } from "../models
  * - Slide-up entrance animation mượt mà khi màn hình hiển thị sau Splash
  * - Tuân thủ quy chuẩn Single Responsibility & dưới 150 dòng code (< 150 lines)
  */
-export default function AuthScreen() {
+export default function AuthScreen({ navigation, route }) {
   const { login, register, isSubmitting } = useAuth();
+  const initialMode = route?.params?.initialMode === "register" ? "register" : "login";
 
-  const [mode, setMode] = useState("login");
+  const [mode, setMode] = useState(initialMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -74,6 +79,10 @@ export default function AuthScreen() {
     if (!result.success) {
       setErrorMessage(result.message || "Đăng nhập không thành công.");
       if (result.errors) setFieldErrors(result.errors);
+      return;
+    }
+    if (navigation?.canGoBack?.()) {
+      navigation.goBack();
     }
   };
 
@@ -97,6 +106,10 @@ export default function AuthScreen() {
     if (!result.success) {
       setErrorMessage(result.message || "Đăng ký không thành công.");
       if (result.errors) setFieldErrors(result.errors);
+      return;
+    }
+    if (navigation?.canGoBack?.()) {
+      navigation.goBack();
     }
   };
 
@@ -124,6 +137,19 @@ export default function AuthScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      {navigation?.canGoBack?.() && (
+        <View style={styles.topBackBar}>
+          <Pressable
+            onPress={() => navigation.goBack()}
+            style={styles.backBtn}
+            accessibilityRole="button"
+            accessibilityLabel="Quay lại"
+          >
+            <ArrowLeft size={20} color={colors.inkPrimary} />
+            <AppText style={styles.backBtnText}>Quay lại</AppText>
+          </Pressable>
+        </View>
+      )}
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -168,6 +194,24 @@ export default function AuthScreen() {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.surfaceElevated },
+  topBackBar: {
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.xs,
+    alignItems: "flex-start",
+  },
+  backBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    minHeight: touchTarget.minHeight,
+    paddingHorizontal: spacing.sm,
+    borderRadius: radius.md,
+  },
+  backBtnText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: colors.inkPrimary,
+  },
   keyboardView: { flex: 1 },
   scrollContent: {
     flexGrow: 1,

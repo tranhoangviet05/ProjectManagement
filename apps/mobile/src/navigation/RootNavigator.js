@@ -3,7 +3,9 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { useAuth } from "../hooks/useAuth";
 import AuthScreen from "../features/auth/screens/AuthScreen";
 import PlatformUnsupportedScreen from "../features/auth/screens/PlatformUnsupportedScreen";
-import TouristWorkspaceScreen from "../features/tourist/screens/TouristWorkspaceScreen";
+import TouristTabsNavigator from "./TouristTabsNavigator";
+import ServiceSearchScreen from "../features/explore/screens/ServiceSearchScreen";
+import AllLocationsScreen from "../features/explore/screens/AllLocationsScreen";
 import ToursScreen from "../features/tour/screens/ToursScreen";
 import DetailScreen from "../features/tour/screens/DetailScreen";
 
@@ -11,38 +13,42 @@ const Stack = createNativeStackNavigator();
 
 /**
  * Điều hướng gốc ứng dụng Mobile:
- * - Khách chưa đăng nhập: AuthScreen
- * - Khách du lịch (tourist): TouristWorkspace & luồng khám phá tour
- * - Quản trị viên (admin) hoặc Nhà cung cấp (provider): Màn hình 404 PlatformUnsupportedScreen
+ * - Mặc định mở thẳng Trang chủ (TouristTabsNavigator — Tab Tìm kiếm) cho cả Khách vãng lai (Guest) và Du khách (tourist).
+ * - Khách vãng lai có thể chủ động bấm Đăng nhập / Đăng ký bất cứ lúc nào (stack Auth).
+ * - Quản trị viên (admin) hoặc Nhà cung cấp (provider) sau khi đăng nhập sẽ chuyển sang PlatformUnsupportedScreen.
  */
 export default function RootNavigator() {
   const { isAuthenticated, role } = useAuth();
 
+  if (isAuthenticated && role !== "tourist") {
+    return (
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="PlatformUnsupported" component={PlatformUnsupportedScreen} />
+      </Stack.Navigator>
+    );
+  }
+
   return (
     <Stack.Navigator
+      initialRouteName="TouristMainTabs"
       screenOptions={{
         headerShown: false,
       }}
     >
-      {!isAuthenticated ? (
-        <Stack.Screen name="Auth" component={AuthScreen} />
-      ) : role === "tourist" ? (
-        <>
-          <Stack.Screen name="TouristWorkspace" component={TouristWorkspaceScreen} />
-          <Stack.Screen
-            name="Tours"
-            component={ToursScreen}
-            options={{ headerShown: true, title: "Danh sách Tour" }}
-          />
-          <Stack.Screen
-            name="Detail"
-            component={DetailScreen}
-            options={{ headerShown: true, title: "Chi tiết Dịch vụ" }}
-          />
-        </>
-      ) : (
-        <Stack.Screen name="PlatformUnsupported" component={PlatformUnsupportedScreen} />
-      )}
+      <Stack.Screen name="TouristMainTabs" component={TouristTabsNavigator} />
+      <Stack.Screen name="ServiceSearch" component={ServiceSearchScreen} />
+      <Stack.Screen name="AllLocations" component={AllLocationsScreen} />
+      <Stack.Screen
+        name="Tours"
+        component={ToursScreen}
+        options={{ headerShown: true, title: "Danh sách Tour" }}
+      />
+      <Stack.Screen
+        name="Detail"
+        component={DetailScreen}
+        options={{ headerShown: true, title: "Chi tiết Dịch vụ" }}
+      />
+      <Stack.Screen name="Auth" component={AuthScreen} />
     </Stack.Navigator>
   );
 }

@@ -633,6 +633,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: spacing.lg,
+    paddingBottom: 120,
     gap: spacing.base,
   },
   card: {
