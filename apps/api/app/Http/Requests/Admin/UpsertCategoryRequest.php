@@ -40,6 +40,8 @@ class UpsertCategoryRequest extends FormRequest
                 'alpha_dash',
                 Rule::unique('categories', 'slug')->ignore($categoryId),
             ],
+            'applicable_types' => ['required', 'array', 'min:1'],
+            'applicable_types.*' => ['string', Rule::in(['hotel', 'homestay', 'tour', 'vehicle', 'train'])],
             'icon' => ['nullable', 'string', 'max:100'],
             'icon_url' => ['nullable', 'string', 'max:1000'],
             'description' => ['nullable', 'string', 'max:2000'],
@@ -56,6 +58,8 @@ class UpsertCategoryRequest extends FormRequest
             'slug.required' => 'Vui lòng nhập slug danh mục.',
             'slug.unique' => 'Slug danh mục này đã tồn tại trên hệ thống.',
             'slug.alpha_dash' => 'Slug chỉ được chứa chữ thường, số và dấu gạch ngang (-).',
+            'applicable_types.required' => 'Vui lòng chọn ít nhất một loại hình dịch vụ áp dụng.',
+            'applicable_types.min' => 'Vui lòng chọn ít nhất một loại hình dịch vụ áp dụng.',
         ];
     }
 }

@@ -13,10 +13,18 @@ class Category extends Model
     protected $fillable = [
         'name',
         'slug',
+        'applicable_types',
         'icon',
         'icon_url',
         'description',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'applicable_types' => 'array',
+        ];
+    }
 
     public function services(): HasMany
     {

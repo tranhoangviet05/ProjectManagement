@@ -126,6 +126,17 @@ export default function ServiceFormStepper({
     setCurrentStep(1);
   }, [initialService, providerConfig.group]);
 
+  const filteredCategories = useMemo(() => {
+    const svcType = formData.type;
+    if (!svcType) return categories;
+    return categories.filter(
+      (cat) =>
+        !Array.isArray(cat.applicable_types) ||
+        cat.applicable_types.length === 0 ||
+        cat.applicable_types.includes(svcType),
+    );
+  }, [categories, formData.type]);
+
   const handleFieldChange = (field, value) => {
     setFormError("");
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -707,7 +718,7 @@ export default function ServiceFormStepper({
                 className={INPUT_CLASS}
               >
                 <option value="">-- Chọn danh mục --</option>
-                {categories.map((cat) => (
+                {filteredCategories.map((cat) => (
                   <option key={cat.id} value={cat.id}>
                     {cat.name}
                   </option>
