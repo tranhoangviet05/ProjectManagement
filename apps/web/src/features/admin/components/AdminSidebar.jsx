@@ -11,6 +11,7 @@ import {
   Compass,
   Menu,
   X,
+  ReceiptText,
 } from "lucide-react";
 import Typography from "../../../components/ui/Typography";
 import { useAuth } from "../../../hooks/useAuth";
@@ -45,6 +46,12 @@ const ADMIN_NAV_LINKS = [
     label: "Quản lý tài khoản",
     path: "/admin/users",
     icon: Users,
+  },
+  {
+    id: "bookings",
+    label: "Đơn đặt chỗ & Đối soát",
+    path: "/admin/bookings",
+    icon: ReceiptText,
   },
   {
     id: "coupons",

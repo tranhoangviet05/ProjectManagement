@@ -12,6 +12,7 @@ import AdminUsersPage from "../features/admin/pages/AdminUsersPage";
 import AdminCouponsPage from "../features/admin/pages/AdminCouponsPage";
 import AdminSettingsPage from "../features/admin/pages/AdminSettingsPage";
 import AdminReportsPage from "../features/admin/pages/AdminReportsPage";
+import AdminBookingsPage from "../features/admin/pages/AdminBookingsPage";
 import ProviderDashboardPage from "../features/provider/pages/ProviderDashboardPage";
 import ProviderProfilePage from "../features/provider/pages/ProviderProfilePage";
 import ServiceManagementPage from "../features/provider/pages/ServiceManagementPage";
@@ -229,6 +230,16 @@ export default function AppRouter() {
           element={
             <ProtectedRoute allowedRoles={["admin"]}>
               <AdminReportsPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* 8. Giám sát Đơn đặt chỗ & Đối soát Ví (Task #56) */}
+        <Route
+          path="/admin/bookings"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminBookingsPage />
             </ProtectedRoute>
           }
         />
