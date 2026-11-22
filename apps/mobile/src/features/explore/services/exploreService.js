@@ -38,6 +38,10 @@ const exploreService = {
   async fetchFeaturedPosts(limit = 12) {
     return apiClient.get(`/public/posts/featured?limit=${limit}`);
   },
+
+  async fetchActiveCampaigns() {
+    return apiClient.get("/public/campaigns");
+  },
 };
 
 export default exploreService;

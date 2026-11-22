@@ -19,6 +19,22 @@ function resolveApiBaseUrl() {
 
 export const API_BASE_URL = resolveApiBaseUrl();
 
+const API_ORIGIN = API_BASE_URL.replace(/\/api\/v1\/?$/, "");
+
+/**
+ * Chuẩn hóa URL ảnh/tài nguyên trả về từ Backend (localhost / 127.0.0.1 / relative path)
+ * sang đúng host hiện hành (10.0.2.2 trên Android Emulator hoặc IP LAN trên thiết bị thật).
+ */
+export function resolveMediaUrl(url) {
+  if (!url || typeof url !== "string") return "";
+  const trimmed = url.trim();
+  if (!trimmed) return "";
+  if (trimmed.startsWith("/")) {
+    return `${API_ORIGIN}${trimmed}`;
+  }
+  return trimmed.replace(/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?/i, API_ORIGIN);
+}
+
 // Bộ nhớ phiên trong RAM (tương thích hoàn toàn với Expo Go mà không phụ thuộc module native)
 let inMemoryToken = null;
 let inMemoryUser = null;

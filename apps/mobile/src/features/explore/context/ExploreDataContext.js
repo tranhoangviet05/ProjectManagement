@@ -12,17 +12,19 @@ export function ExploreDataProvider({ children }) {
   const [categories, setCategories] = useState([]);
   const [services, setServices] = useState([]);
   const [featuredPosts, setFeaturedPosts] = useState([]);
+  const [campaigns, setCampaigns] = useState([]);
   const [isBootstrapped, setIsBootstrapped] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const loadInitialData = useCallback(async (isRefresh = false) => {
     if (isRefresh) setIsRefreshing(true);
     try {
-      const [locRes, catRes, svcRes, postRes] = await Promise.allSettled([
+      const [locRes, catRes, svcRes, postRes, campRes] = await Promise.allSettled([
         exploreService.fetchLocations(),
         exploreService.fetchCategories(),
         exploreService.fetchServices({ per_page: 20 }),
         exploreService.fetchFeaturedPosts(12),
+        exploreService.fetchActiveCampaigns(),
       ]);
 
       if (locRes.status === "fulfilled" && Array.isArray(locRes.value?.data)) {
@@ -36,6 +38,9 @@ export function ExploreDataProvider({ children }) {
       }
       if (postRes.status === "fulfilled" && Array.isArray(postRes.value?.data)) {
         setFeaturedPosts(postRes.value.data);
+      }
+      if (campRes.status === "fulfilled" && Array.isArray(campRes.value?.data)) {
+        setCampaigns(campRes.value.data);
       }
     } finally {
       setIsBootstrapped(true);
@@ -54,6 +59,7 @@ export function ExploreDataProvider({ children }) {
         categories,
         services,
         featuredPosts,
+        campaigns,
         isBootstrapped,
         isRefreshing,
         refreshExploreData: () => loadInitialData(true),

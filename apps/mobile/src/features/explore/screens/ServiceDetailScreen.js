@@ -8,6 +8,7 @@ import {
   Building2,
   Calendar,
   CheckCircle2,
+  Flame,
   MapPin,
   Phone,
   ShieldCheck,
@@ -129,11 +130,25 @@ export default function ServiceDetailScreen({ navigation, route }) {
     return service.availability.find((a) => a.id === selectedDateId) || null;
   }, [service, selectedDateId]);
 
-  const effectivePrice = useMemo(() => {
+  const baseEffectivePrice = useMemo(() => {
     if (selectedSlot?.price_override) return Number(selectedSlot.price_override);
     if (isAccommodation && selectedRoom?.base_price) return Number(selectedRoom.base_price);
     return Number(service?.base_price || 0);
   }, [selectedSlot, isAccommodation, selectedRoom, service]);
+
+  const activePromotion = service?.active_promotion || null;
+
+  const effectivePrice = useMemo(() => {
+    if (!activePromotion) return baseEffectivePrice;
+    if (activePromotion.discount_type === "fixed") {
+      return Math.max(
+        0,
+        Math.round(baseEffectivePrice - Number(activePromotion.discount_value || 0)),
+      );
+    }
+    const pct = Number(activePromotion.discount_value || 0);
+    return Math.max(0, Math.round(baseEffectivePrice * (1 - pct / 100)));
+  }, [baseEffectivePrice, activePromotion]);
 
   const handleBookNow = () => {
     if (!isAuthenticated) {
@@ -274,6 +289,26 @@ export default function ServiceDetailScreen({ navigation, route }) {
               </View>
             ) : null}
           </View>
+
+          {/* Khối Ưu đãi Lễ hội đang áp dụng */}
+          {activePromotion ? (
+            <View style={styles.promoPolicyCard}>
+              <Flame size={20} color="#E11D48" fill="#FFE4E6" />
+              <View style={{ flex: 1, gap: 3 }}>
+                <View style={styles.promoHeaderRow}>
+                  <AppText style={styles.promoPolicyTitle}>{activePromotion.campaign_name}</AppText>
+                  <View style={styles.promoPill}>
+                    <AppText style={styles.promoPillText}>{activePromotion.badge_text}</AppText>
+                  </View>
+                </View>
+                <AppText style={styles.promoPolicyDesc}>
+                  Ưu đãi áp dụng trực tiếp cho dịch vụ này: giá chỉ còn{" "}
+                  {formatCurrencyVnd(effectivePrice)} (giá gốc{" "}
+                  {formatCurrencyVnd(baseEffectivePrice)}).
+                </AppText>
+              </View>
+            </View>
+          ) : null}
 
           {/* Chính sách Cọc an toàn 30% Escrow (chỉ hiển thị cho Chỗ ở) */}
           {isAccommodation ? (
@@ -467,6 +502,39 @@ export default function ServiceDetailScreen({ navigation, route }) {
             </View>
           ) : null}
 
+          {/* Chính sách dịch vụ từ Nhà cung cấp */}
+          {Array.isArray(service?.policies) && service.policies.length > 0 ? (
+            <View style={styles.sectionCard}>
+              <AppText style={styles.sectionTitle}>Chính sách dịch vụ</AppText>
+              <View style={styles.policiesList}>
+                {service.policies.map((pol) => {
+                  const catLabel =
+                    pol.category === "payment"
+                      ? "Thanh toán"
+                      : pol.category === "cancellation"
+                        ? "Hủy & Đổi lịch"
+                        : pol.category === "checkin"
+                          ? "Nhận & Trả chỗ"
+                          : "Quy định";
+                  return (
+                    <View key={pol.id} style={styles.policyItemCard}>
+                      <View style={styles.policyItemTop}>
+                        <ShieldCheck size={15} color={colors.brandPrimary} />
+                        <AppText style={styles.policyItemName}>{pol.name}</AppText>
+                        <View style={styles.policyCatChip}>
+                          <AppText style={styles.policyCatChipText}>{catLabel}</AppText>
+                        </View>
+                      </View>
+                      {pol.description ? (
+                        <AppText style={styles.policyItemDesc}>{pol.description}</AppText>
+                      ) : null}
+                    </View>
+                  );
+                })}
+              </View>
+            </View>
+          ) : null}
+
           {/* Đánh giá từ khách hàng */}
           <ServiceDetailReviews
             ratingAvg={ratingScore}
@@ -482,8 +550,15 @@ export default function ServiceDetailScreen({ navigation, route }) {
           <AppText style={styles.bottomPriceLabel}>
             {isAccommodation && selectedRoom ? selectedRoom.name : "Giá áp dụng"}
           </AppText>
+          {activePromotion && baseEffectivePrice > effectivePrice ? (
+            <AppText style={styles.bottomStrikePrice}>
+              {formatCurrencyVnd(baseEffectivePrice)}
+            </AppText>
+          ) : null}
           <View style={styles.bottomPriceRow}>
-            <AppText style={styles.bottomPriceValue}>{formatCurrencyVnd(effectivePrice)}</AppText>
+            <AppText style={[styles.bottomPriceValue, activePromotion && { color: "#E11D48" }]}>
+              {formatCurrencyVnd(effectivePrice)}
+            </AppText>
             <AppText style={styles.bottomPriceUnit}>
               /{formatPriceUnit(service?.price_unit, service?.type)}
             </AppText>
@@ -959,6 +1034,87 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#059669",
     marginTop: 1,
+  },
+  bottomStrikePrice: {
+    fontSize: 12,
+    color: colors.inkSubtle,
+    textDecorationLine: "line-through",
+  },
+  promoPolicyCard: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 10,
+    backgroundColor: "#FFF1F2",
+    borderWidth: 1,
+    borderColor: "#FECDD3",
+    borderRadius: 16,
+    padding: spacing.md,
+  },
+  promoHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
+  },
+  promoPolicyTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#9F1239",
+    flex: 1,
+  },
+  promoPill: {
+    backgroundColor: "#E11D48",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: radius.full,
+  },
+  promoPillText: {
+    fontSize: 10.5,
+    fontWeight: "700",
+    color: "#FFFFFF",
+  },
+  promoPolicyDesc: {
+    fontSize: 12.5,
+    lineHeight: 18,
+    color: "#BE123C",
+  },
+  policiesList: {
+    gap: 8,
+  },
+  policyItemCard: {
+    backgroundColor: "#F8FAFC",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#F1F5F9",
+    padding: 10,
+    gap: 4,
+  },
+  policyItemTop: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  policyItemName: {
+    fontSize: 13.5,
+    fontWeight: "700",
+    color: colors.inkPrimary,
+    flex: 1,
+  },
+  policyCatChip: {
+    backgroundColor: "#E0F2FE",
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: radius.full,
+  },
+  policyCatChipText: {
+    fontSize: 10.5,
+    fontWeight: "700",
+    color: colors.brandPrimary,
+  },
+  policyItemDesc: {
+    fontSize: 12,
+    lineHeight: 17,
+    color: colors.inkBody,
   },
   bookBtn: {
     backgroundColor: colors.brandPrimary,

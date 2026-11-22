@@ -11,6 +11,7 @@ import {
   TrainFront,
 } from "lucide-react-native";
 import AppText from "../../../components/common/AppText";
+import { resolveMediaUrl } from "../../../lib/apiClient";
 import { colors, radius, spacing } from "../../../theme/tokens";
 import {
   POPULAR_TRAIN_ROUTES,
@@ -49,8 +50,7 @@ const VEHICLE_FALLBACK_CARDS = [
 
 function ServiceHighlightCard({ item, onPress }) {
   const thumb =
-    item.cover_image ||
-    item.primary_image ||
+    resolveMediaUrl(item.cover_image || item.primary_image) ||
     "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80";
   const displayName = item.name || item.title || "Dịch vụ du lịch";
   const ratingScore = Number(item.rating_avg || item.avg_rating || 0);
@@ -61,12 +61,25 @@ function ServiceHighlightCard({ item, onPress }) {
       ? `${item.address}, ${item.location.name}`
       : item.address
     : item.location?.name || "Việt Nam";
-  const perks =
+  const displayedAmenities =
     Array.isArray(item.amenities) && item.amenities.length > 0
       ? item.amenities.slice(0, 2)
       : Array.isArray(item.includes) && item.includes.length > 0
         ? item.includes.slice(0, 2)
-        : ["Bảo vệ cọc Escrow 30%", "Xác nhận nhanh"];
+        : [];
+  const totalAmenities =
+    Array.isArray(item.amenities) && item.amenities.length > 0
+      ? Number(item.amenities_count || item.amenities.length)
+      : Array.isArray(item.includes)
+        ? item.includes.length
+        : 0;
+  const extraAmenities = Math.max(0, totalAmenities - displayedAmenities.length);
+
+  const displayedPolicies = Array.isArray(item.policies) ? item.policies.slice(0, 1) : [];
+  const extraPolicies = Math.max(
+    0,
+    Number(item.policies_count || displayedPolicies.length) - displayedPolicies.length,
+  );
 
   const categoryLabel = item.category?.name || getServiceTypeLabel(item.type);
 
@@ -87,11 +100,20 @@ function ServiceHighlightCard({ item, onPress }) {
       </View>
 
       <View style={styles.serviceBody}>
-        {/* Nhãn danh mục dịch vụ đặt trong phần thông tin */}
-        <View style={styles.categoryTag}>
-          <AppText style={styles.categoryTagText} numberOfLines={1}>
-            {categoryLabel}
-          </AppText>
+        {/* Nhãn danh mục dịch vụ & Khuyến mãi đặt trong phần thông tin */}
+        <View style={styles.tagsRow}>
+          <View style={styles.categoryTag}>
+            <AppText style={styles.categoryTagText} numberOfLines={1}>
+              {categoryLabel}
+            </AppText>
+          </View>
+          {item.active_promotion ? (
+            <View style={styles.promoTag}>
+              <AppText style={styles.promoTagText} numberOfLines={1}>
+                {item.active_promotion.badge_text}
+              </AppText>
+            </View>
+          ) : null}
         </View>
 
         {/* Tiêu đề dịch vụ */}
@@ -135,30 +157,57 @@ function ServiceHighlightCard({ item, onPress }) {
           </View>
         ) : null}
 
-        {/* Tiện ích / Điểm nổi bật */}
-        <View style={styles.perksRow}>
-          {perks.map((perk, idx) => (
-            <View key={`${perk}-${idx}`} style={styles.perkChip}>
-              <AppText style={styles.perkChipText} numberOfLines={1}>
-                {perk}
-              </AppText>
-            </View>
-          ))}
-        </View>
+        {/* Chính sách dịch vụ + chỉ báo còn thêm bên trong */}
+        {displayedPolicies.length > 0 ? (
+          <View style={styles.policiesRow}>
+            {displayedPolicies.map((pol) => (
+              <View key={pol.id} style={styles.policyChip}>
+                <ShieldCheck size={11} color="#059669" />
+                <AppText style={styles.policyChipText} numberOfLines={1}>
+                  {pol.name}
+                </AppText>
+              </View>
+            ))}
+            {extraPolicies > 0 ? (
+              <View style={styles.moreChip}>
+                <AppText style={styles.moreChipText}>+{extraPolicies} chính sách</AppText>
+              </View>
+            ) : null}
+          </View>
+        ) : null}
 
-        {/* Tag Cọc an toàn 30% chỉ hiển thị cho dịch vụ Chỗ ở và nằm tách hàng riêng */}
-        {item.type === "hotel" || item.type === "homestay" ? (
-          <View style={styles.escrowTag}>
-            <ShieldCheck size={12} color="#059669" />
-            <AppText style={styles.escrowTagText}>Cọc an toàn 30%</AppText>
+        {/* Tiện nghi / Điểm nổi bật + chỉ báo còn thêm bên trong */}
+        {displayedAmenities.length > 0 ? (
+          <View style={styles.perksRow}>
+            {displayedAmenities.map((perk, idx) => (
+              <View key={`${perk}-${idx}`} style={styles.perkChip}>
+                <AppText style={styles.perkChipText} numberOfLines={1}>
+                  {perk}
+                </AppText>
+              </View>
+            ))}
+            {extraAmenities > 0 ? (
+              <View style={styles.moreChip}>
+                <AppText style={styles.moreChipText}>+{extraAmenities} tiện nghi</AppText>
+              </View>
+            ) : null}
           </View>
         ) : null}
 
         {/* Khối giá minh bạch kiểu Booking.com / Trip.com */}
         <View style={styles.priceBlock}>
-          <AppText style={styles.priceFromLabel}>Giá từ</AppText>
+          <View>
+            <AppText style={styles.priceFromLabel}>Giá từ</AppText>
+            {item.active_promotion ? (
+              <AppText style={styles.strikePriceText}>{formatCurrencyVnd(item.base_price)}</AppText>
+            ) : null}
+          </View>
           <View style={styles.priceAmountRow}>
-            <AppText style={styles.priceText}>{formatCurrencyVnd(item.base_price)}</AppText>
+            <AppText style={[styles.priceText, item.active_promotion && { color: "#E11D48" }]}>
+              {formatCurrencyVnd(
+                item.active_promotion ? item.active_promotion.discounted_price : item.base_price,
+              )}
+            </AppText>
             <AppText style={styles.priceUnitText}>
               /{formatPriceUnit(item.price_unit, item.type)}
             </AppText>
@@ -386,6 +435,29 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: colors.brandPrimary,
   },
+  tagsRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 5,
+  },
+  promoTag: {
+    backgroundColor: "#FFF1F2",
+    borderWidth: 1,
+    borderColor: "#FECDD3",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: radius.full,
+  },
+  promoTagText: {
+    fontSize: 10.5,
+    fontWeight: "700",
+    color: "#E11D48",
+  },
+  strikePriceText: {
+    fontSize: 11,
+    color: colors.inkSubtle,
+    textDecorationLine: "line-through",
+  },
   serviceTitle: {
     fontSize: 15,
     fontWeight: "700",
@@ -437,6 +509,27 @@ const styles = StyleSheet.create({
     color: colors.inkSubtle,
     flex: 1,
   },
+  policiesRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 5,
+  },
+  policyChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "#ECFDF5",
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 6,
+    maxWidth: 165,
+  },
+  policyChipText: {
+    fontSize: 10.5,
+    fontWeight: "600",
+    color: "#059669",
+    flexShrink: 1,
+  },
   perksRow: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -448,12 +541,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 6,
-    maxWidth: 130,
+    maxWidth: 120,
   },
   perkChipText: {
     fontSize: 11,
     fontWeight: "600",
     color: colors.inkBody,
+  },
+  moreChip: {
+    backgroundColor: "#F0F9FF",
+    borderWidth: 1,
+    borderColor: "#BAE6FD",
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  moreChipText: {
+    fontSize: 10.5,
+    fontWeight: "700",
+    color: colors.brandPrimary,
   },
   priceBlock: {
     flexDirection: "row",
@@ -463,21 +569,6 @@ const styles = StyleSheet.create({
     marginTop: 2,
     borderTopWidth: 1,
     borderTopColor: "#F1F5F9",
-  },
-  escrowTag: {
-    alignSelf: "flex-start",
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    backgroundColor: "#ECFDF5",
-    paddingHorizontal: 7,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  escrowTagText: {
-    fontSize: 10.5,
-    fontWeight: "700",
-    color: "#059669",
   },
   priceFromLabel: {
     fontSize: 11,

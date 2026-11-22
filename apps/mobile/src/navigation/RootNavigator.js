@@ -6,6 +6,7 @@ import PlatformUnsupportedScreen from "../features/auth/screens/PlatformUnsuppor
 import TouristTabsNavigator from "./TouristTabsNavigator";
 import ServiceSearchScreen from "../features/explore/screens/ServiceSearchScreen";
 import AllLocationsScreen from "../features/explore/screens/AllLocationsScreen";
+import HolidayCampaignsScreen from "../features/explore/screens/HolidayCampaignsScreen";
 import RoomTypeDetailScreen from "../features/explore/screens/RoomTypeDetailScreen";
 import ToursScreen from "../features/tour/screens/ToursScreen";
 import DetailScreen from "../features/tour/screens/DetailScreen";
@@ -39,6 +40,7 @@ export default function RootNavigator() {
       <Stack.Screen name="TouristMainTabs" component={TouristTabsNavigator} />
       <Stack.Screen name="ServiceSearch" component={ServiceSearchScreen} />
       <Stack.Screen name="AllLocations" component={AllLocationsScreen} />
+      <Stack.Screen name="HolidayCampaigns" component={HolidayCampaignsScreen} />
       <Stack.Screen
         name="Tours"
         component={ToursScreen}
