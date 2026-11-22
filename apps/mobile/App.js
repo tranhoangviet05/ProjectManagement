@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, ActivityIndicator, StyleSheet } from "react-native";
+import { View, StyleSheet } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { NavigationContainer } from "@react-navigation/native";
@@ -11,9 +11,37 @@ import {
   PlusJakartaSans_700Bold,
 } from "@expo-google-fonts/plus-jakarta-sans";
 import { AuthProvider } from "./src/features/auth/context/AuthContext";
+import { useAuth } from "./src/hooks/useAuth";
+import {
+  ExploreDataProvider,
+  useExploreData,
+} from "./src/features/explore/context/ExploreDataContext";
 import RootNavigator from "./src/navigation/RootNavigator";
 import SplashScreen from "./src/features/splash/screens/SplashScreen";
 import { colors } from "./src/theme/tokens";
+
+function AppBootstrapShell({ fontsLoaded }) {
+  const { isLoading: authLoading } = useAuth();
+  const { isBootstrapped } = useExploreData();
+  const [isSplashDone, setIsSplashDone] = useState(false);
+
+  const isAppDataReady = fontsLoaded && !authLoading && isBootstrapped;
+
+  if (!fontsLoaded) {
+    return <View style={styles.splashFallback} />;
+  }
+
+  if (!isSplashDone) {
+    return <SplashScreen isReady={isAppDataReady} onFinish={() => setIsSplashDone(true)} />;
+  }
+
+  return (
+    <NavigationContainer>
+      <StatusBar style="dark" />
+      <RootNavigator />
+    </NavigationContainer>
+  );
+}
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -25,28 +53,12 @@ export default function App() {
     PlusJakartaSans_700Bold,
   });
 
-  const [isSplashDone, setIsSplashDone] = useState(false);
-
-  if (!fontsLoaded) {
-    return (
-      <View style={styles.splashFallback}>
-        <ActivityIndicator size="large" color={colors.brandPrimary} />
-      </View>
-    );
-  }
-
-  // Khởi động màn hình Splash trước tiên
-  if (!isSplashDone) {
-    return <SplashScreen onFinish={() => setIsSplashDone(true)} />;
-  }
-
   return (
     <SafeAreaProvider>
       <AuthProvider>
-        <NavigationContainer>
-          <StatusBar style="dark" />
-          <RootNavigator />
-        </NavigationContainer>
+        <ExploreDataProvider>
+          <AppBootstrapShell fontsLoaded={fontsLoaded} />
+        </ExploreDataProvider>
       </AuthProvider>
     </SafeAreaProvider>
   );
@@ -55,8 +67,6 @@ export default function App() {
 const styles = StyleSheet.create({
   splashFallback: {
     flex: 1,
-    backgroundColor: colors.surfaceBase,
-    alignItems: "center",
-    justifyContent: "center",
+    backgroundColor: colors.surfaceElevated,
   },
 });

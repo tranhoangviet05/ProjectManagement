@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers\Api\V1\Public;
 
+use App\Enums\ServiceStatus;
 use App\Http\Controllers\Controller;
 use App\Models\BusinessType;
 use App\Models\Category;
 use App\Models\Location;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class CatalogController extends Controller
 {
@@ -24,18 +26,26 @@ class CatalogController extends Controller
     }
 
     /**
-     * Lấy danh sách địa điểm du lịch.
+     * Lấy danh sách địa điểm du lịch (hỗ trợ ?popular=1 và đếm dịch vụ active).
      */
-    public function locations(): JsonResponse
+    public function locations(Request $request): JsonResponse
     {
-        $locations = Location::query()
+        $query = Location::query()
+            ->with('parent:id,name')
+            ->withCount([
+                'services as active_services_count' => fn ($q) => $q->where('status', ServiceStatus::Active->value),
+            ])
             ->orderByDesc('is_popular')
-            ->orderBy('name')
-            ->get();
+            ->orderByDesc('active_services_count')
+            ->orderBy('name');
+
+        if ($request->boolean('popular')) {
+            $query->where('is_popular', true);
+        }
 
         return response()->json([
             'success' => true,
-            'data' => $locations,
+            'data' => $query->get(),
         ]);
     }
 

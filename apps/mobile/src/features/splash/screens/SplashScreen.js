@@ -5,74 +5,75 @@ import AppText from "../../../components/common/AppText";
 import { colors, spacing } from "../../../theme/tokens";
 
 /**
- * Màn hình Splash khởi động Mobile tối giản nhất:
- * - Nền trắng
- * - Chỉ hiển thị Logo "Social Travel Booking" xuất hiện nhẹ nhàng từ dưới lên
- * - Sau 2s xuất hiện hiệu ứng loading ngay dưới logo (không có text)
- * - Kết thúc thời gian loading thì biến mất nhẹ nhàng
+ * Màn hình Splash khởi động Mobile gắn với dữ liệu thực:
+ * - Nền trắng sạch, hiển thị Logo "Social Travel Booking" xuất hiện nhẹ nhàng từ dưới lên
+ * - Hiệu ứng loading hiển thị ngay dưới logo cho đến khi toàn bộ dữ liệu khởi tạo (auth, địa điểm, dịch vụ, bài đăng) tải hoàn tất
+ * - Khi dữ liệu sẵn sàng (`isReady === true`) và hiệu ứng logo đã hoàn tất, màn hình mờ dần rồi chuyển thẳng vào Trang chủ
  */
-export default function SplashScreen({ onFinish }) {
-  const [showLoading, setShowLoading] = useState(false);
+export default function SplashScreen({ isReady = false, onFinish }) {
+  const [minIntroDone, setMinIntroDone] = useState(false);
+  const hasFinishedRef = useRef(false);
 
-  // Animated values
   const logoOpacity = useRef(new Animated.Value(0)).current;
-  const logoTranslateY = useRef(new Animated.Value(30)).current;
+  const logoTranslateY = useRef(new Animated.Value(28)).current;
   const loadingOpacity = useRef(new Animated.Value(0)).current;
   const screenOpacity = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    // 1. Logo xuất hiện nhẹ nhàng từ dưới lên
     Animated.parallel([
       Animated.timing(logoOpacity, {
         toValue: 1,
-        duration: 850,
+        duration: 700,
         easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }),
       Animated.timing(logoTranslateY, {
         toValue: 0,
-        duration: 850,
+        duration: 700,
         easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }),
     ]).start();
 
-    // 2. Sau 2 giây xuất hiện hiệu ứng loading ngay dưới logo
-    const timerLoading = setTimeout(() => {
-      setShowLoading(true);
+    const loadingTimer = setTimeout(() => {
       Animated.timing(loadingOpacity, {
         toValue: 1,
-        duration: 450,
+        duration: 350,
         easing: Easing.out(Easing.ease),
         useNativeDriver: true,
       }).start();
-    }, 2000);
+    }, 350);
 
-    // 3. Sau khi kết thúc thời gian loading giả lập (thêm 1.8s) -> fade out chuyển trang
-    const timerFinish = setTimeout(() => {
-      Animated.timing(screenOpacity, {
-        toValue: 0,
-        duration: 450,
-        easing: Easing.inOut(Easing.ease),
-        useNativeDriver: true,
-      }).start(() => {
-        if (onFinish) {
-          onFinish();
-        }
-      });
-    }, 3800);
+    const introTimer = setTimeout(() => {
+      setMinIntroDone(true);
+    }, 850);
 
     return () => {
-      clearTimeout(timerLoading);
-      clearTimeout(timerFinish);
+      clearTimeout(loadingTimer);
+      clearTimeout(introTimer);
     };
-  }, [logoOpacity, logoTranslateY, loadingOpacity, screenOpacity, onFinish]);
+  }, [logoOpacity, logoTranslateY, loadingOpacity]);
+
+  useEffect(() => {
+    if (!isReady || !minIntroDone || hasFinishedRef.current) return;
+    hasFinishedRef.current = true;
+
+    Animated.timing(screenOpacity, {
+      toValue: 0,
+      duration: 380,
+      easing: Easing.inOut(Easing.ease),
+      useNativeDriver: true,
+    }).start(() => {
+      if (onFinish) {
+        onFinish();
+      }
+    });
+  }, [isReady, minIntroDone, screenOpacity, onFinish]);
 
   return (
     <Animated.View style={[styles.container, { opacity: screenOpacity }]}>
       <StatusBar style="dark" />
 
-      {/* Logo và Loading căn giữa màn hình */}
       <View style={styles.centerBox}>
         <Animated.View
           style={[
@@ -83,18 +84,14 @@ export default function SplashScreen({ onFinish }) {
             },
           ]}
         >
-          {/* Chỉ hiển thị duy nhất Logo Quicksand chuẩn thương hiệu */}
           <AppText isLogo style={styles.logoText}>
             Social Travel Booking
           </AppText>
 
-          {/* Vùng loading ngay dưới logo, giữ vị trí cố định để không đẩy lệch logo */}
           <View style={styles.loadingSlot}>
-            {showLoading && (
-              <Animated.View style={{ opacity: loadingOpacity }}>
-                <ActivityIndicator size="large" color={colors.brandPrimary} />
-              </Animated.View>
-            )}
+            <Animated.View style={{ opacity: loadingOpacity }}>
+              <ActivityIndicator size="large" color={colors.brandPrimary} />
+            </Animated.View>
           </View>
         </Animated.View>
       </View>
