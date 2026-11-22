@@ -24,6 +24,8 @@ class DatabaseSeeder extends Seeder
             LocationSeeder::class,
             AmenitySeeder::class,
             ServiceInclusionSeeder::class,
+            ServicePolicySeeder::class,
+            HolidayCampaignSeeder::class,
         ]);
 
         $authService = app(AuthService::class);

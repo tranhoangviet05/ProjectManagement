@@ -11,6 +11,7 @@ import AdminServiceModerationPage from "../features/admin/pages/AdminServiceMode
 import AdminUsersPage from "../features/admin/pages/AdminUsersPage";
 import AdminCouponsPage from "../features/admin/pages/AdminCouponsPage";
 import AdminSettingsPage from "../features/admin/pages/AdminSettingsPage";
+import AdminCampaignsPage from "../features/admin/pages/AdminCampaignsPage";
 import AdminReportsPage from "../features/admin/pages/AdminReportsPage";
 import AdminBookingsPage from "../features/admin/pages/AdminBookingsPage";
 import ProviderDashboardPage from "../features/provider/pages/ProviderDashboardPage";
@@ -210,6 +211,16 @@ export default function AppRouter() {
           element={
             <ProtectedRoute allowedRoles={["admin"]}>
               <AdminCouponsPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* 5b. Chương trình khuyến mãi ngày lễ (Task #67) */}
+        <Route
+          path="/admin/campaigns"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminCampaignsPage />
             </ProtectedRoute>
           }
         />

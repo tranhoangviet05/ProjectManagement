@@ -8,6 +8,7 @@ const RESOURCE_CONFIG = {
   roomAmenities: { base: "/admin/amenities", query: { scope: "room" } },
   includes: { base: "/admin/inclusions", query: { kind: "include" } },
   excludes: { base: "/admin/inclusions", query: { kind: "exclude" } },
+  policies: { base: "/admin/policies", query: {} },
 };
 
 const adminCatalogApi = {

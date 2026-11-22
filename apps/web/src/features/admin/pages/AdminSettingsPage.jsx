@@ -16,6 +16,7 @@ const ADD_BUTTON_LABELS = {
   roomAmenities: "Thêm tiện nghi phòng",
   includes: "Thêm mục bao gồm",
   excludes: "Thêm mục không bao gồm",
+  policies: "Thêm chính sách",
 };
 
 /**

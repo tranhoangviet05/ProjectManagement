@@ -12,7 +12,15 @@ const TABS = [
   { id: "roomAmenities", label: "Tiện nghi phòng" },
   { id: "includes", label: "Bao gồm" },
   { id: "excludes", label: "Không bao gồm" },
+  { id: "policies", label: "Chính sách dịch vụ" },
 ];
+
+const POLICY_CATEGORY_LABELS = {
+  payment: "Thanh toán",
+  cancellation: "Hủy & Đổi lịch",
+  checkin: "Nhận & Trả chỗ",
+  rules: "Quy định sử dụng",
+};
 
 /**
  * Bảng quản lý dữ liệu gốc (Locations, Categories, BusinessTypes) — đồng bộ chuẩn UI Admin.
@@ -108,6 +116,15 @@ export default function CatalogCrudTable({
               <tr className="bg-slate-50/80 border-b border-border-subtle text-[11px] font-bold uppercase tracking-wider text-ink-subtle">
                 <th className="py-3 px-4 sm:px-6">Nội dung</th>
                 <th className="py-3 px-4">Loại hình dịch vụ áp dụng</th>
+                <th className="py-3 px-4">Trạng thái</th>
+                <th className="py-3 px-4 sm:px-6 text-right">Thao tác</th>
+              </tr>
+            )}
+            {activeTab === "policies" && (
+              <tr className="bg-slate-50/80 border-b border-border-subtle text-[11px] font-bold uppercase tracking-wider text-ink-subtle">
+                <th className="py-3 px-4 sm:px-6">Chính sách</th>
+                <th className="py-3 px-4">Nhóm chính sách</th>
+                <th className="py-3 px-4">Loại hình áp dụng</th>
                 <th className="py-3 px-4">Trạng thái</th>
                 <th className="py-3 px-4 sm:px-6 text-right">Thao tác</th>
               </tr>
@@ -332,6 +349,74 @@ export default function CatalogCrudTable({
                             )}
                           </div>
                         </div>
+                      </td>
+                      <td className="py-4 px-4">
+                        <div className="flex flex-wrap gap-1.5">
+                          {types.map((t) => (
+                            <span
+                              key={t}
+                              className="px-2 py-0.5 rounded-md bg-slate-100 text-ink-body text-[11px] font-semibold"
+                            >
+                              {SERVICE_TYPE_LABELS[t] || t}
+                            </span>
+                          ))}
+                        </div>
+                      </td>
+                      <td className="py-4 px-4">
+                        <span
+                          className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                            item.is_active !== false
+                              ? "bg-emerald-50 text-emerald-700"
+                              : "bg-slate-100 text-ink-subtle"
+                          }`}
+                        >
+                          {item.is_active !== false ? "Đang bật" : "Tạm ẩn"}
+                        </span>
+                      </td>
+                      <td className="py-4 px-4 sm:px-6 text-right space-x-1.5 whitespace-nowrap">
+                        <button
+                          type="button"
+                          onClick={() => onEdit?.(item)}
+                          className="px-3 py-1.5 rounded-lg border border-border-subtle bg-surface-elevated hover:bg-slate-100 text-ink-primary font-semibold text-xs transition-colors cursor-pointer"
+                        >
+                          Sửa
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => onDelete?.(item)}
+                          className="px-2.5 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-status-danger border border-rose-200 text-xs font-semibold transition-colors cursor-pointer"
+                        >
+                          Xóa
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                }
+
+                if (activeTab === "policies") {
+                  const types = Array.isArray(item.applicable_types) ? item.applicable_types : [];
+
+                  return (
+                    <tr key={item.id} className="hover:bg-slate-50/70 transition-colors">
+                      <td className="py-4 px-4 sm:px-6">
+                        <div className="flex items-start gap-3">
+                          <span className="w-8 h-8 rounded-lg bg-brand-subtle text-brand-primary border border-brand-light flex items-center justify-center shrink-0 mt-0.5">
+                            <AmenityIcon name={item.icon || "shield-check"} className="w-4 h-4" />
+                          </span>
+                          <div>
+                            <div className="font-semibold text-ink-primary">{item.name}</div>
+                            {item.description && (
+                              <div className="text-xs text-ink-subtle line-clamp-1 max-w-md mt-0.5">
+                                {item.description}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-4 px-4">
+                        <span className="px-2.5 py-0.5 rounded-full bg-brand-subtle text-brand-primary text-xs font-semibold">
+                          {POLICY_CATEGORY_LABELS[item.category] || item.category}
+                        </span>
                       </td>
                       <td className="py-4 px-4">
                         <div className="flex flex-wrap gap-1.5">

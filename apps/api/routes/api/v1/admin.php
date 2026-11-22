@@ -6,11 +6,13 @@ use App\Http\Controllers\Api\V1\Admin\AdminBusinessTypeController;
 use App\Http\Controllers\Api\V1\Admin\AdminCategoryController;
 use App\Http\Controllers\Api\V1\Admin\AdminCouponController;
 use App\Http\Controllers\Api\V1\Admin\AdminDashboardController;
+use App\Http\Controllers\Api\V1\Admin\AdminHolidayCampaignController;
 use App\Http\Controllers\Api\V1\Admin\AdminKycController;
 use App\Http\Controllers\Api\V1\Admin\AdminLocationController;
 use App\Http\Controllers\Api\V1\Admin\AdminReportController;
 use App\Http\Controllers\Api\V1\Admin\AdminServiceController;
 use App\Http\Controllers\Api\V1\Admin\AdminServiceInclusionController;
+use App\Http\Controllers\Api\V1\Admin\AdminServicePolicyController;
 use App\Http\Controllers\Api\V1\Admin\AdminUserController;
 use Illuminate\Support\Facades\Route;
 
@@ -87,6 +89,22 @@ Route::prefix('inclusions')->group(function () {
     Route::post('/', [AdminServiceInclusionController::class, 'store']);
     Route::put('/{id}', [AdminServiceInclusionController::class, 'update']);
     Route::delete('/{id}', [AdminServiceInclusionController::class, 'destroy']);
+});
+
+// Phân hệ Quản lý Chính sách dịch vụ & Chương trình khuyến mãi ngày lễ (Task #67)
+Route::prefix('policies')->group(function () {
+    Route::get('/', [AdminServicePolicyController::class, 'index']);
+    Route::post('/', [AdminServicePolicyController::class, 'store']);
+    Route::put('/{id}', [AdminServicePolicyController::class, 'update']);
+    Route::delete('/{id}', [AdminServicePolicyController::class, 'destroy']);
+});
+
+Route::prefix('campaigns')->group(function () {
+    Route::get('/', [AdminHolidayCampaignController::class, 'index']);
+    Route::post('/', [AdminHolidayCampaignController::class, 'store']);
+    Route::put('/{id}', [AdminHolidayCampaignController::class, 'update']);
+    Route::post('/{id}/reopen', [AdminHolidayCampaignController::class, 'reopen']);
+    Route::delete('/{id}', [AdminHolidayCampaignController::class, 'destroy']);
 });
 
 // Phân hệ Kiểm duyệt Nội dung & Báo cáo Cộng đồng (Task #55)
