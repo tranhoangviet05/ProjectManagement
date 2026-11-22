@@ -196,21 +196,21 @@ function ServiceHighlightCard({ item, onPress }) {
 
         {/* Khối giá minh bạch kiểu Booking.com / Trip.com */}
         <View style={styles.priceBlock}>
-          <View>
-            <AppText style={styles.priceFromLabel}>Giá từ</AppText>
+          <AppText style={styles.priceFromLabel}>Giá từ</AppText>
+          <View style={styles.priceRightCol}>
             {item.active_promotion ? (
               <AppText style={styles.strikePriceText}>{formatCurrencyVnd(item.base_price)}</AppText>
             ) : null}
-          </View>
-          <View style={styles.priceAmountRow}>
-            <AppText style={[styles.priceText, item.active_promotion && { color: "#E11D48" }]}>
-              {formatCurrencyVnd(
-                item.active_promotion ? item.active_promotion.discounted_price : item.base_price,
-              )}
-            </AppText>
-            <AppText style={styles.priceUnitText}>
-              /{formatPriceUnit(item.price_unit, item.type)}
-            </AppText>
+            <View style={styles.priceAmountRow}>
+              <AppText style={[styles.priceText, item.active_promotion && { color: "#E11D48" }]}>
+                {formatCurrencyVnd(
+                  item.active_promotion ? item.active_promotion.discounted_price : item.base_price,
+                )}
+              </AppText>
+              <AppText style={styles.priceUnitText}>
+                /{formatPriceUnit(item.price_unit, item.type)}
+              </AppText>
+            </View>
           </View>
         </View>
       </View>
@@ -417,6 +417,7 @@ const styles = StyleSheet.create({
     color: "#047857",
   },
   serviceBody: {
+    flex: 1,
     padding: spacing.sm + 4,
     gap: 6,
   },
@@ -563,12 +564,15 @@ const styles = StyleSheet.create({
   },
   priceBlock: {
     flexDirection: "row",
-    alignItems: "baseline",
+    alignItems: "flex-end",
     justifyContent: "space-between",
     paddingTop: 8,
-    marginTop: 2,
+    marginTop: "auto",
     borderTopWidth: 1,
     borderTopColor: "#F1F5F9",
+  },
+  priceRightCol: {
+    alignItems: "flex-end",
   },
   priceFromLabel: {
     fontSize: 11,

@@ -119,6 +119,9 @@ export default function ServiceDetailScreen({ navigation, route }) {
   }, [route?.params?.selectedRoomId]);
 
   const isAccommodation = service?.type === "hotel" || service?.type === "homestay";
+  const hasDepositPolicy =
+    Array.isArray(service?.policies) &&
+    service.policies.some((p) => /đặt cọc giữ chỗ 30%/i.test(p.name || ""));
 
   const selectedRoom = useMemo(() => {
     if (!Array.isArray(service?.room_types)) return null;
@@ -166,7 +169,7 @@ export default function ServiceDetailScreen({ navigation, route }) {
       return;
     }
 
-    const depositNote = isAccommodation
+    const depositNote = hasDepositPolicy
       ? `\n• Tiền cọc giữ chỗ 30% (Escrow): ${formatCurrencyVnd(Math.round(effectivePrice * 0.3))}`
       : "";
     Alert.alert(
@@ -224,7 +227,7 @@ export default function ServiceDetailScreen({ navigation, route }) {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[
           styles.scrollContent,
-          { paddingBottom: Math.max(insets.bottom, 16) + 104 },
+          { paddingBottom: Math.max(insets.bottom, 16) + (activePromotion ? 156 : 124) },
         ]}
       >
         <ServiceDetailGallery
@@ -306,19 +309,9 @@ export default function ServiceDetailScreen({ navigation, route }) {
                   {formatCurrencyVnd(effectivePrice)} (giá gốc{" "}
                   {formatCurrencyVnd(baseEffectivePrice)}).
                 </AppText>
-              </View>
-            </View>
-          ) : null}
-
-          {/* Chính sách Cọc an toàn 30% Escrow (chỉ hiển thị cho Chỗ ở) */}
-          {isAccommodation ? (
-            <View style={styles.escrowPolicyCard}>
-              <ShieldCheck size={20} color="#059669" />
-              <View style={{ flex: 1, gap: 2 }}>
-                <AppText style={styles.escrowPolicyTitle}>Bảo vệ Cọc an toàn 30% (Escrow)</AppText>
-                <AppText style={styles.escrowPolicyDesc}>
-                  Bạn chỉ cần thanh toán trước 30% để giữ phòng. Tiền cọc được hệ thống bảo vệ và
-                  chỉ giải ngân khi bạn quét mã QR check-in thành công.
+                <AppText style={styles.promoPolicyDesc}>
+                  *Lưu ý: Mức giảm trên là chính sách của hệ thống Social Travel Booking. Giá trị
+                  thực tế còn phụ thuộc vào chính sách của Nhà cung cấp dịch vụ.
                 </AppText>
               </View>
             </View>
@@ -563,7 +556,7 @@ export default function ServiceDetailScreen({ navigation, route }) {
               /{formatPriceUnit(service?.price_unit, service?.type)}
             </AppText>
           </View>
-          {isAccommodation ? (
+          {hasDepositPolicy ? (
             <AppText style={styles.bottomDepositHint}>
               Cọc trước 30%: {formatCurrencyVnd(Math.round(effectivePrice * 0.3))}
             </AppText>

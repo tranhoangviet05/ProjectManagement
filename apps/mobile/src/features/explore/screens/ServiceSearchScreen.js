@@ -16,6 +16,7 @@ import {
   BadgeCheck,
   Building2,
   MapPin,
+  PawPrint,
   Search,
   ShieldCheck,
   SlidersHorizontal,
@@ -69,6 +70,7 @@ export default function ServiceSearchScreen({ navigation, route }) {
   const [locationName, setLocationName] = useState(initialParams.location_name || "");
   const [minPrice, setMinPrice] = useState(initialParams.min_price || "");
   const [maxPrice, setMaxPrice] = useState(initialParams.max_price || "");
+  const [hasPets, setHasPets] = useState(Boolean(initialParams.has_pets));
   const [sort, setSort] = useState(initialParams.sort || "newest");
 
   const [results, setResults] = useState([]);
@@ -85,6 +87,7 @@ export default function ServiceSearchScreen({ navigation, route }) {
         location_id: params.location_id || undefined,
         min_price: params.min_price || undefined,
         max_price: params.max_price || undefined,
+        has_pets: params.has_pets ? 1 : undefined,
         sort: params.sort || "newest",
         per_page: 25,
       });
@@ -105,6 +108,7 @@ export default function ServiceSearchScreen({ navigation, route }) {
       location_id: locationId,
       min_price: minPrice,
       max_price: maxPrice,
+      has_pets: hasPets,
       sort,
     };
     navigation.setParams({
@@ -124,6 +128,7 @@ export default function ServiceSearchScreen({ navigation, route }) {
     locationName,
     minPrice,
     maxPrice,
+    hasPets,
     sort,
     fetchResults,
     navigation,
@@ -136,6 +141,7 @@ export default function ServiceSearchScreen({ navigation, route }) {
     setLocationName("");
     setMinPrice("");
     setMaxPrice("");
+    setHasPets(false);
     setSort("newest");
   };
 
@@ -231,6 +237,16 @@ export default function ServiceSearchScreen({ navigation, route }) {
               </Pressable>
             );
           })}
+
+          <Pressable
+            style={[styles.chip, hasPets && styles.chipActive]}
+            onPress={() => setHasPets((prev) => !prev)}
+          >
+            <PawPrint size={13} color={hasPets ? "#FFFFFF" : colors.inkBody} />
+            <AppText style={[styles.chipText, hasPets && styles.chipTextActive]}>
+              Cho phép thú cưng
+            </AppText>
+          </Pressable>
         </ScrollView>
       </View>
 
@@ -240,7 +256,7 @@ export default function ServiceSearchScreen({ navigation, route }) {
           <AppText style={styles.summaryText}>
             {loading ? "Đang tìm dịch vụ phù hợp..." : `Tìm thấy ${totalCount} dịch vụ`}
           </AppText>
-          {(keyword || group || locationId || minPrice || maxPrice) && (
+          {(keyword || group || locationId || minPrice || maxPrice || hasPets) && (
             <Pressable onPress={handleResetFilters}>
               <AppText style={styles.resetText}>Xóa bộ lọc</AppText>
             </Pressable>

@@ -364,19 +364,19 @@ export default function HolidayDealsSection({
                   ) : null}
 
                   <View style={styles.priceBlock}>
-                    <View>
-                      <AppText style={styles.priceFromLabel}>Giá từ</AppText>
+                    <AppText style={styles.priceFromLabel}>Giá từ</AppText>
+                    <View style={styles.priceRightCol}>
                       <AppText style={styles.strikePrice}>
                         {formatCurrencyVnd(item.base_price)}
                       </AppText>
-                    </View>
-                    <View style={styles.newPriceRow}>
-                      <AppText style={styles.newPrice}>
-                        {formatCurrencyVnd(promo.discounted_price)}
-                      </AppText>
-                      <AppText style={styles.priceUnit}>
-                        /{formatPriceUnit(item.price_unit, item.type)}
-                      </AppText>
+                      <View style={styles.newPriceRow}>
+                        <AppText style={styles.newPrice}>
+                          {formatCurrencyVnd(promo.discounted_price)}
+                        </AppText>
+                        <AppText style={styles.priceUnit}>
+                          /{formatPriceUnit(item.price_unit, item.type)}
+                        </AppText>
+                      </View>
                     </View>
                   </View>
                 </View>
@@ -603,6 +603,7 @@ const styles = StyleSheet.create({
     color: "#047857",
   },
   dealBody: {
+    flex: 1,
     padding: spacing.sm + 4,
     gap: 6,
   },
@@ -741,12 +742,15 @@ const styles = StyleSheet.create({
   },
   priceBlock: {
     flexDirection: "row",
-    alignItems: "baseline",
+    alignItems: "flex-end",
     justifyContent: "space-between",
     paddingTop: 8,
-    marginTop: 2,
+    marginTop: "auto",
     borderTopWidth: 1,
     borderTopColor: "#F1F5F9",
+  },
+  priceRightCol: {
+    alignItems: "flex-end",
   },
   priceFromLabel: {
     fontSize: 11,
