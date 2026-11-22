@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
 import { CheckCircle2 } from "lucide-react";
 import AdminLayout from "../layouts/AdminLayout";
 import Typography from "../../../components/ui/Typography";
+import { useDebouncedUrlSearch } from "../../../hooks/useDebouncedUrlSearch";
 import adminKycService from "../services/adminKycService";
 import ProviderKycTable from "../components/ProviderKycTable";
 import KycDetailModal from "../components/KycDetailModal";
@@ -12,11 +14,37 @@ import KycRejectDialog from "../components/KycRejectDialog";
  * Sử dụng AdminLayout và thanh AdminSidebar dùng chung.
  */
 export default function AdminProviderKycPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const statusFilter = searchParams.get("status") || "all";
+  const [searchInput, setSearchInput, searchQuery] = useDebouncedUrlSearch(
+    searchParams,
+    setSearchParams,
+  );
+
   const [providers, setProviders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [searchQuery, setSearchQuery] = useState("");
   const [pendingCount, setPendingCount] = useState(0);
+
+  useEffect(() => {
+    if (!searchParams.has("status")) {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.set("status", "all");
+          return next;
+        },
+        { replace: true },
+      );
+    }
+  }, [searchParams, setSearchParams]);
+
+  const handleStatusFilterChange = (nextStatus) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set("status", nextStatus || "all");
+      return next;
+    });
+  };
 
   const [selectedProvider, setSelectedProvider] = useState(null);
   const [rejectingProvider, setRejectingProvider] = useState(null);
@@ -102,9 +130,9 @@ export default function AdminProviderKycPage() {
           providers={providers}
           isLoading={isLoading}
           statusFilter={statusFilter}
-          onStatusFilterChange={setStatusFilter}
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
+          onStatusFilterChange={handleStatusFilterChange}
+          searchQuery={searchInput}
+          onSearchChange={setSearchInput}
           onViewDetail={(item) => setSelectedProvider(item)}
           onApproveQuick={handleApprove}
           onRequestReject={handleRequestReject}

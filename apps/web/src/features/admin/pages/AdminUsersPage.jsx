@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
 import { CheckCircle2, AlertCircle } from "lucide-react";
 import AdminLayout from "../layouts/AdminLayout";
 import Typography from "../../../components/ui/Typography";
+import { useDebouncedUrlSearch } from "../../../hooks/useDebouncedUrlSearch";
 import AdminUsersTable from "../components/AdminUsersTable";
 import UserDetailModal from "../components/UserDetailModal";
 import UserBanDialog from "../components/UserBanDialog";
@@ -12,11 +14,42 @@ import adminUserApi from "../services/adminUserApi";
  * Chỉ quản lý 2 vai trò: Nhà cung cấp (provider) và Khách du lịch (tourist).
  */
 export default function AdminUsersPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const roleFilter = searchParams.get("role") || "all";
+  const statusFilter = searchParams.get("status") || "all";
+  const [searchInput, setSearchInput, searchQuery] = useDebouncedUrlSearch(
+    searchParams,
+    setSearchParams,
+  );
+
   const [users, setUsers] = useState([]);
   const [counts, setCounts] = useState({ all: 0, provider: 0, tourist: 0, active: 0, banned: 0 });
-  const [roleFilter, setRoleFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    if (!searchParams.has("role") || !searchParams.has("status")) {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          if (!next.has("role")) next.set("role", "all");
+          if (!next.has("status")) next.set("status", "all");
+          return next;
+        },
+        { replace: true },
+      );
+    }
+  }, [searchParams, setSearchParams]);
+
+  const updateParam = (key, value, emptyWhen = null, replace = false) => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (emptyWhen !== null && value === emptyWhen) next.delete(key);
+        else next.set(key, value);
+        return next;
+      },
+      { replace },
+    );
+  };
 
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingDetail, setIsLoadingDetail] = useState(false);
@@ -130,11 +163,11 @@ export default function AdminUsersPage() {
           users={users}
           isLoading={isLoading}
           roleFilter={roleFilter}
-          onRoleFilterChange={setRoleFilter}
+          onRoleFilterChange={(val) => updateParam("role", val || "all")}
           statusFilter={statusFilter}
-          onStatusFilterChange={setStatusFilter}
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
+          onStatusFilterChange={(val) => updateParam("status", val || "all")}
+          searchQuery={searchInput}
+          onSearchChange={setSearchInput}
           counts={counts}
           onViewDetail={handleViewDetail}
           onOpenBan={(u) => setBanTarget(u)}

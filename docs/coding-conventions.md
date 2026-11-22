@@ -232,3 +232,26 @@ Mọi API trả về cho Frontend (Mobile & Web) phải tuân theo cấu trúc J
 - `404 Not Found`: Không tìm thấy dữ liệu.
 - `422 Unprocessable Entity`: Dữ liệu gửi lên sai định dạng validate (Form Request fail).
 - `500 Internal Server Error`: Lỗi logic máy chủ.
+
+---
+
+## 5. Quy chuẩn Quản lý Trạng thái URL (`useSearchParams`) & Navigation Params
+
+Để đảm bảo trải nghiệm điều hướng chuẩn mực, giữ nguyên ngữ cảnh khi tải lại trang (F5) và dễ dàng chia sẻ liên kết trên cả **Web Portal (`@stb/web`)** lẫn **Mobile App (`@stb/mobile`)**, việc phân tách giữa trạng thái đồng bộ trên URL/Route và trạng thái cục bộ phải tuân thủ quy tắc sau:
+
+### 5.1. Khi nào bắt buộc dùng `useSearchParams()` (Web) / `route.params` (Mobile)
+
+- **Tab phân loại & Bộ lọc danh sách:** `status`, `role`, `type`, `tab`, `month`, `category`, `location`.
+- **Chế độ màn hình con & Định danh tài nguyên đang thao tác:**
+  - Chế độ tạo mới: `?mode=create` (ví dụ: `/provider/services?status=all&mode=create`).
+  - Chế độ chỉnh sửa / chi tiết: `?mode=edit&id=<id>` (ví dụ: `/provider/services?status=all&mode=edit&id=18`). Khi người dùng nhấn **F5** tại URL này, màn hình phải tự động gọi API lấy dữ liệu theo `id` và mở lại đúng form chỉnh sửa.
+- **Từ khóa tìm kiếm, Phân trang & Sắp xếp:** `q`, `page`, `sort`.
+- **Quy tắc hiển thị tham số mặc định trên URL:**
+  - Ngay khi mở trang quản lý/danh sách, phải khởi tạo đầy đủ các tham số tab/bộ lọc mặc định lên thanh địa chỉ bằng `setSearchParams(..., { replace: true })` (ví dụ: `/admin/providers?status=all`, `/admin/users?role=all&status=all`, `/admin/settings?tab=locations`, `/provider/profile?tab=profile`).
+  - Riêng ô tìm kiếm (`q`): chỉ gắn `q` lên URL khi có nội dung tìm kiếm (xóa `q` khi chuỗi rỗng `""`) và dùng `{ replace: true }` khi gõ để không làm tràn lịch sử nút Back của trình duyệt.
+
+### 5.2. Khi nào giữ nguyên `useState()` (Local UI State)
+
+- **Trạng thái tải & phản hồi tạm thời:** `isLoading`, `isLoadingDetail`, `isSubmitting`, `toast`, `feedback`.
+- **Dữ liệu đang nhập dở trong Form / Modal / Dialog:** các trường input chưa submit, lý do từ chối/khóa, danh sách checkbox đang chọn tạm thời.
+- **Trạng thái đóng/mở giao diện cục bộ:** mobile menu drawer, dropdown, hộp thoại xác nhận xóa, lightbox zoom ảnh.
