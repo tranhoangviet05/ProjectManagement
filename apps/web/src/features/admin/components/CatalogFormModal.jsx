@@ -13,7 +13,15 @@ const TAB_TITLES = {
   roomAmenities: { create: "Thêm tiện nghi phòng", edit: "Cập nhật tiện nghi phòng" },
   includes: { create: "Thêm mục bao gồm", edit: "Cập nhật mục bao gồm" },
   excludes: { create: "Thêm mục không bao gồm", edit: "Cập nhật mục không bao gồm" },
+  policies: { create: "Thêm chính sách dịch vụ", edit: "Cập nhật chính sách dịch vụ" },
 };
+
+const POLICY_CATEGORIES = [
+  { id: "payment", label: "Thanh toán" },
+  { id: "cancellation", label: "Hủy & Đổi lịch" },
+  { id: "checkin", label: "Nhận & Trả chỗ" },
+  { id: "rules", label: "Quy định sử dụng" },
+];
 
 /**
  * Modal Form Tạo / Cập nhật đầy đủ các trường DB cho Locations, Categories & BusinessTypes.
@@ -37,11 +45,16 @@ export default function CatalogFormModal({
     country_code: item?.country_code || "VN",
     image_url: item?.image_url || "",
     is_popular: Boolean(item?.is_popular),
-    // Categories & Amenities
+    // Categories, Amenities & Policies
     icon:
       item?.icon ||
-      (activeTab === "serviceAmenities" || activeTab === "roomAmenities" ? "sparkles" : ""),
+      (activeTab === "policies"
+        ? "shield-check"
+        : activeTab === "serviceAmenities" || activeTab === "roomAmenities"
+          ? "sparkles"
+          : ""),
     icon_url: item?.icon_url || "",
+    category: item?.category || "rules",
     // Shared description
     description: item?.description || "",
     // BusinessTypes
@@ -132,6 +145,20 @@ export default function CatalogFormModal({
         slug: form.slug.trim() || undefined,
         kind: activeTab === "excludes" ? "exclude" : "include",
         applicable_types: form.applicable_types,
+        description: form.description.trim() || null,
+        is_active: Boolean(form.is_active),
+      };
+    } else if (activeTab === "policies") {
+      if (form.applicable_types.length === 0) {
+        setError("Vui lòng chọn ít nhất một loại hình dịch vụ áp dụng.");
+        return;
+      }
+      payload = {
+        name: form.name.trim(),
+        slug: form.slug.trim() || undefined,
+        category: form.category || "rules",
+        applicable_types: form.applicable_types,
+        icon: form.icon.trim() || "shield-check",
         description: form.description.trim() || null,
         is_active: Boolean(form.is_active),
       };
@@ -290,6 +317,21 @@ export default function CatalogFormModal({
                 />
               </div>
 
+              {activeTab === "policies" && (
+                <div>
+                  <label className="block text-xs font-semibold text-ink-primary mb-1">
+                    Mô tả chi tiết chính sách
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={form.description}
+                    onChange={(e) => handleChange("description", e.target.value)}
+                    placeholder="Giải thích rõ điều kiện áp dụng cho khách hàng và đối tác..."
+                    className="w-full px-3.5 py-2 rounded-lg border border-border-subtle bg-surface-base text-sm text-ink-primary outline-hidden focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
+                  />
+                </div>
+              )}
+
               <label className="inline-flex items-center gap-2.5 cursor-pointer select-none">
                 <input
                   type="checkbox"
@@ -378,8 +420,28 @@ export default function CatalogFormModal({
           {(activeTab === "serviceAmenities" ||
             activeTab === "roomAmenities" ||
             activeTab === "includes" ||
-            activeTab === "excludes") && (
+            activeTab === "excludes" ||
+            activeTab === "policies") && (
             <>
+              {activeTab === "policies" && (
+                <div>
+                  <label className="block text-xs font-semibold text-ink-primary mb-1">
+                    Nhóm chính sách *
+                  </label>
+                  <select
+                    value={form.category}
+                    onChange={(e) => handleChange("category", e.target.value)}
+                    className="w-full px-3.5 py-2 rounded-lg border border-border-subtle bg-surface-base text-sm text-ink-primary outline-hidden focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
+                  >
+                    {POLICY_CATEGORIES.map((cat) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
               <div>
                 <label className="block text-xs font-semibold text-ink-primary mb-1.5">
                   Loại hình dịch vụ áp dụng *
@@ -406,7 +468,9 @@ export default function CatalogFormModal({
                 </div>
               </div>
 
-              {(activeTab === "serviceAmenities" || activeTab === "roomAmenities") && (
+              {(activeTab === "serviceAmenities" ||
+                activeTab === "roomAmenities" ||
+                activeTab === "policies") && (
                 <div>
                   <label className="block text-xs font-semibold text-ink-primary mb-1.5">
                     Chọn biểu tượng hiển thị ({form.icon || "sparkles"})
@@ -457,6 +521,21 @@ export default function CatalogFormModal({
                       </span>
                     </>
                   )}
+                </div>
+              )}
+
+              {activeTab === "policies" && (
+                <div>
+                  <label className="block text-xs font-semibold text-ink-primary mb-1">
+                    Mô tả chi tiết chính sách
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={form.description}
+                    onChange={(e) => handleChange("description", e.target.value)}
+                    placeholder="Giải thích rõ điều kiện áp dụng cho khách hàng và đối tác..."
+                    className="w-full px-3.5 py-2 rounded-lg border border-border-subtle bg-surface-base text-sm text-ink-primary outline-hidden focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
+                  />
                 </div>
               )}
 
