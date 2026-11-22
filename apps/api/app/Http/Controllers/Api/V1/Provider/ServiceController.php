@@ -118,6 +118,10 @@ class ServiceController extends Controller
                 'excludes' => $validated['excludes'] ?? [],
             ]);
 
+            if (array_key_exists('policy_ids', $validated)) {
+                $service->policies()->sync($validated['policy_ids'] ?? []);
+            }
+
             if ($mapping['group'] === 'accommodation' && ! empty($validated['room_types'])) {
                 $this->syncRoomTypes($service, $validated['room_types']);
             }
@@ -137,7 +141,7 @@ class ServiceController extends Controller
             return $service;
         });
 
-        $service->load(['category', 'location', 'media', 'schedules', 'roomTypes', 'availability']);
+        $service->load(['category', 'location', 'media', 'schedules', 'roomTypes', 'availability', 'policies']);
 
         return response()->json([
             'success' => true,
@@ -158,7 +162,7 @@ class ServiceController extends Controller
 
         $service = Service::query()
             ->where('provider_id', $provider->id)
-            ->with(['category', 'location', 'media', 'schedules', 'roomTypes', 'availability'])
+            ->with(['category', 'location', 'media', 'schedules', 'roomTypes', 'availability', 'policies'])
             ->find($id);
 
         if (! $service) {
@@ -208,7 +212,7 @@ class ServiceController extends Controller
 
         DB::transaction(function () use ($service, $validated, $mapping) {
             $updateData = collect($validated)
-                ->except(['schedules', 'room_types', 'availabilities'])
+                ->except(['schedules', 'room_types', 'availabilities', 'policy_ids'])
                 ->toArray();
 
             $updateData['type'] = $mapping['type'];
@@ -223,6 +227,10 @@ class ServiceController extends Controller
             }
 
             $service->update($updateData);
+
+            if (array_key_exists('policy_ids', $validated)) {
+                $service->policies()->sync($validated['policy_ids'] ?? []);
+            }
 
             if ($mapping['group'] === 'accommodation' && array_key_exists('room_types', $validated)) {
                 $this->syncRoomTypes($service, $validated['room_types'] ?? []);
@@ -239,7 +247,7 @@ class ServiceController extends Controller
             }
         });
 
-        $service->load(['category', 'location', 'media', 'schedules', 'roomTypes', 'availability']);
+        $service->load(['category', 'location', 'media', 'schedules', 'roomTypes', 'availability', 'policies']);
 
         return response()->json([
             'success' => true,

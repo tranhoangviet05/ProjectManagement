@@ -17,6 +17,7 @@ import AdminBookingsPage from "../features/admin/pages/AdminBookingsPage";
 import ProviderDashboardPage from "../features/provider/pages/ProviderDashboardPage";
 import ProviderProfilePage from "../features/provider/pages/ProviderProfilePage";
 import ServiceManagementPage from "../features/provider/pages/ServiceManagementPage";
+import ProviderCampaignsPage from "../features/provider/pages/ProviderCampaignsPage";
 import ServiceAvailabilityPage from "../features/provider/pages/ServiceAvailabilityPage";
 import NotFoundPage from "../features/common/pages/NotFoundPage";
 import Typography from "../components/ui/Typography";
@@ -290,6 +291,16 @@ export default function AppRouter() {
           element={
             <ProtectedRoute allowedRoles={["provider", "admin"]}>
               <ServiceManagementPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* 2c. Tham gia Chương trình khuyến mãi ngày lễ (Task #68) */}
+        <Route
+          path="/provider/campaigns"
+          element={
+            <ProtectedRoute allowedRoles={["provider", "admin"]}>
+              <ProviderCampaignsPage />
             </ProtectedRoute>
           }
         />

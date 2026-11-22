@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\V1\Provider\HotelRoomTypeController;
 use App\Http\Controllers\Api\V1\Provider\KycController;
+use App\Http\Controllers\Api\V1\Provider\ProviderCampaignController;
 use App\Http\Controllers\Api\V1\Provider\ProviderProfileController;
 use App\Http\Controllers\Api\V1\Provider\ServiceAvailabilityController;
 use App\Http\Controllers\Api\V1\Provider\ServiceController;
@@ -43,4 +44,10 @@ Route::prefix('services')->group(function () {
     Route::post('/{serviceId}/room-types', [HotelRoomTypeController::class, 'store']);
     Route::put('/{serviceId}/room-types/{roomTypeId}', [HotelRoomTypeController::class, 'update']);
     Route::delete('/{serviceId}/room-types/{roomTypeId}', [HotelRoomTypeController::class, 'destroy']);
+});
+
+// ── Provider Holiday Campaigns Opt-in (Task #68) ──────────────
+Route::prefix('campaigns')->group(function () {
+    Route::get('/', [ProviderCampaignController::class, 'index']);
+    Route::put('/{campaignId}/services', [ProviderCampaignController::class, 'toggleService']);
 });

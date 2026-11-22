@@ -94,31 +94,36 @@ export default function ServiceFormStepper({
     roomAmenities: [],
     includes: [],
     excludes: [],
+    policies: [],
   });
+
+  const resolvedServiceType = initialService?.type || providerConfig.serviceType || "tour";
 
   useEffect(() => {
     let mounted = true;
-    const svcType = formData.type || "hotel";
+    const svcType = resolvedServiceType;
 
     Promise.allSettled([
       apiClient.get(`/public/amenities?scope=service&type=${encodeURIComponent(svcType)}`),
       apiClient.get(`/public/amenities?scope=room&type=${encodeURIComponent(svcType)}`),
       apiClient.get(`/public/inclusions?kind=include&type=${encodeURIComponent(svcType)}`),
       apiClient.get(`/public/inclusions?kind=exclude&type=${encodeURIComponent(svcType)}`),
-    ]).then(([svcAmRes, roomAmRes, incRes, excRes]) => {
+      apiClient.get(`/public/policies?type=${encodeURIComponent(svcType)}`),
+    ]).then(([svcAmRes, roomAmRes, incRes, excRes, polRes]) => {
       if (!mounted) return;
       setCatalogOptions({
         amenities: svcAmRes.status === "fulfilled" ? svcAmRes.value?.data || [] : [],
         roomAmenities: roomAmRes.status === "fulfilled" ? roomAmRes.value?.data || [] : [],
         includes: incRes.status === "fulfilled" ? incRes.value?.data || [] : [],
         excludes: excRes.status === "fulfilled" ? excRes.value?.data || [] : [],
+        policies: polRes.status === "fulfilled" ? polRes.value?.data || [] : [],
       });
     });
 
     return () => {
       mounted = false;
     };
-  }, [formData.type]);
+  }, [resolvedServiceType]);
 
   useEffect(() => {
     setFormData(createInitialServiceForm(initialService, providerConfig.group));
@@ -127,7 +132,7 @@ export default function ServiceFormStepper({
   }, [initialService, providerConfig.group]);
 
   const filteredCategories = useMemo(() => {
-    const svcType = formData.type;
+    const svcType = resolvedServiceType;
     if (!svcType) return categories;
     return categories.filter(
       (cat) =>
@@ -135,7 +140,18 @@ export default function ServiceFormStepper({
         cat.applicable_types.length === 0 ||
         cat.applicable_types.includes(svcType),
     );
-  }, [categories, formData.type]);
+  }, [categories, resolvedServiceType]);
+
+  const handleTogglePolicy = (policyId) => {
+    setFormData((prev) => {
+      const current = Array.isArray(prev.policy_ids) ? prev.policy_ids : [];
+      const exists = current.includes(policyId);
+      return {
+        ...prev,
+        policy_ids: exists ? current.filter((id) => id !== policyId) : [...current, policyId],
+      };
+    });
+  };
 
   const handleFieldChange = (field, value) => {
     setFormError("");
@@ -456,6 +472,7 @@ export default function ServiceFormStepper({
       amenities: formData.amenities,
       includes: formData.includes,
       excludes: formData.excludes,
+      policy_ids: formData.policy_ids || [],
     };
 
     if (isAccommodation) {
@@ -540,96 +557,147 @@ export default function ServiceFormStepper({
   };
 
   const renderTagSection = () => (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-      {[
-        { key: "amenities", label: "Tiện nghi", placeholder: "VD: Wifi miễn phí, Điều hòa" },
-        { key: "includes", label: "Bao gồm", placeholder: "VD: Ăn sáng, Vé tham quan" },
-        { key: "excludes", label: "Không bao gồm", placeholder: "VD: Thuế VAT, Chi phí cá nhân" },
-      ].map((group) => (
-        <div key={group.key} className="p-4 rounded-2xl bg-surface-muted/60 space-y-3">
-          <label className="block text-sm font-semibold text-ink-primary">{group.label}</label>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={tagInputs[group.key]}
-              onChange={(e) => setTagInputs((prev) => ({ ...prev, [group.key]: e.target.value }))}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  handleAddTag(group.key);
-                }
-              }}
-              placeholder={group.placeholder}
-              className="flex-1 px-3 py-2 rounded-xl bg-surface-elevated text-xs focus:outline-none focus:ring-2 focus:ring-brand-primary/30"
-            />
-            <button
-              type="button"
-              onClick={() => handleAddTag(group.key)}
-              className="px-3 py-2 rounded-xl bg-brand-primary text-white text-xs font-semibold hover:bg-brand-hover transition-colors"
-            >
-              Thêm
-            </button>
-          </div>
-          {catalogOptions[group.key]?.length > 0 && (
-            <div className="space-y-1.5">
-              <span className="text-[11px] font-semibold uppercase tracking-wide text-ink-subtle">
-                Chọn nhanh gợi ý chuẩn hệ thống
-              </span>
-              <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto pr-1">
-                {catalogOptions[group.key].map((preset) => {
-                  const selected = formData[group.key].includes(preset.name);
-                  return (
-                    <button
-                      key={preset.id}
-                      type="button"
-                      onClick={() => handleTogglePresetTag(group.key, preset.name)}
-                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors cursor-pointer ${
-                        selected
-                          ? "bg-brand-primary text-white border-brand-primary"
-                          : "bg-surface-elevated text-ink-body border-border-subtle hover:bg-slate-100"
-                      }`}
-                    >
-                      {group.key === "amenities" ? (
-                        <AmenityIcon name={preset.icon} className="w-3.5 h-3.5 shrink-0" />
-                      ) : group.key === "includes" ? (
-                        <Check
-                          className={`w-3.5 h-3.5 shrink-0 ${
-                            selected ? "text-white" : "text-emerald-600"
-                          }`}
-                        />
-                      ) : (
-                        <X
-                          className={`w-3.5 h-3.5 shrink-0 ${
-                            selected ? "text-white" : "text-rose-600"
-                          }`}
-                        />
-                      )}
-                      <span>{preset.name}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-          <div className="flex flex-wrap gap-1.5">
-            {formData[group.key].map((tag, idx) => (
-              <span
-                key={`${group.key}-${tag}`}
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-elevated text-xs font-medium text-ink-primary shadow-xs"
+    <div className="space-y-5">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        {[
+          { key: "amenities", label: "Tiện nghi", placeholder: "VD: Wifi miễn phí, Điều hòa" },
+          { key: "includes", label: "Bao gồm", placeholder: "VD: Ăn sáng, Vé tham quan" },
+          { key: "excludes", label: "Không bao gồm", placeholder: "VD: Thuế VAT, Chi phí cá nhân" },
+        ].map((group) => (
+          <div key={group.key} className="p-4 rounded-2xl bg-surface-muted/60 space-y-3">
+            <label className="block text-sm font-semibold text-ink-primary">{group.label}</label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={tagInputs[group.key]}
+                onChange={(e) => setTagInputs((prev) => ({ ...prev, [group.key]: e.target.value }))}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleAddTag(group.key);
+                  }
+                }}
+                placeholder={group.placeholder}
+                className="flex-1 px-3 py-2 rounded-xl bg-surface-elevated text-xs focus:outline-none focus:ring-2 focus:ring-brand-primary/30"
+              />
+              <button
+                type="button"
+                onClick={() => handleAddTag(group.key)}
+                className="px-3 py-2 rounded-xl bg-brand-primary text-white text-xs font-semibold hover:bg-brand-hover transition-colors"
               >
-                {tag}
-                <button
-                  type="button"
-                  onClick={() => handleRemoveTag(group.key, idx)}
-                  className="text-ink-subtle hover:text-status-danger"
+                Thêm
+              </button>
+            </div>
+            {catalogOptions[group.key]?.length > 0 && (
+              <div className="space-y-1.5">
+                <span className="text-[11px] font-semibold uppercase tracking-wide text-ink-subtle">
+                  Chọn nhanh gợi ý chuẩn hệ thống
+                </span>
+                <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto pr-1">
+                  {catalogOptions[group.key].map((preset) => {
+                    const selected = formData[group.key].includes(preset.name);
+                    return (
+                      <button
+                        key={preset.id}
+                        type="button"
+                        onClick={() => handleTogglePresetTag(group.key, preset.name)}
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors cursor-pointer ${
+                          selected
+                            ? "bg-brand-primary text-white border-brand-primary"
+                            : "bg-surface-elevated text-ink-body border-border-subtle hover:bg-slate-100"
+                        }`}
+                      >
+                        {group.key === "amenities" ? (
+                          <AmenityIcon name={preset.icon} className="w-3.5 h-3.5 shrink-0" />
+                        ) : group.key === "includes" ? (
+                          <Check
+                            className={`w-3.5 h-3.5 shrink-0 ${
+                              selected ? "text-white" : "text-emerald-600"
+                            }`}
+                          />
+                        ) : (
+                          <X
+                            className={`w-3.5 h-3.5 shrink-0 ${
+                              selected ? "text-white" : "text-rose-600"
+                            }`}
+                          />
+                        )}
+                        <span>{preset.name}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+            <div className="flex flex-wrap gap-1.5">
+              {formData[group.key].map((tag, idx) => (
+                <span
+                  key={`${group.key}-${tag}`}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-elevated text-xs font-medium text-ink-primary shadow-xs"
                 >
-                  ×
+                  {tag}
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveTag(group.key, idx)}
+                    className="text-ink-subtle hover:text-status-danger"
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {catalogOptions.policies?.length > 0 && (
+        <div className="p-4 sm:p-5 rounded-2xl bg-surface-muted/60 space-y-3">
+          <div>
+            <label className="block text-sm font-semibold text-ink-primary">
+              Chính sách dịch vụ áp dụng
+            </label>
+            <p className="text-xs text-ink-subtle mt-0.5">
+              Chọn các chính sách thanh toán, hủy/đổi lịch và quy định sử dụng mà doanh nghiệp bạn
+              áp dụng cho dịch vụ này.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            {catalogOptions.policies.map((pol) => {
+              const selected = (formData.policy_ids || []).includes(pol.id);
+              return (
+                <button
+                  key={pol.id}
+                  type="button"
+                  onClick={() => handleTogglePolicy(pol.id)}
+                  className={`flex items-start gap-2.5 p-3 rounded-xl border text-left transition-colors cursor-pointer ${
+                    selected
+                      ? "bg-brand-subtle border-brand-primary text-brand-primary"
+                      : "bg-surface-elevated border-border-subtle text-ink-body hover:bg-slate-100"
+                  }`}
+                >
+                  <span
+                    className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
+                      selected ? "bg-brand-primary text-white" : "bg-slate-100 text-ink-subtle"
+                    }`}
+                  >
+                    <AmenityIcon name={pol.icon || "shield-check"} className="w-3.5 h-3.5" />
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs font-semibold text-ink-primary leading-snug">
+                      {pol.name}
+                    </div>
+                    {pol.description && (
+                      <div className="text-[11px] text-ink-subtle line-clamp-2 mt-0.5">
+                        {pol.description}
+                      </div>
+                    )}
+                  </div>
                 </button>
-              </span>
-            ))}
+              );
+            })}
           </div>
         </div>
-      ))}
+      )}
     </div>
   );
 
