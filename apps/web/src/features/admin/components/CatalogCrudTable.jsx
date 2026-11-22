@@ -1,12 +1,17 @@
 import React from "react";
-import { Search, Image as ImageIcon } from "lucide-react";
+import { Search, Image as ImageIcon, Check, X } from "lucide-react";
 import Typography from "../../../components/ui/Typography";
 import { Skeleton } from "../../../components/ui/Skeleton";
+import { AmenityIcon, SERVICE_TYPE_LABELS } from "../utils/amenityIcons";
 
 const TABS = [
   { id: "locations", label: "Điểm đến" },
   { id: "categories", label: "Danh mục dịch vụ" },
   { id: "businessTypes", label: "Loại hình kinh doanh" },
+  { id: "serviceAmenities", label: "Tiện nghi dịch vụ" },
+  { id: "roomAmenities", label: "Tiện nghi phòng" },
+  { id: "includes", label: "Bao gồm" },
+  { id: "excludes", label: "Không bao gồm" },
 ];
 
 /**
@@ -25,8 +30,8 @@ export default function CatalogCrudTable({
   return (
     <div className="bg-surface-elevated border border-border-subtle rounded-xl shadow-xs overflow-hidden">
       {/* Thanh công cụ */}
-      <div className="p-4 sm:p-5 border-b border-border-subtle flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0">
+      <div className="p-4 sm:p-5 border-b border-border-subtle flex flex-col gap-3">
+        <div className="flex flex-wrap items-center gap-1.5">
           {TABS.map((tab) => {
             const isActive = activeTab === tab.id;
             return (
@@ -46,7 +51,7 @@ export default function CatalogCrudTable({
           })}
         </div>
 
-        <div className="relative w-full lg:w-72">
+        <div className="relative w-full sm:w-80">
           <input
             type="text"
             value={searchQuery}
@@ -90,6 +95,22 @@ export default function CatalogCrudTable({
                 <th className="py-3 px-4 sm:px-6 text-right">Thao tác</th>
               </tr>
             )}
+            {(activeTab === "serviceAmenities" || activeTab === "roomAmenities") && (
+              <tr className="bg-slate-50/80 border-b border-border-subtle text-[11px] font-bold uppercase tracking-wider text-ink-subtle">
+                <th className="py-3 px-4 sm:px-6">Biểu tượng & Tên tiện nghi</th>
+                <th className="py-3 px-4">Loại hình dịch vụ áp dụng</th>
+                <th className="py-3 px-4">Trạng thái</th>
+                <th className="py-3 px-4 sm:px-6 text-right">Thao tác</th>
+              </tr>
+            )}
+            {(activeTab === "includes" || activeTab === "excludes") && (
+              <tr className="bg-slate-50/80 border-b border-border-subtle text-[11px] font-bold uppercase tracking-wider text-ink-subtle">
+                <th className="py-3 px-4 sm:px-6">Nội dung</th>
+                <th className="py-3 px-4">Loại hình dịch vụ áp dụng</th>
+                <th className="py-3 px-4">Trạng thái</th>
+                <th className="py-3 px-4 sm:px-6 text-right">Thao tác</th>
+              </tr>
+            )}
           </thead>
 
           <tbody className="divide-y divide-border-subtle text-sm">
@@ -105,9 +126,13 @@ export default function CatalogCrudTable({
                   <td className="py-4 px-4">
                     <Skeleton className="h-4 w-28" rounded="rounded-md" />
                   </td>
-                  <td className="py-4 px-4">
-                    <Skeleton className="h-4 w-20" rounded="rounded-md" />
-                  </td>
+                  {(activeTab === "locations" ||
+                    activeTab === "categories" ||
+                    activeTab === "businessTypes") && (
+                    <td className="py-4 px-4">
+                      <Skeleton className="h-4 w-20" rounded="rounded-md" />
+                    </td>
+                  )}
                   {activeTab === "locations" && (
                     <td className="py-4 px-4">
                       <Skeleton className="h-4 w-16" rounded="rounded-md" />
@@ -246,6 +271,86 @@ export default function CatalogCrudTable({
                             Xóa
                           </button>
                         )}
+                      </td>
+                    </tr>
+                  );
+                }
+
+                if (
+                  activeTab === "serviceAmenities" ||
+                  activeTab === "roomAmenities" ||
+                  activeTab === "includes" ||
+                  activeTab === "excludes"
+                ) {
+                  const isAmenity =
+                    activeTab === "serviceAmenities" || activeTab === "roomAmenities";
+                  const types = Array.isArray(item.applicable_types) ? item.applicable_types : [];
+
+                  return (
+                    <tr key={item.id} className="hover:bg-slate-50/70 transition-colors">
+                      <td className="py-4 px-4 sm:px-6">
+                        <div className="flex items-center gap-3">
+                          {isAmenity ? (
+                            <span className="w-8 h-8 rounded-lg bg-brand-subtle text-brand-primary border border-brand-light flex items-center justify-center shrink-0">
+                              <AmenityIcon name={item.icon} className="w-4 h-4" />
+                            </span>
+                          ) : activeTab === "includes" ? (
+                            <span className="w-7 h-7 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center shrink-0">
+                              <Check className="w-3.5 h-3.5" />
+                            </span>
+                          ) : (
+                            <span className="w-7 h-7 rounded-full bg-rose-50 text-rose-600 border border-rose-200 flex items-center justify-center shrink-0">
+                              <X className="w-3.5 h-3.5" />
+                            </span>
+                          )}
+                          <div>
+                            <div className="font-semibold text-ink-primary">{item.name}</div>
+                            {isAmenity && (
+                              <div className="text-[11px] font-mono text-ink-subtle">
+                                icon: {item.icon}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-4 px-4">
+                        <div className="flex flex-wrap gap-1.5">
+                          {types.map((t) => (
+                            <span
+                              key={t}
+                              className="px-2 py-0.5 rounded-md bg-slate-100 text-ink-body text-[11px] font-semibold"
+                            >
+                              {SERVICE_TYPE_LABELS[t] || t}
+                            </span>
+                          ))}
+                        </div>
+                      </td>
+                      <td className="py-4 px-4">
+                        <span
+                          className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                            item.is_active !== false
+                              ? "bg-emerald-50 text-emerald-700"
+                              : "bg-slate-100 text-ink-subtle"
+                          }`}
+                        >
+                          {item.is_active !== false ? "Đang bật" : "Tạm ẩn"}
+                        </span>
+                      </td>
+                      <td className="py-4 px-4 sm:px-6 text-right space-x-1.5 whitespace-nowrap">
+                        <button
+                          type="button"
+                          onClick={() => onEdit?.(item)}
+                          className="px-3 py-1.5 rounded-lg border border-border-subtle bg-surface-elevated hover:bg-slate-100 text-ink-primary font-semibold text-xs transition-colors cursor-pointer"
+                        >
+                          Sửa
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => onDelete?.(item)}
+                          className="px-2.5 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-status-danger border border-rose-200 text-xs font-semibold transition-colors cursor-pointer"
+                        >
+                          Xóa
+                        </button>
                       </td>
                     </tr>
                   );

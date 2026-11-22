@@ -12,6 +12,10 @@ const ADD_BUTTON_LABELS = {
   locations: "Thêm điểm đến",
   categories: "Thêm danh mục",
   businessTypes: "Thêm loại hình",
+  serviceAmenities: "Thêm tiện nghi dịch vụ",
+  roomAmenities: "Thêm tiện nghi phòng",
+  includes: "Thêm mục bao gồm",
+  excludes: "Thêm mục không bao gồm",
 };
 
 /**
