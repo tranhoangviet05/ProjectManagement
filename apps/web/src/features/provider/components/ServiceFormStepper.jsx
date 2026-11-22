@@ -12,10 +12,13 @@ import {
   BedDouble,
   CalendarDays,
   Sparkles,
+  X,
 } from "lucide-react";
 import Typography from "../../../components/ui/Typography";
 import ServiceGalleryUploader from "./ServiceGalleryUploader";
 import { useAuth } from "../../../hooks/useAuth";
+import apiClient from "../../../lib/apiClient";
+import { AmenityIcon } from "../../admin/utils/amenityIcons";
 import {
   ROOM_RANK_OPTIONS,
   resolveProviderServiceConfig,
@@ -86,6 +89,36 @@ export default function ServiceFormStepper({
   const [roomAmenityInputs, setRoomAmenityInputs] = useState({});
   const [activityInputs, setActivityInputs] = useState({});
   const [formError, setFormError] = useState("");
+  const [catalogOptions, setCatalogOptions] = useState({
+    amenities: [],
+    roomAmenities: [],
+    includes: [],
+    excludes: [],
+  });
+
+  useEffect(() => {
+    let mounted = true;
+    const svcType = formData.type || "hotel";
+
+    Promise.allSettled([
+      apiClient.get(`/public/amenities?scope=service&type=${encodeURIComponent(svcType)}`),
+      apiClient.get(`/public/amenities?scope=room&type=${encodeURIComponent(svcType)}`),
+      apiClient.get(`/public/inclusions?kind=include&type=${encodeURIComponent(svcType)}`),
+      apiClient.get(`/public/inclusions?kind=exclude&type=${encodeURIComponent(svcType)}`),
+    ]).then(([svcAmRes, roomAmRes, incRes, excRes]) => {
+      if (!mounted) return;
+      setCatalogOptions({
+        amenities: svcAmRes.status === "fulfilled" ? svcAmRes.value?.data || [] : [],
+        roomAmenities: roomAmRes.status === "fulfilled" ? roomAmRes.value?.data || [] : [],
+        includes: incRes.status === "fulfilled" ? incRes.value?.data || [] : [],
+        excludes: excRes.status === "fulfilled" ? excRes.value?.data || [] : [],
+      });
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, [formData.type]);
 
   useEffect(() => {
     setFormData(createInitialServiceForm(initialService, providerConfig.group));
@@ -113,6 +146,30 @@ export default function ServiceFormStepper({
     setFormData((prev) => ({
       ...prev,
       [field]: prev[field].filter((_, i) => i !== index),
+    }));
+  };
+
+  const handleTogglePresetTag = (field, name) => {
+    setFormData((prev) => {
+      const exists = prev[field].includes(name);
+      return {
+        ...prev,
+        [field]: exists ? prev[field].filter((t) => t !== name) : [...prev[field], name],
+      };
+    });
+  };
+
+  const handleToggleRoomPresetAmenity = (roomIdx, name) => {
+    setFormData((prev) => ({
+      ...prev,
+      room_types: prev.room_types.map((room, idx) => {
+        if (idx !== roomIdx) return room;
+        const exists = room.amenities.includes(name);
+        return {
+          ...room,
+          amenities: exists ? room.amenities.filter((a) => a !== name) : [...room.amenities, name],
+        };
+      }),
     }));
   };
 
@@ -502,6 +559,47 @@ export default function ServiceFormStepper({
               Thêm
             </button>
           </div>
+          {catalogOptions[group.key]?.length > 0 && (
+            <div className="space-y-1.5">
+              <span className="text-[11px] font-semibold uppercase tracking-wide text-ink-subtle">
+                Chọn nhanh gợi ý chuẩn hệ thống
+              </span>
+              <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto pr-1">
+                {catalogOptions[group.key].map((preset) => {
+                  const selected = formData[group.key].includes(preset.name);
+                  return (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      onClick={() => handleTogglePresetTag(group.key, preset.name)}
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors cursor-pointer ${
+                        selected
+                          ? "bg-brand-primary text-white border-brand-primary"
+                          : "bg-surface-elevated text-ink-body border-border-subtle hover:bg-slate-100"
+                      }`}
+                    >
+                      {group.key === "amenities" ? (
+                        <AmenityIcon name={preset.icon} className="w-3.5 h-3.5 shrink-0" />
+                      ) : group.key === "includes" ? (
+                        <Check
+                          className={`w-3.5 h-3.5 shrink-0 ${
+                            selected ? "text-white" : "text-emerald-600"
+                          }`}
+                        />
+                      ) : (
+                        <X
+                          className={`w-3.5 h-3.5 shrink-0 ${
+                            selected ? "text-white" : "text-rose-600"
+                          }`}
+                        />
+                      )}
+                      <span>{preset.name}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
           <div className="flex flex-wrap gap-1.5">
             {formData[group.key].map((tag, idx) => (
               <span
@@ -916,6 +1014,28 @@ export default function ServiceFormStepper({
                       <label className="block text-xs font-semibold text-ink-primary">
                         Tiện nghi riêng của loại phòng này
                       </label>
+                      {catalogOptions.roomAmenities.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto">
+                          {catalogOptions.roomAmenities.map((preset) => {
+                            const selected = room.amenities.includes(preset.name);
+                            return (
+                              <button
+                                key={preset.id}
+                                type="button"
+                                onClick={() => handleToggleRoomPresetAmenity(roomIdx, preset.name)}
+                                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors cursor-pointer ${
+                                  selected
+                                    ? "bg-brand-primary text-white border-brand-primary"
+                                    : "bg-surface-elevated text-ink-body border-border-subtle hover:bg-slate-100"
+                                }`}
+                              >
+                                <AmenityIcon name={preset.icon} className="w-3.5 h-3.5 shrink-0" />
+                                <span>{preset.name}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
                       <div className="flex gap-2 max-w-md">
                         <input
                           type="text"
