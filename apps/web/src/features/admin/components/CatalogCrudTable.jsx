@@ -80,6 +80,7 @@ export default function CatalogCrudTable({
             {activeTab === "categories" && (
               <tr className="bg-slate-50/80 border-b border-border-subtle text-[11px] font-bold uppercase tracking-wider text-ink-subtle">
                 <th className="py-3 px-4 sm:px-6">Danh mục</th>
+                <th className="py-3 px-4">Loại hình áp dụng</th>
                 <th className="py-3 px-4">Đường dẫn</th>
                 <th className="py-3 px-4">Mô tả</th>
                 <th className="py-3 px-4">Dịch vụ gắn kết</th>
@@ -233,6 +234,9 @@ export default function CatalogCrudTable({
 
                 if (activeTab === "categories") {
                   const isLocked = (item.services_count || 0) > 0;
+                  const catTypes = Array.isArray(item.applicable_types)
+                    ? item.applicable_types
+                    : [];
                   return (
                     <tr key={item.id} className="hover:bg-slate-50/70 transition-colors">
                       <td className="py-4 px-4 sm:px-6">
@@ -245,6 +249,22 @@ export default function CatalogCrudTable({
                             />
                           )}
                           <span className="font-semibold text-ink-primary">{item.name}</span>
+                        </div>
+                      </td>
+                      <td className="py-4 px-4">
+                        <div className="flex flex-wrap gap-1.5">
+                          {catTypes.length > 0 ? (
+                            catTypes.map((t) => (
+                              <span
+                                key={t}
+                                className="px-2 py-0.5 rounded-md bg-slate-100 text-ink-body text-[11px] font-semibold"
+                              >
+                                {SERVICE_TYPE_LABELS[t] || t}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="text-xs text-ink-subtle">Tất cả</span>
+                          )}
                         </div>
                       </td>
                       <td className="py-4 px-4 font-mono text-xs text-ink-subtle">{item.slug}</td>
