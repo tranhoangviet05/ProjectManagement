@@ -31,6 +31,10 @@ const exploreService = {
     return apiClient.get(`/public/services${qs ? `?${qs}` : ""}`);
   },
 
+  async fetchServiceDetail(id) {
+    return apiClient.get(`/public/services/${id}`);
+  },
+
   async fetchFeaturedPosts(limit = 12) {
     return apiClient.get(`/public/posts/featured?limit=${limit}`);
   },
