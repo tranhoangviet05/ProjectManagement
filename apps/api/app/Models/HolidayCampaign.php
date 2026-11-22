@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class HolidayCampaign extends Model
 {
@@ -34,6 +35,11 @@ class HolidayCampaign extends Model
             'ends_at' => 'datetime',
             'priority' => 'integer',
         ];
+    }
+
+    public function promotions(): HasMany
+    {
+        return $this->hasMany(ServicePromotion::class);
     }
 
     public function scopeCurrentlyActive(Builder $query): Builder

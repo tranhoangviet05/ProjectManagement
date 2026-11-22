@@ -29,6 +29,8 @@ class UpdateServiceRequest extends FormRequest
             'includes.*' => ['string', 'max:255'],
             'excludes' => ['nullable', 'array'],
             'excludes.*' => ['string', 'max:255'],
+            'policy_ids' => ['nullable', 'array'],
+            'policy_ids.*' => ['integer', 'exists:service_policies,id'],
 
             'availabilities' => ['nullable', 'array'],
             'availabilities.*.available_date' => ['required_with:availabilities', 'date'],

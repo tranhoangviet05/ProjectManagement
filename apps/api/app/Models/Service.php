@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -87,5 +88,16 @@ class Service extends Model
     public function reviews(): HasMany
     {
         return $this->hasMany(Review::class)->latest();
+    }
+
+    public function policies(): BelongsToMany
+    {
+        return $this->belongsToMany(ServicePolicy::class, 'service_policy_assignments', 'service_id', 'service_policy_id')
+            ->withTimestamps();
+    }
+
+    public function promotions(): HasMany
+    {
+        return $this->hasMany(ServicePromotion::class);
     }
 }

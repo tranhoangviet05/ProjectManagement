@@ -29,6 +29,8 @@ class StoreServiceRequest extends FormRequest
             'includes.*' => ['string', 'max:255'],
             'excludes' => ['nullable', 'array'],
             'excludes.*' => ['string', 'max:255'],
+            'policy_ids' => ['nullable', 'array'],
+            'policy_ids.*' => ['integer', 'exists:service_policies,id'],
 
             // Dành cho Tour: cấu hình 15 ngày khả dụng
             'daily_slots' => ['nullable', 'integer', 'min:1'],
