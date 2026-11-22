@@ -7,8 +7,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Amenity;
 use App\Models\BusinessType;
 use App\Models\Category;
+use App\Models\HolidayCampaign;
 use App\Models\Location;
 use App\Models\ServiceInclusion;
+use App\Models\ServicePolicy;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -127,6 +129,50 @@ class CatalogController extends Controller
         return response()->json([
             'success' => true,
             'data' => $query->get(),
+        ]);
+    }
+
+    /**
+     * Lấy danh sách chính sách dịch vụ đang kích hoạt (lọc theo ?type=&category=).
+     */
+    public function policies(Request $request): JsonResponse
+    {
+        $category = trim((string) $request->query('category', ''));
+        $type = trim((string) $request->query('type', ''));
+
+        $query = ServicePolicy::query()
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('name');
+
+        if ($category !== '' && in_array($category, ['payment', 'cancellation', 'checkin', 'rules'], true)) {
+            $query->where('category', $category);
+        }
+
+        if ($type !== '') {
+            $query->whereJsonContains('applicable_types', $type);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $query->get(),
+        ]);
+    }
+
+    /**
+     * Lấy danh sách chương trình khuyến mãi ngày lễ đang diễn ra.
+     */
+    public function campaigns(): JsonResponse
+    {
+        $campaigns = HolidayCampaign::query()
+            ->currentlyActive()
+            ->orderByDesc('priority')
+            ->orderBy('ends_at')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $campaigns,
         ]);
     }
 }

@@ -45,6 +45,8 @@ Route::prefix('public')->group(function () {
     Route::get('/business-types', [CatalogController::class, 'businessTypes']);
     Route::get('/amenities', [CatalogController::class, 'amenities']);
     Route::get('/inclusions', [CatalogController::class, 'inclusions']);
+    Route::get('/policies', [CatalogController::class, 'policies']);
+    Route::get('/campaigns', [CatalogController::class, 'campaigns']);
 
     // Khám phá & Tìm kiếm Dịch vụ công khai (Task #19)
     Route::get('/services', [PublicServiceController::class, 'index']);
