@@ -65,8 +65,9 @@ export default function ServiceFormStepper({
     if (isAccommodation) {
       return [
         { id: 1, title: "Thông tin cơ bản" },
-        { id: 2, title: "Tiện ích & Loại phòng" },
-        { id: 3, title: "Album ảnh & Xuất bản" },
+        { id: 2, title: "Tiện ích & Chính sách" },
+        { id: 3, title: "Loại phòng" },
+        { id: 4, title: "Album ảnh & Xuất bản" },
       ];
     }
     return [
@@ -87,6 +88,7 @@ export default function ServiceFormStepper({
   const [pendingCoverIndex, setPendingCoverIndex] = useState(null);
   const [tagInputs, setTagInputs] = useState({ amenities: "", includes: "", excludes: "" });
   const [roomAmenityInputs, setRoomAmenityInputs] = useState({});
+  const [uploadingRoomIdx, setUploadingRoomIdx] = useState(null);
   const [activityInputs, setActivityInputs] = useState({});
   const [formError, setFormError] = useState("");
   const [catalogOptions, setCatalogOptions] = useState({
@@ -439,8 +441,8 @@ export default function ServiceFormStepper({
       setCurrentStep(1);
       return;
     }
-    if (isAccommodation && targetStep > 2 && !validateAccommodationRooms()) {
-      setCurrentStep(2);
+    if (isAccommodation && targetStep > 3 && !validateAccommodationRooms()) {
+      setCurrentStep(3);
       return;
     }
     setCurrentStep(targetStep);
@@ -457,7 +459,7 @@ export default function ServiceFormStepper({
       return;
     }
     if (!validateAccommodationRooms()) {
-      setCurrentStep(2);
+      setCurrentStep(3);
       return;
     }
 
@@ -490,6 +492,7 @@ export default function ServiceFormStepper({
         capacity_adults: Number(room.capacity_adults),
         capacity_children: Number(room.capacity_children || 0),
         amenities: Array.isArray(room.amenities) ? room.amenities : [],
+        images: Array.isArray(room.images) ? room.images : [],
         status: room.status || "active",
       }));
     }
@@ -893,16 +896,21 @@ export default function ServiceFormStepper({
           </div>
         )}
 
-        {/* BƯỚC 2 (CHẾ ĐỘ CHỖ Ở): TIỆN ÍCH CHỖ Ở & LOẠI PHÒNG (hotel_room_types) */}
+        {/* BƯỚC 2 (CHẾ ĐỘ CHỖ Ở): TIỆN ÍCH CHUNG & CHÍNH SÁCH */}
         {isAccommodation && currentStep === 2 && (
-          <div className="space-y-8">
+          <div className="space-y-6">
             <div className="space-y-3">
               <Typography variant="h3" className="text-ink-primary">
-                Tiện ích chung của Chỗ ở
+                Tiện ích chung & Chính sách của Chỗ ở
               </Typography>
               {renderTagSection()}
             </div>
+          </div>
+        )}
 
+        {/* BƯỚC 3 (CHẾ ĐỘ CHỖ Ở): DANH SÁCH LOẠI PHÒNG (hotel_room_types) */}
+        {isAccommodation && currentStep === 3 && (
+          <div className="space-y-6">
             <div className="space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
@@ -1160,6 +1168,95 @@ export default function ServiceFormStepper({
                             </span>
                           ))}
                         </div>
+                      )}
+                    </div>
+
+                    {/* Album ảnh riêng của loại phòng */}
+                    <div className="pt-3 border-t border-border-subtle/60 space-y-2.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <label className="block text-xs font-semibold text-ink-primary">
+                          Album ảnh loại phòng (
+                          {Array.isArray(room.images) ? room.images.length : 0})
+                        </label>
+                        <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-subtle text-brand-primary text-xs font-semibold hover:bg-brand-primary hover:text-white transition-colors cursor-pointer">
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>
+                            {uploadingRoomIdx === roomIdx ? "Đang tải ảnh..." : "Thêm ảnh phòng"}
+                          </span>
+                          <input
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp"
+                            multiple
+                            disabled={uploadingRoomIdx === roomIdx}
+                            className="hidden"
+                            onChange={async (e) => {
+                              const files = Array.from(e.target.files || []);
+                              e.target.value = "";
+                              if (files.length === 0) return;
+                              setUploadingRoomIdx(roomIdx);
+                              setFormError("");
+                              try {
+                                const uploadedUrls = [];
+                                for (const file of files) {
+                                  const fd = new FormData();
+                                  fd.append("type", "service_gallery");
+                                  fd.append("file", file);
+                                  const res = await apiClient.post("/media/upload", fd);
+                                  if (res?.data?.url) uploadedUrls.push(res.data.url);
+                                }
+                                if (uploadedUrls.length > 0) {
+                                  const prevImgs = Array.isArray(room.images) ? room.images : [];
+                                  handleUpdateRoomType(roomIdx, "images", [
+                                    ...prevImgs,
+                                    ...uploadedUrls,
+                                  ]);
+                                }
+                              } catch (err) {
+                                setFormError(
+                                  err?.message || "Tải ảnh loại phòng lên máy chủ thất bại.",
+                                );
+                              } finally {
+                                setUploadingRoomIdx(null);
+                              }
+                            }}
+                          />
+                        </label>
+                      </div>
+
+                      {Array.isArray(room.images) && room.images.length > 0 ? (
+                        <div className="grid grid-cols-3 sm:grid-cols-5 gap-2.5">
+                          {room.images.map((imgUrl, imgIdx) => (
+                            <div
+                              key={`${imgUrl}-${imgIdx}`}
+                              className="relative aspect-video rounded-xl overflow-hidden border border-border-subtle bg-slate-100 group"
+                            >
+                              <img
+                                src={imgUrl}
+                                alt={`${room.name || "Phòng"} ${imgIdx + 1}`}
+                                className="w-full h-full object-cover"
+                              />
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleUpdateRoomType(
+                                    roomIdx,
+                                    "images",
+                                    room.images.filter((_, i) => i !== imgIdx),
+                                  )
+                                }
+                                className="absolute top-1 right-1 w-5 h-5 rounded-full bg-rose-600/90 text-white text-xs flex items-center justify-center opacity-90 hover:opacity-100 cursor-pointer"
+                                title="Xóa ảnh"
+                              >
+                                ×
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-ink-subtle">
+                          Chưa có ảnh riêng cho loại phòng này. Thêm ảnh giúp khách hàng xem chi
+                          tiết hạng phòng trực quan hơn.
+                        </p>
                       )}
                     </div>
                   </div>
