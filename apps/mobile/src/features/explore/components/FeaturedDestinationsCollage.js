@@ -2,6 +2,7 @@
 import { Image, Pressable, StyleSheet, View } from "react-native";
 import { ChevronRight } from "lucide-react-native";
 import AppText from "../../../components/common/AppText";
+import { resolveMediaUrl } from "../../../lib/apiClient";
 import { colors, radius, spacing } from "../../../theme/tokens";
 
 const FALLBACK_DESTINATIONS = [
@@ -53,7 +54,7 @@ function CollageTile({ item, style, onPress }) {
       <Image
         source={{
           uri:
-            item.image_url ||
+            resolveMediaUrl(item.image_url) ||
             "https://images.unsplash.com/photo-1528127269322-539801943592?auto=format&fit=crop&w=800&q=80",
         }}
         style={styles.tileImage}
