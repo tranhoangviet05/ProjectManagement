@@ -37,16 +37,10 @@ Route::prefix('media')->middleware('firebase.auth')->group(function () {
 });
 
 // ── Public Catalog & Metadata Endpoints ────────────────────────────
-Route::prefix('catalog')->group(function () {
+Route::prefix('public')->group(function () {
     Route::get('/categories', [CatalogController::class, 'categories']);
     Route::get('/locations', [CatalogController::class, 'locations']);
     Route::get('/business-types', [CatalogController::class, 'businessTypes']);
-    Route::get('/policies', [CatalogController::class, 'policies']);
-    Route::get('/campaigns', [CatalogController::class, 'campaigns']);
-});
-
-// ── Public Policies & Holiday Campaigns Endpoints ─────────────────
-Route::prefix('public')->group(function () {
     Route::get('/policies', [CatalogController::class, 'policies']);
     Route::get('/campaigns', [CatalogController::class, 'campaigns']);
 });

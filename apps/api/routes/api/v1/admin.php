@@ -84,7 +84,6 @@ Route::prefix('reports')->group(function () {
 Route::prefix('policies')->group(function () {
     Route::get('/', [AdminServicePolicyController::class, 'index']);
     Route::post('/', [AdminServicePolicyController::class, 'store']);
-    Route::get('/{id}', [AdminServicePolicyController::class, 'show']);
     Route::put('/{id}', [AdminServicePolicyController::class, 'update']);
     Route::delete('/{id}', [AdminServicePolicyController::class, 'destroy']);
 });
@@ -93,9 +92,7 @@ Route::prefix('policies')->group(function () {
 Route::prefix('campaigns')->group(function () {
     Route::get('/', [AdminHolidayCampaignController::class, 'index']);
     Route::post('/', [AdminHolidayCampaignController::class, 'store']);
-    Route::get('/{id}', [AdminHolidayCampaignController::class, 'show']);
     Route::put('/{id}', [AdminHolidayCampaignController::class, 'update']);
     Route::post('/{id}/reopen', [AdminHolidayCampaignController::class, 'reopen']);
     Route::delete('/{id}', [AdminHolidayCampaignController::class, 'destroy']);
 });
-
