@@ -33,6 +33,7 @@ Route::prefix('auth')->group(function () {
 Route::prefix('media')->middleware('firebase.auth')->group(function () {
     Route::post('/upload', [MediaController::class, 'upload']);
     Route::post('/upload-private', [MediaController::class, 'uploadPrivate']);
+    Route::get('/private/{path}', [MediaController::class, 'showPrivate'])->where('path', '.*');
 });
 
 // ── Public Catalog & Metadata Endpoints ────────────────────────────
