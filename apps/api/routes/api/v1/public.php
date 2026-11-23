@@ -36,9 +36,11 @@ Route::prefix('media')->middleware('firebase.auth')->group(function () {
     Route::get('/private/{path}', [MediaController::class, 'showPrivate'])->where('path', '.*');
 });
 
-// ── Public Catalog Endpoints ──────────────────────────────────────
+// ── Public Catalog & Metadata Endpoints ────────────────────────────
 Route::prefix('public')->group(function () {
     Route::get('/categories', [CatalogController::class, 'categories']);
     Route::get('/locations', [CatalogController::class, 'locations']);
     Route::get('/business-types', [CatalogController::class, 'businessTypes']);
+    Route::get('/policies', [CatalogController::class, 'policies']);
+    Route::get('/campaigns', [CatalogController::class, 'campaigns']);
 });

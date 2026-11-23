@@ -3,10 +3,12 @@
 use App\Http\Controllers\Api\V1\Admin\AdminBusinessTypeController;
 use App\Http\Controllers\Api\V1\Admin\AdminCategoryController;
 use App\Http\Controllers\Api\V1\Admin\AdminCouponController;
+use App\Http\Controllers\Api\V1\Admin\AdminHolidayCampaignController;
 use App\Http\Controllers\Api\V1\Admin\AdminKycController;
 use App\Http\Controllers\Api\V1\Admin\AdminLocationController;
 use App\Http\Controllers\Api\V1\Admin\AdminReportController;
 use App\Http\Controllers\Api\V1\Admin\AdminServiceController;
+use App\Http\Controllers\Api\V1\Admin\AdminServicePolicyController;
 use App\Http\Controllers\Api\V1\Admin\AdminUserController;
 use Illuminate\Support\Facades\Route;
 
@@ -76,4 +78,21 @@ Route::prefix('reports')->group(function () {
     Route::get('/{id}', [AdminReportController::class, 'show']);
     Route::post('/{id}/hide-content', [AdminReportController::class, 'hideContent']);
     Route::post('/{id}/dismiss', [AdminReportController::class, 'dismiss']);
+});
+
+// Phân hệ Quản lý Chính sách Dịch vụ Chung (Task #67)
+Route::prefix('policies')->group(function () {
+    Route::get('/', [AdminServicePolicyController::class, 'index']);
+    Route::post('/', [AdminServicePolicyController::class, 'store']);
+    Route::put('/{id}', [AdminServicePolicyController::class, 'update']);
+    Route::delete('/{id}', [AdminServicePolicyController::class, 'destroy']);
+});
+
+// Phân hệ Quản lý Chương trình Khuyến mãi Ngày lễ (Task #67)
+Route::prefix('campaigns')->group(function () {
+    Route::get('/', [AdminHolidayCampaignController::class, 'index']);
+    Route::post('/', [AdminHolidayCampaignController::class, 'store']);
+    Route::put('/{id}', [AdminHolidayCampaignController::class, 'update']);
+    Route::post('/{id}/reopen', [AdminHolidayCampaignController::class, 'reopen']);
+    Route::delete('/{id}', [AdminHolidayCampaignController::class, 'destroy']);
 });

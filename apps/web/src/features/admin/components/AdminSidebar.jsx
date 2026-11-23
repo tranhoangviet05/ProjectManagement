@@ -11,6 +11,7 @@ import {
   Compass,
   Menu,
   X,
+  Sparkles,
 } from "lucide-react";
 import Typography from "../../../components/ui/Typography";
 import { useAuth } from "../../../hooks/useAuth";
@@ -44,6 +45,12 @@ const ADMIN_NAV_LINKS = [
     label: "Mã ưu đãi toàn sàn",
     path: "/admin/coupons",
     icon: TicketPercent,
+  },
+  {
+    id: "campaigns",
+    label: "Chương trình khuyến mãi",
+    path: "/admin/campaigns",
+    icon: Sparkles,
   },
   {
     id: "reports",

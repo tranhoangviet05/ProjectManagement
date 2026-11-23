@@ -12,6 +12,7 @@ const ADD_BUTTON_LABELS = {
   locations: "Thêm điểm đến",
   categories: "Thêm danh mục",
   businessTypes: "Thêm loại hình",
+  policies: "Thêm chính sách",
 };
 
 /**
