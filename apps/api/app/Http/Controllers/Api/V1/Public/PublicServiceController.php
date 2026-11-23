@@ -138,7 +138,11 @@ class PublicServiceController extends Controller
             } elseif ($group === 'entertainment') {
                 $query->where('type', 'tour');
             } elseif ($group === 'vehicle') {
-                $query->where('type', 'vehicle');
+                $query->where('type', 'vehicle')
+                    ->whereDoesntHave('category', function ($c) {
+                        $c->where('slug', 'ilike', '%tau%')
+                            ->orWhere('name', 'ilike', '%vé tàu%');
+                    });
             } elseif ($group === 'train') {
                 $query->where(function ($sub) {
                     $sub->where('type', 'train')

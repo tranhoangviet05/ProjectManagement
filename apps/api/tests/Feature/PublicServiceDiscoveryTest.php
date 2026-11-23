@@ -32,7 +32,7 @@ class PublicServiceDiscoveryTest extends TestCase
         $this->seed(ServicePolicySeeder::class);
         $this->seed(HolidayCampaignSeeder::class);
 
-        $providerUser = User::where('email', 'tranhoangviet.provider@gmail.com')->firstOrFail();
+        $providerUser = User::where('role', 'provider')->firstOrFail();
         $this->approvedProvider = ProviderProfile::where('user_id', $providerUser->id)->firstOrFail();
         $this->approvedProvider->update(['status' => ProviderStatus::Approved->value]);
 

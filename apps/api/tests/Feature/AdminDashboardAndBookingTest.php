@@ -39,7 +39,7 @@ class AdminDashboardAndBookingTest extends TestCase
         $this->touristUser = User::where('email', 'tranhoangviet@gmail.com')->firstOrFail();
         $this->touristToken = $this->touristUser->createToken('test-tourist-dashboard')->plainTextToken;
 
-        $providerUser = User::where('email', 'tranhoangviet.provider@gmail.com')->firstOrFail();
+        $providerUser = User::where('role', 'provider')->firstOrFail();
         $this->providerProfile = ProviderProfile::where('user_id', $providerUser->id)->firstOrFail();
         $this->providerProfile->update(['status' => ProviderStatus::Approved->value]);
 
@@ -64,13 +64,17 @@ class AdminDashboardAndBookingTest extends TestCase
             'user_id' => $this->touristUser->id,
             'service_id' => $this->service->id,
             'provider_id' => $this->providerProfile->id,
-            'check_in_date' => now()->addDays(2)->toDateString(),
-            'num_adults' => 2,
-            'num_children' => 0,
+            'start_date' => now()->addDays(2)->toDateString(),
+            'quantity' => 2,
+            'duration_units' => 1,
             'unit_price' => 1000000,
             'subtotal' => 2000000,
-            'discount_amount' => 0,
+            'promotion_discount_amount' => 0,
+            'coupon_discount_amount' => 0,
             'total_amount' => 2000000,
+            'deposit_rate' => 100,
+            'deposit_amount' => 2000000,
+            'remaining_amount' => 0,
             'status' => 'confirmed',
             'contact_name' => 'Trần Hoàng Việt',
             'contact_phone' => '0905888999',
@@ -129,13 +133,17 @@ class AdminDashboardAndBookingTest extends TestCase
             'user_id' => $this->touristUser->id,
             'service_id' => $this->service->id,
             'provider_id' => $this->providerProfile->id,
-            'check_in_date' => now()->addDays(3)->toDateString(),
-            'num_adults' => 1,
-            'num_children' => 0,
+            'start_date' => now()->addDays(3)->toDateString(),
+            'quantity' => 1,
+            'duration_units' => 1,
             'unit_price' => 1000000,
             'subtotal' => 1000000,
-            'discount_amount' => 0,
+            'promotion_discount_amount' => 0,
+            'coupon_discount_amount' => 0,
             'total_amount' => 1000000,
+            'deposit_rate' => 100,
+            'deposit_amount' => 1000000,
+            'remaining_amount' => 0,
             'status' => 'completed',
             'contact_name' => 'Khách Đối Soát',
             'contact_phone' => '0909111222',

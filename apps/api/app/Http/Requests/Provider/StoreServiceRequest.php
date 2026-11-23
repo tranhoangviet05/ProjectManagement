@@ -60,6 +60,8 @@ class StoreServiceRequest extends FormRequest
             'room_types.*.capacity_children' => ['nullable', 'integer', 'min:0'],
             'room_types.*.amenities' => ['nullable', 'array'],
             'room_types.*.amenities.*' => ['string', 'max:255'],
+            'room_types.*.images' => ['nullable', 'array'],
+            'room_types.*.images.*' => ['string', 'max:2048'],
             'room_types.*.status' => ['nullable', 'string', Rule::in(['active', 'inactive'])],
         ];
     }
