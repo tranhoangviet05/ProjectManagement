@@ -4,6 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { ArrowLeft, MapPin, Search, X } from "lucide-react-native";
 import AppText from "../../../components/common/AppText";
+import { resolveMediaUrl } from "../../../lib/apiClient";
 import { colors, radius, spacing, touchTarget } from "../../../theme/tokens";
 import { useExploreData } from "../context/ExploreDataContext";
 
@@ -75,7 +76,11 @@ export default function AllLocationsScreen({ navigation }) {
               }
             >
               {item.image_url ? (
-                <Image source={{ uri: item.image_url }} style={styles.cardImg} resizeMode="cover" />
+                <Image
+                  source={{ uri: resolveMediaUrl(item.image_url) }}
+                  style={styles.cardImg}
+                  resizeMode="cover"
+                />
               ) : (
                 <View style={styles.cardPlaceholder}>
                   <MapPin size={22} color={colors.brandPrimary} />

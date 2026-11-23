@@ -41,6 +41,7 @@ class ServiceController extends Controller
         $query = Service::query()
             ->where('provider_id', $provider->id)
             ->with(['category', 'location', 'media', 'roomTypes', 'availability'])
+            ->withSum(['bookings as sold_quantity' => fn ($b) => $b->whereNotIn('status', ['cancelled', 'refunded'])], 'quantity')
             ->latest();
 
         if ($request->filled('status')) {
@@ -557,6 +558,7 @@ class ServiceController extends Controller
                 'capacity_adults' => (int) $room['capacity_adults'],
                 'capacity_children' => (int) ($room['capacity_children'] ?? 0),
                 'amenities' => $room['amenities'] ?? [],
+                'images' => is_array($room['images'] ?? null) ? array_values(array_filter($room['images'])) : [],
                 'status' => $room['status'] ?? 'active',
             ];
 
@@ -614,6 +616,7 @@ class ServiceController extends Controller
             'availability_count' => $service->availability->count(),
             'rating_avg' => $service->rating_avg,
             'total_bookings' => $service->total_bookings,
+            'sold_quantity' => (int) ($service->sold_quantity ?? 0),
             'rejection_reason' => $service->rejection_reason,
             'created_at' => $service->created_at?->toISOString(),
             'updated_at' => $service->updated_at?->toISOString(),
@@ -624,8 +627,42 @@ class ServiceController extends Controller
     {
         $coverMedia = $service->media->firstWhere('is_cover', true) ?? $service->media->first();
 
+        $allBookings = $service->bookings()
+            ->with(['roomType:id,name'])
+            ->latest('created_at')
+            ->get();
+
+        $activeBookings = $allBookings->whereNotIn('status', ['cancelled', 'refunded']);
+        $paidRevenueBookings = $allBookings->whereIn('status', ['confirmed', 'checked_in', 'completed']);
+
+        $salesOverview = [
+            'total_orders' => $activeBookings->count(),
+            'total_quantity_sold' => (int) $activeBookings->sum('quantity'),
+            'pending_payment_count' => $allBookings->where('status', 'pending_payment')->count(),
+            'confirmed_count' => $allBookings->where('status', 'confirmed')->count(),
+            'checked_in_count' => $allBookings->where('status', 'checked_in')->count(),
+            'completed_count' => $allBookings->where('status', 'completed')->count(),
+            'cancelled_count' => $allBookings->whereIn('status', ['cancelled', 'refunded'])->count(),
+            'total_revenue' => (float) $paidRevenueBookings->sum('total_amount'),
+            'recent_bookings' => $allBookings->take(10)->map(fn ($b) => [
+                'id' => $b->id,
+                'booking_code' => $b->booking_code,
+                'status' => $b->status,
+                'start_date' => $b->start_date?->format('Y-m-d'),
+                'end_date' => $b->end_date?->format('Y-m-d'),
+                'quantity' => (int) $b->quantity,
+                'total_amount' => (float) $b->total_amount,
+                'deposit_amount' => (float) $b->deposit_amount,
+                'contact_name' => $b->contact_name,
+                'contact_phone' => $b->contact_phone,
+                'room_type_name' => $b->roomType?->name,
+                'created_at' => $b->created_at?->toIso8601String(),
+            ])->values(),
+        ];
+
         return array_merge($service->toArray(), [
             'cover_image' => $coverMedia?->url,
+            'sales_overview' => $salesOverview,
         ]);
     }
 }

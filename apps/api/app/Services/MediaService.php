@@ -43,6 +43,11 @@ class MediaService
             'max_size' => 20480, // 20MB
             'mimes' => ['jpeg', 'jpg', 'png', 'webp'],
         ],
+        'location' => [
+            'directory' => 'locations',
+            'max_size' => 20480, // 20MB
+            'mimes' => ['jpeg', 'jpg', 'png', 'webp'],
+        ],
         'category' => [
             'directory' => 'categories',
             'max_size' => 2048, // 2MB

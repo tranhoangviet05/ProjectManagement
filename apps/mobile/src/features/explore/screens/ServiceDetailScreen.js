@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Alert, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import {
@@ -29,6 +29,7 @@ import {
 } from "../models/exploreModel";
 import ServiceDetailGallery from "../components/ServiceDetailGallery";
 import ServiceDetailReviews from "../components/ServiceDetailReviews";
+import QuickBookingModal from "../components/QuickBookingModal";
 
 function DetailSkeleton({ onBack }) {
   return (
@@ -64,7 +65,7 @@ function formatSlotDate(isoDate) {
  */
 export default function ServiceDetailScreen({ navigation, route }) {
   const insets = useSafeAreaInsets();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
 
   const initialPreview = route?.params?.tour || null;
   const serviceId = route?.params?.serviceId || initialPreview?.id;
@@ -75,6 +76,7 @@ export default function ServiceDetailScreen({ navigation, route }) {
   const [selectedRoomId, setSelectedRoomId] = useState(null);
   const [selectedDateId, setSelectedDateId] = useState(null);
   const [descExpanded, setDescExpanded] = useState(false);
+  const [bookingModalOpen, setBookingModalOpen] = useState(false);
 
   const loadDetail = useCallback(async () => {
     if (!serviceId) {
@@ -119,6 +121,15 @@ export default function ServiceDetailScreen({ navigation, route }) {
   }, [route?.params?.selectedRoomId]);
 
   const isAccommodation = service?.type === "hotel" || service?.type === "homestay";
+  const isTrainService =
+    service?.type === "train" ||
+    String(service?.category?.slug || "")
+      .toLowerCase()
+      .includes("tau") ||
+    String(service?.category?.name || "")
+      .toLowerCase()
+      .includes("vé tàu");
+  const showAvailabilitySection = service?.type === "tour" || isTrainService;
   const hasDepositPolicy =
     Array.isArray(service?.policies) &&
     service.policies.some((p) => /đặt cọc giữ chỗ 30%/i.test(p.name || ""));
@@ -154,28 +165,7 @@ export default function ServiceDetailScreen({ navigation, route }) {
   }, [baseEffectivePrice, activePromotion]);
 
   const handleBookNow = () => {
-    if (!isAuthenticated) {
-      Alert.alert(
-        "Đăng nhập để đặt chỗ",
-        "Hãy đăng nhập tài khoản Du khách để tiến hành giữ chỗ và nhận mã vé QR.",
-        [
-          { text: "Để sau", style: "cancel" },
-          {
-            text: "Đăng nhập ngay",
-            onPress: () => navigation.navigate("Auth", { initialMode: "login" }),
-          },
-        ],
-      );
-      return;
-    }
-
-    const depositNote = hasDepositPolicy
-      ? `\n• Tiền cọc giữ chỗ 30% (Escrow): ${formatCurrencyVnd(Math.round(effectivePrice * 0.3))}`
-      : "";
-    Alert.alert(
-      "Xác nhận giữ chỗ (Sprint 3)",
-      `Dịch vụ: ${service?.name || service?.title}\n• Giá áp dụng: ${formatCurrencyVnd(effectivePrice)} / ${formatPriceUnit(service?.price_unit, service?.type)}${depositNote}\n\nTính năng tạo đơn & thanh toán Sepay sẽ được kích hoạt ở Sprint 3.`,
-    );
+    setBookingModalOpen(true);
   };
 
   if (loading && !service) {
@@ -435,8 +425,8 @@ export default function ServiceDetailScreen({ navigation, route }) {
             </View>
           ) : null}
 
-          {/* Lịch trống & Giá theo ngày */}
-          {availability.length > 0 ? (
+          {/* Lịch trống & Giá theo ngày (chỉ hiển thị cho Giải trí/Tour và Vé tàu) */}
+          {showAvailabilitySection && availability.length > 0 ? (
             <View style={styles.sectionCard}>
               <View style={styles.sectionHeaderInline}>
                 <Calendar size={17} color={colors.brandPrimary} />
@@ -571,6 +561,16 @@ export default function ServiceDetailScreen({ navigation, route }) {
           <AppText style={styles.bookBtnText}>Đặt chỗ ngay</AppText>
         </Pressable>
       </View>
+
+      <QuickBookingModal
+        visible={bookingModalOpen}
+        onClose={() => setBookingModalOpen(false)}
+        service={service}
+        selectedRoom={selectedRoom}
+        selectedSlot={selectedSlot}
+        user={user}
+        isAuthenticated={isAuthenticated}
+      />
     </View>
   );
 }

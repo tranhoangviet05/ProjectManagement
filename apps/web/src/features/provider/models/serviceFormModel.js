@@ -104,6 +104,7 @@ export function createEmptyRoomType() {
     capacity_adults: "2",
     capacity_children: "0",
     amenities: [],
+    images: [],
     status: "active",
   };
 }
@@ -142,6 +143,7 @@ export function createInitialServiceForm(service = null, group = "tour") {
           capacity_adults: String(room.capacity_adults ?? 2),
           capacity_children: String(room.capacity_children ?? 0),
           amenities: Array.isArray(room.amenities) ? room.amenities : [],
+          images: Array.isArray(room.images) ? room.images : [],
           status: room.status || "active",
         }))
       : group === "accommodation"

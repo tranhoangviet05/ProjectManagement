@@ -235,7 +235,12 @@ export default function CategoryShowcaseSection({
       return services.filter((s) => s.type === "tour");
     }
     if (activeCategory === "vehicle") {
-      return services.filter((s) => s.type === "vehicle");
+      return services.filter((s) => {
+        if (s.type !== "vehicle") return false;
+        const catSlug = String(s.category?.slug || "").toLowerCase();
+        const catName = String(s.category?.name || "").toLowerCase();
+        return !catSlug.includes("tau") && !catName.includes("vé tàu");
+      });
     }
     return [];
   }, [activeCategory, services]);

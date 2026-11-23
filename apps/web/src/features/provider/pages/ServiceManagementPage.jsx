@@ -1,16 +1,17 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import {
   Plus,
   Search,
   Edit3,
+  Eye,
   Trash2,
   Compass,
   Image as ImageIcon,
   AlertCircle,
   CheckCircle2,
   BedDouble,
-  CalendarDays,
+  ShoppingBag,
   MapPin,
 } from "lucide-react";
 import ProviderLayout from "../layouts/ProviderLayout";
@@ -18,11 +19,11 @@ import Typography from "../../../components/ui/Typography";
 import { useDebouncedUrlSearch } from "../../../hooks/useDebouncedUrlSearch";
 import { ServiceGridSkeleton } from "../../../components/ui/Skeleton";
 import ServiceFormStepper from "../components/ServiceFormStepper";
+import ProviderServiceDetailView from "../components/ProviderServiceDetailView";
 import providerServiceApi from "../services/providerServiceApi";
 import { SERVICE_STATUS_CONFIG, formatCurrencyVnd } from "../models/serviceFormModel";
 
 export default function ServiceManagementPage() {
-  const navigate = useNavigate();
   const [services, setServices] = useState([]);
   const [categories, setCategories] = useState([]);
   const [locations, setLocations] = useState([]);
@@ -41,7 +42,13 @@ export default function ServiceManagementPage() {
   const modeParam = searchParams.get("mode");
   const editIdParam = searchParams.get("id");
   const viewMode =
-    modeParam === "create" ? "create" : modeParam === "edit" && editIdParam ? "edit" : "list";
+    modeParam === "create"
+      ? "create"
+      : modeParam === "edit" && editIdParam
+        ? "edit"
+        : modeParam === "detail" && editIdParam
+          ? "detail"
+          : "list";
 
   const [editingService, setEditingService] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -60,7 +67,11 @@ export default function ServiceManagementPage() {
   }, [viewMode, searchParams, setSearchParams]);
 
   useEffect(() => {
-    if (viewMode === "edit" && editIdParam && String(editingService?.id) !== String(editIdParam)) {
+    if (
+      (viewMode === "edit" || viewMode === "detail") &&
+      editIdParam &&
+      String(editingService?.id) !== String(editIdParam)
+    ) {
       let mounted = true;
       setIsSubmitting(true);
       providerServiceApi
@@ -147,12 +158,12 @@ export default function ServiceManagementPage() {
     });
   };
 
-  const handleOpenEdit = async (serviceSummary) => {
+  const openServiceMode = async (mode, serviceSummary) => {
     setFeedback(null);
     setEditingService(serviceSummary);
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev);
-      next.set("mode", "edit");
+      next.set("mode", mode);
       next.set("id", String(serviceSummary.id));
       return next;
     });
@@ -169,6 +180,10 @@ export default function ServiceManagementPage() {
       setIsSubmitting(false);
     }
   };
+
+  const handleOpenDetail = (serviceSummary) => openServiceMode("detail", serviceSummary);
+
+  const handleOpenEdit = (serviceSummary) => openServiceMode("edit", serviceSummary);
 
   const handleSaveService = async (payload, pendingFiles, pendingCoverIndex) => {
     setIsSubmitting(true);
@@ -298,7 +313,13 @@ export default function ServiceManagementPage() {
           </div>
         )}
 
-        {viewMode !== "list" ? (
+        {viewMode === "detail" ? (
+          <ProviderServiceDetailView
+            service={editingService}
+            onBack={returnToListUrl}
+            onEdit={handleOpenEdit}
+          />
+        ) : viewMode !== "list" ? (
           <ServiceFormStepper
             initialService={editingService}
             categories={categories}
@@ -428,12 +449,11 @@ export default function ServiceManagementPage() {
                                 <BedDouble className="w-3.5 h-3.5 text-brand-primary" />
                                 {service.room_types_count || 0} loại phòng
                               </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1">
-                                <CalendarDays className="w-3.5 h-3.5 text-brand-primary" />
-                                {service.availability_count || 0} ngày khả dụng
-                              </span>
-                            )}
+                            ) : null}
+                            <span className="inline-flex items-center gap-1">
+                              <ShoppingBag className="w-3.5 h-3.5 text-emerald-600" />
+                              Đã bán: {service.sold_quantity ?? 0}
+                            </span>
                           </div>
 
                           {service.status === "rejected" && service.rejection_reason && (
@@ -456,14 +476,12 @@ export default function ServiceManagementPage() {
                           <div className="flex items-center gap-2">
                             <button
                               type="button"
-                              onClick={() =>
-                                navigate(`/provider/services/${service.id}/availability`)
-                              }
+                              onClick={() => handleOpenDetail(service)}
                               className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-brand-subtle text-brand-primary text-xs font-semibold hover:bg-brand-primary hover:text-white shadow-xs transition-colors"
-                              title="Cấu hình Lịch & Giá"
+                              title="Xem chi tiết & doanh số bán"
                             >
-                              <CalendarDays className="w-3.5 h-3.5" />
-                              Lịch & Giá
+                              <Eye className="w-3.5 h-3.5" />
+                              Chi tiết
                             </button>
                             <button
                               type="button"

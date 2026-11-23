@@ -19,23 +19,28 @@ class Booking extends Model
         'service_id',
         'provider_id',
         'room_type_id',
+        'service_promotion_id',
         'coupon_id',
-        'affiliate_post_id',
-        'check_in_date',
-        'check_out_date',
+        'start_date',
+        'end_date',
+        'quantity',
+        'duration_units',
         'checked_in_at',
-        'num_adults',
-        'num_children',
         'unit_price',
         'subtotal',
-        'discount_amount',
-        'coupon_code',
+        'promotion_discount_amount',
+        'coupon_discount_amount',
         'total_amount',
+        'deposit_rate',
+        'deposit_amount',
+        'remaining_amount',
         'status',
+        'payment_expires_at',
         'contact_name',
         'contact_phone',
         'contact_email',
         'special_requests',
+        'metadata',
         'cancel_reason',
         'cancelled_at',
     ];
@@ -43,16 +48,22 @@ class Booking extends Model
     protected function casts(): array
     {
         return [
-            'check_in_date' => 'date',
-            'check_out_date' => 'date',
+            'start_date' => 'date',
+            'end_date' => 'date',
             'checked_in_at' => 'datetime',
+            'payment_expires_at' => 'datetime',
             'cancelled_at' => 'datetime',
-            'num_adults' => 'integer',
-            'num_children' => 'integer',
+            'quantity' => 'integer',
+            'duration_units' => 'integer',
             'unit_price' => 'decimal:2',
             'subtotal' => 'decimal:2',
-            'discount_amount' => 'decimal:2',
+            'promotion_discount_amount' => 'decimal:2',
+            'coupon_discount_amount' => 'decimal:2',
             'total_amount' => 'decimal:2',
+            'deposit_rate' => 'integer',
+            'deposit_amount' => 'decimal:2',
+            'remaining_amount' => 'decimal:2',
+            'metadata' => 'array',
         ];
     }
 
@@ -76,14 +87,14 @@ class Booking extends Model
         return $this->belongsTo(HotelRoomType::class, 'room_type_id');
     }
 
+    public function servicePromotion(): BelongsTo
+    {
+        return $this->belongsTo(ServicePromotion::class);
+    }
+
     public function coupon(): BelongsTo
     {
         return $this->belongsTo(Coupon::class);
-    }
-
-    public function affiliatePost(): BelongsTo
-    {
-        return $this->belongsTo(Post::class, 'affiliate_post_id');
     }
 
     public function payments(): HasMany
