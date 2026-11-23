@@ -1,12 +1,9 @@
 <?php
 
-use App\Http\Controllers\Api\V1\Admin\AdminBusinessTypeController;
-use App\Http\Controllers\Api\V1\Admin\AdminCategoryController;
 use App\Http\Controllers\Api\V1\Admin\AdminCouponController;
 use App\Http\Controllers\Api\V1\Admin\AdminDashboardController;
 use App\Http\Controllers\Api\V1\Admin\AdminHolidayCampaignController;
 use App\Http\Controllers\Api\V1\Admin\AdminKycController;
-use App\Http\Controllers\Api\V1\Admin\AdminLocationController;
 use App\Http\Controllers\Api\V1\Admin\AdminReportController;
 use App\Http\Controllers\Api\V1\Admin\AdminServiceController;
 use App\Http\Controllers\Api\V1\Admin\AdminServicePolicyController;
@@ -87,4 +84,3 @@ Route::prefix('campaigns')->group(function () {
     Route::post('/{id}/reopen', [AdminHolidayCampaignController::class, 'reopen']);
     Route::delete('/{id}', [AdminHolidayCampaignController::class, 'destroy']);
 });
-
