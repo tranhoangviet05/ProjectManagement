@@ -1,34 +1,143 @@
-﻿import React from "react";
-import { Pressable, ScrollView, StyleSheet, View } from "react-native";
+﻿import React, { useCallback, useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
-import { useIsFocused } from "@react-navigation/native";
-import { CalendarCheck2, Compass, QrCode, ShieldCheck } from "lucide-react-native";
+import { useFocusEffect, useIsFocused } from "@react-navigation/native";
+import { CalendarCheck2, Compass, QrCode, Search, ShieldCheck } from "lucide-react-native";
 import AppText from "../../../components/common/AppText";
-import { colors, radius, spacing } from "../../../theme/tokens";
 import { useAuth } from "../../../hooks/useAuth";
+import { colors, radius, spacing } from "../../../theme/tokens";
+import BookingCard from "../../booking/components/BookingCard";
+import { BOOKING_STATUS_FILTERS } from "../../booking/models/bookingModel";
+import bookingService from "../../booking/services/bookingService";
 
 /**
- * Tab "Đặt chỗ" — Lịch sử đặt chỗ & vé QR Check-in của Du khách.
+ * Tab "Đặt chỗ" — Lịch sử đặt chỗ của Du khách & Tra cứu đơn cho Khách vãng lai.
  */
 export default function BookingsTabScreen({ navigation }) {
   const isFocused = useIsFocused();
   const { isAuthenticated, user } = useAuth();
 
-  return (
-    <SafeAreaView style={styles.safeArea} edges={["top"]}>
-      {isFocused ? <StatusBar style="dark" /> : null}
-      <View style={styles.header}>
-        <AppText style={styles.headerTitle}>Đặt chỗ</AppText>
-        <AppText style={styles.headerSub}>Quản lý lịch trình, cọc Escrow và vé QR check-in</AppText>
-      </View>
+  const [selectedStatus, setSelectedStatus] = useState("all");
+  const [bookings, setBookings] = useState([]);
+  const [meta, setMeta] = useState({ current_page: 1, last_page: 1, total: 0 });
+  const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [error, setError] = useState("");
 
-      <ScrollView
-        style={styles.bodyScroll}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-      >
-        {!isAuthenticated ? (
+  // State cho Khách vãng lai tra cứu đơn
+  const [lookupCode, setLookupCode] = useState("");
+  const [lookupPhone, setLookupPhone] = useState("");
+  const [lookupLoading, setLookupLoading] = useState(false);
+
+  const fetchBookings = useCallback(
+    async ({ page = 1, append = false, isRefresh = false } = {}) => {
+      if (!isAuthenticated) return;
+
+      if (isRefresh) {
+        setRefreshing(true);
+      } else if (append) {
+        setLoadingMore(true);
+      } else {
+        setLoading(true);
+      }
+      setError("");
+
+      try {
+        const result = await bookingService.getBookings({
+          status: selectedStatus,
+          page,
+          perPage: 15,
+        });
+        setMeta(result.meta);
+        setBookings((prev) => (append ? [...prev, ...result.items] : result.items));
+      } catch (err) {
+        setError(err?.message || "Không thể tải danh sách đơn đặt chỗ.");
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+        setLoadingMore(false);
+      }
+    },
+    [isAuthenticated, selectedStatus],
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      if (isAuthenticated) {
+        fetchBookings({ page: 1, append: false, isRefresh: false });
+      }
+    }, [isAuthenticated, fetchBookings]),
+  );
+
+  const handleLoadMore = () => {
+    if (loading || loadingMore || refreshing) return;
+    if (meta.current_page >= meta.last_page) return;
+    fetchBookings({ page: meta.current_page + 1, append: true });
+  };
+
+  const handleOpenBookingDetail = (booking) => {
+    navigation.navigate("BookingDetail", {
+      bookingId: booking.id,
+      bookingCode: booking.booking_code,
+      initialBooking: booking,
+    });
+  };
+
+  const handleGuestLookup = async () => {
+    const code = lookupCode.trim().toUpperCase();
+    const phone = lookupPhone.trim();
+
+    if (!code || !phone) {
+      Alert.alert("Thiếu thông tin", "Vui lòng nhập đầy đủ Mã đơn và Số điện thoại đã đặt chỗ.");
+      return;
+    }
+
+    setLookupLoading(true);
+    try {
+      const booking = await bookingService.lookupGuestBooking(code, phone);
+      if (booking) {
+        navigation.navigate("BookingDetail", {
+          bookingCode: booking.booking_code,
+          contactPhone: phone,
+          initialBooking: booking,
+        });
+      }
+    } catch (err) {
+      Alert.alert("Không tìm thấy đơn", err?.message || "Vui lòng kiểm tra lại mã đơn và SĐT.");
+    } finally {
+      setLookupLoading(false);
+    }
+  };
+
+  if (!isAuthenticated) {
+    return (
+      <SafeAreaView style={styles.safeArea} edges={["top"]}>
+        {isFocused ? <StatusBar style="dark" /> : null}
+        <View style={styles.header}>
+          <AppText style={styles.headerTitle}>Đặt chỗ</AppText>
+          <AppText style={styles.headerSub}>
+            Quản lý lịch trình, cọc Escrow và vé QR check-in
+          </AppText>
+        </View>
+
+        <ScrollView
+          style={styles.bodyScroll}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
           <View style={styles.guestCard}>
             <View style={styles.iconCircle}>
               <CalendarCheck2 size={28} color={colors.brandPrimary} />
@@ -51,32 +160,158 @@ export default function BookingsTabScreen({ navigation }) {
               <AppText style={styles.secondaryBtnText}>Tạo tài khoản mới</AppText>
             </Pressable>
           </View>
-        ) : (
-          <View style={styles.loggedInWrap}>
-            <View style={styles.emptyBookingsCard}>
-              <View style={styles.iconCircle}>
-                <QrCode size={26} color={colors.brandPrimary} />
-              </View>
-              <AppText style={styles.cardTitle}>Xin chào, {user?.name || "Du khách"}!</AppText>
-              <AppText style={styles.cardDesc}>
-                Bạn chưa có đơn đặt chỗ nào sắp tới. Hãy khám phá hàng loạt chỗ ở và tour du lịch
-                đặc sắc trên toàn quốc.
-              </AppText>
-              <Pressable style={styles.primaryBtn} onPress={() => navigation.navigate("SearchTab")}>
-                <Compass size={17} color="#FFFFFF" />
-                <AppText style={styles.primaryBtnText}>Khám phá dịch vụ ngay</AppText>
-              </Pressable>
-            </View>
 
-            <View style={styles.infoNote}>
-              <ShieldCheck size={18} color={colors.brandPrimary} />
-              <AppText style={styles.infoNoteText}>
-                Mọi đơn đặt chỗ đều được cấp mã QR check-in riêng và bảo vệ cọc Escrow tự động.
-              </AppText>
+          <View style={styles.lookupCard}>
+            <View style={styles.lookupHeader}>
+              <Search size={18} color={colors.brandPrimary} />
+              <AppText style={styles.lookupTitle}>Tra cứu đơn Khách vãng lai</AppText>
             </View>
+            <AppText style={styles.lookupDesc}>
+              Đã đặt chỗ không cần tài khoản? Nhập Mã đơn và SĐT để kiểm tra trạng thái giữ chỗ.
+            </AppText>
+
+            <TextInput
+              value={lookupCode}
+              onChangeText={setLookupCode}
+              placeholder="Mã đơn (VD: STB-20261124-XXXX)"
+              autoCapitalize="characters"
+              style={styles.input}
+            />
+            <TextInput
+              value={lookupPhone}
+              onChangeText={setLookupPhone}
+              placeholder="Số điện thoại đặt chỗ"
+              keyboardType="phone-pad"
+              style={styles.input}
+            />
+
+            <Pressable
+              style={[styles.lookupBtn, lookupLoading && { opacity: 0.7 }]}
+              onPress={handleGuestLookup}
+              disabled={lookupLoading}
+            >
+              {lookupLoading ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <AppText style={styles.primaryBtnText}>Tra cứu đơn ngay</AppText>
+              )}
+            </Pressable>
           </View>
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <SafeAreaView style={styles.safeArea} edges={["top"]}>
+      {isFocused ? <StatusBar style="dark" /> : null}
+      <View style={styles.header}>
+        <AppText style={styles.headerTitle}>Đặt chỗ</AppText>
+        <AppText style={styles.headerSub}>
+          Xin chào {user?.name || "Du khách"} · {meta.total} đơn đặt chỗ
+        </AppText>
+      </View>
+
+      <View style={styles.filterBarWrap}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.filterScroll}
+        >
+          {BOOKING_STATUS_FILTERS.map((filter) => {
+            const isActive = selectedStatus === filter.id;
+            return (
+              <Pressable
+                key={filter.id}
+                style={[styles.filterChip, isActive && styles.filterChipActive]}
+                onPress={() => setSelectedStatus(filter.id)}
+              >
+                <AppText style={[styles.filterText, isActive && styles.filterTextActive]}>
+                  {filter.label}
+                </AppText>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      </View>
+
+      <View style={styles.listContainer}>
+        {loading && bookings.length === 0 ? (
+          <View style={styles.centerState}>
+            <ActivityIndicator size="large" color={colors.brandPrimary} />
+            <AppText style={styles.stateText}>Đang tải lịch sử đặt chỗ...</AppText>
+          </View>
+        ) : error && bookings.length === 0 ? (
+          <View style={styles.centerState}>
+            <AppText style={styles.cardTitle}>Không thể tải dữ liệu</AppText>
+            <AppText style={styles.cardDesc}>{error}</AppText>
+            <Pressable
+              style={styles.primaryBtn}
+              onPress={() => fetchBookings({ page: 1, append: false })}
+            >
+              <AppText style={styles.primaryBtnText}>Thử lại</AppText>
+            </Pressable>
+          </View>
+        ) : (
+          <FlatList
+            data={bookings}
+            keyExtractor={(item) => String(item.id)}
+            renderItem={({ item }) => (
+              <BookingCard booking={item} onPress={handleOpenBookingDetail} />
+            )}
+            contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={() => fetchBookings({ page: 1, append: false, isRefresh: true })}
+                tintColor={colors.brandPrimary}
+              />
+            }
+            onEndReached={handleLoadMore}
+            onEndReachedThreshold={0.35}
+            ListEmptyComponent={
+              <View style={styles.loggedInWrap}>
+                <View style={styles.emptyBookingsCard}>
+                  <View style={styles.iconCircle}>
+                    <QrCode size={26} color={colors.brandPrimary} />
+                  </View>
+                  <AppText style={styles.cardTitle}>
+                    {selectedStatus === "all"
+                      ? "Chưa có đơn đặt chỗ nào"
+                      : "Không có đơn ở trạng thái này"}
+                  </AppText>
+                  <AppText style={styles.cardDesc}>
+                    Hãy khám phá hàng loạt chỗ ở, tour du lịch và dịch vụ di chuyển đặc sắc trên
+                    toàn quốc.
+                  </AppText>
+                  <Pressable
+                    style={styles.primaryBtn}
+                    onPress={() => navigation.navigate("SearchTab")}
+                  >
+                    <Compass size={17} color="#FFFFFF" />
+                    <AppText style={styles.primaryBtnText}>Khám phá dịch vụ ngay</AppText>
+                  </Pressable>
+                </View>
+
+                <View style={styles.infoNote}>
+                  <ShieldCheck size={18} color={colors.brandPrimary} />
+                  <AppText style={styles.infoNoteText}>
+                    Mọi đơn đặt chỗ đều được cấp mã QR check-in riêng và bảo vệ cọc Escrow tự động.
+                  </AppText>
+                </View>
+              </View>
+            }
+            ListFooterComponent={
+              loadingMore ? (
+                <View style={styles.footerLoader}>
+                  <ActivityIndicator size="small" color={colors.brandPrimary} />
+                </View>
+              ) : null
+            }
+          />
         )}
-      </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }
@@ -108,9 +343,61 @@ const styles = StyleSheet.create({
     color: colors.inkBody,
     marginTop: 2,
   },
+  filterBarWrap: {
+    backgroundColor: "#FFFFFF",
+    borderBottomWidth: 1,
+    borderBottomColor: "#E2E8F0",
+  },
+  filterScroll: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: 10,
+    gap: 8,
+  },
+  filterChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 9999,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    backgroundColor: "#F8FAFC",
+  },
+  filterChipActive: {
+    borderColor: colors.brandPrimary,
+    backgroundColor: "#E0F2FE",
+  },
+  filterText: {
+    fontSize: 12.5,
+    fontWeight: "600",
+    color: colors.inkBody,
+  },
+  filterTextActive: {
+    color: colors.brandPrimary,
+    fontWeight: "700",
+  },
+  listContainer: {
+    flex: 1,
+    backgroundColor: colors.surfaceBase,
+  },
+  listContent: {
+    padding: spacing.md,
+    gap: 12,
+    paddingBottom: 120,
+  },
   content: {
     padding: spacing.md,
+    gap: 16,
     paddingBottom: 120,
+  },
+  centerState: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: spacing.lg,
+    gap: 10,
+  },
+  stateText: {
+    fontSize: 13.5,
+    color: colors.inkBody,
   },
   guestCard: {
     backgroundColor: "#FFFFFF",
@@ -120,7 +407,47 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     alignItems: "center",
     gap: 12,
-    marginTop: spacing.md,
+  },
+  lookupCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    padding: spacing.md,
+    gap: 10,
+  },
+  lookupHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  lookupTitle: {
+    fontSize: 15.5,
+    fontWeight: "700",
+    color: colors.inkPrimary,
+  },
+  lookupDesc: {
+    fontSize: 12.5,
+    lineHeight: 18,
+    color: colors.inkBody,
+  },
+  input: {
+    height: 46,
+    borderWidth: 1,
+    borderColor: "#CBD5E1",
+    borderRadius: radius.lg,
+    paddingHorizontal: 14,
+    fontSize: 14,
+    color: colors.inkPrimary,
+    backgroundColor: "#F8FAFC",
+  },
+  lookupBtn: {
+    minHeight: 46,
+    borderRadius: radius.lg,
+    backgroundColor: "#0F172A",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 2,
   },
   loggedInWrap: {
     gap: spacing.md,
@@ -200,5 +527,9 @@ const styles = StyleSheet.create({
     fontSize: 12.5,
     lineHeight: 18,
     color: "#0369A1",
+  },
+  footerLoader: {
+    paddingVertical: 16,
+    alignItems: "center",
   },
 });

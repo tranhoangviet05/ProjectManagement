@@ -110,7 +110,7 @@ class BookingService
             ->get()
             ->keyBy(fn (ServiceAvailability $row) => $row->available_date->format('Y-m-d'));
 
-        $this->assertScheduleAvailable(
+        $availableQuantity = $this->assertScheduleAvailable(
             $service,
             $roomType,
             $dates,
@@ -139,6 +139,8 @@ class BookingService
             'end_date' => $endDate?->format('Y-m-d'),
             'quantity' => $quantity,
             'duration_units' => $durationUnits,
+            'available_quantity' => $availableQuantity,
+            'policy_rules' => $this->extractPolicyRules($service),
             'payment_hold_minutes' => $pricing['deposit_amount'] > 0 ? self::PAYMENT_HOLD_MINUTES : 0,
             'availability_ok' => true,
         ]);
@@ -454,6 +456,177 @@ class BookingService
     }
 
     /**
+     * Trích xuất các quy tắc nghiệp vụ thực thi từ danh sách chính sách gắn với dịch vụ.
+     *
+     * @return array<string, mixed>
+     */
+    public function extractPolicyRules(Service $service): array
+    {
+        $policies = $service->relationLoaded('policies')
+            ? $service->policies
+            : $service->policies()->get();
+
+        $rules = [
+            'checkin_time' => null,
+            'checkout_time' => null,
+            'cancellation' => null,
+            'allow_pets' => null,
+            'pets_surcharge' => false,
+            'children_policy' => null,
+            'arrival_notice_minutes' => null,
+            'security_deposit_required' => false,
+            'driver_license_required' => false,
+            'id_required' => false,
+            'qr_checkin_enabled' => false,
+            'deposit_rates' => [],
+        ];
+
+        foreach ($policies as $policy) {
+            $key = (string) ($policy->rule_key ?? '');
+            $config = is_array($policy->rule_config) ? $policy->rule_config : [];
+
+            switch ($key) {
+                case 'checkin_checkout':
+                    $rules['checkin_time'] = $config['checkin_time'] ?? $rules['checkin_time'];
+                    $rules['checkout_time'] = $config['checkout_time'] ?? $rules['checkout_time'];
+                    break;
+                case 'deposit_rate':
+                    if (isset($config['rate'])) {
+                        $rules['deposit_rates'][] = (int) $config['rate'];
+                    }
+                    break;
+                case 'cancellation':
+                    $rules['cancellation'] = [
+                        'refundable' => (bool) ($config['refundable'] ?? true),
+                        'free_cancel_hours' => (int) ($config['free_cancel_hours'] ?? 0),
+                        'allow_reschedule' => (bool) ($config['allow_reschedule'] ?? false),
+                        'label' => $policy->name,
+                        'description' => $policy->description,
+                    ];
+                    break;
+                case 'pet_policy':
+                    $rules['allow_pets'] = (bool) ($config['allow_pets'] ?? false);
+                    $rules['pets_surcharge'] = (bool) ($config['has_surcharge'] ?? false);
+                    break;
+                case 'children_policy':
+                    $rules['children_policy'] = [
+                        'free_under_age' => (int) ($config['free_under_age'] ?? 6),
+                        'label' => $policy->name,
+                        'description' => $policy->description,
+                    ];
+                    break;
+                case 'arrival_notice':
+                    $rules['arrival_notice_minutes'] = (int) ($config['minutes_before'] ?? 30);
+                    break;
+                case 'security_deposit':
+                    $rules['security_deposit_required'] = (bool) ($config['required'] ?? true);
+                    break;
+                case 'driver_license':
+                    $rules['driver_license_required'] = (bool) ($config['required'] ?? true);
+                    break;
+                case 'id_required':
+                    $rules['id_required'] = (bool) ($config['required'] ?? true);
+                    break;
+                case 'qr_checkin':
+                    $rules['qr_checkin_enabled'] = (bool) ($config['enabled'] ?? true);
+                    break;
+            }
+        }
+
+        $rules['deposit_rates'] = array_values(array_unique($rules['deposit_rates']));
+        sort($rules['deposit_rates']);
+
+        return $rules;
+    }
+
+    /**
+     * Tính đỉnh số lượng đã đặt (peak booked) trong khoảng ngày yêu cầu.
+     * Đảm bảo: nếu đơn A trả ngày 28 và đơn B nhận ngày 28 thì không xung đột;
+     * nếu đơn A (26->27) và đơn B (27->28) nối tiếp nhau thì đỉnh mỗi ngày là 1 (không cộng dồn thành 2).
+     *
+     * @param  array<int, string>  $dates
+     */
+    public function calculatePeakBookedInRange(
+        int $serviceId,
+        ?int $roomTypeId,
+        array $dates,
+        bool $isStay,
+        ?string $checkoutTime = null
+    ): int {
+        if (empty($dates)) {
+            return 0;
+        }
+
+        $firstDate = $dates[0];
+        $lastDate = $dates[count($dates) - 1];
+        $now = now();
+        $todayStr = $now->format('Y-m-d');
+        $isPastCheckoutToday = false;
+
+        if ($checkoutTime && preg_match('/^\d{2}:\d{2}$/', $checkoutTime)) {
+            $todayCheckout = Carbon::parse("{$todayStr} {$checkoutTime}");
+            $isPastCheckoutToday = $now->greaterThanOrEqualTo($todayCheckout);
+        }
+
+        $query = Booking::query()
+            ->where('service_id', $serviceId)
+            ->whereIn('status', self::ACTIVE_BOOKING_STATUSES)
+            ->whereDate('start_date', '<=', $lastDate)
+            ->where(function ($q) use ($firstDate, $isStay) {
+                if ($isStay) {
+                    $q->whereNull('end_date')
+                        ->orWhereDate('end_date', '>', $firstDate);
+                } else {
+                    $q->where(function ($sub) use ($firstDate) {
+                        $sub->whereNull('end_date')
+                            ->whereDate('start_date', '>=', $firstDate);
+                    })->orWhereDate('end_date', '>=', $firstDate);
+                }
+            });
+
+        if ($roomTypeId !== null) {
+            $query->where('room_type_id', $roomTypeId);
+        }
+
+        $activeBookings = $query->get(['start_date', 'end_date', 'quantity']);
+        if ($activeBookings->isEmpty()) {
+            return 0;
+        }
+
+        $peak = 0;
+        foreach ($dates as $dateStr) {
+            $dayBooked = 0;
+            foreach ($activeBookings as $b) {
+                $bStart = $b->start_date?->format('Y-m-d');
+                $bEnd = $b->end_date?->format('Y-m-d');
+                if (! $bStart) {
+                    continue;
+                }
+
+                // Nếu đơn kết thúc đúng hôm nay và đã qua giờ trả phòng/trả xe theo chính sách -> kho đã được giải phóng
+                if ($isPastCheckoutToday && $bEnd === $todayStr && $dateStr === $todayStr) {
+                    continue;
+                }
+
+                if ($isStay) {
+                    $occupiesDay = $bStart <= $dateStr && ($bEnd === null || $bEnd > $dateStr);
+                } else {
+                    $occupiesDay = $bStart <= $dateStr && ($bEnd === null ? $bStart === $dateStr : $bEnd >= $dateStr);
+                }
+
+                if ($occupiesDay) {
+                    $dayBooked += max(1, (int) $b->quantity);
+                }
+            }
+            if ($dayBooked > $peak) {
+                $peak = $dayBooked;
+            }
+        }
+
+        return $peak;
+    }
+
+    /**
      * @param  Collection<string, ServiceAvailability>  $availabilityRecords
      * @param  array<int, string>  $dates
      * @param  array<string, mixed>  $metadata
@@ -467,7 +640,9 @@ class BookingService
         int $quantity,
         array $metadata,
         $availabilityRecords
-    ): void {
+    ): ?int {
+        $minAvailable = null;
+
         // 1. Kiểm tra tồn kho service_availability (ngày khóa hoặc hết slot)
         foreach ($dates as $dateStr) {
             $row = $availabilityRecords->get($dateStr);
@@ -482,6 +657,7 @@ class BookingService
             }
 
             $remaining = max(0, $row->total_slots - $row->booked_slots);
+            $minAvailable = $minAvailable === null ? $remaining : min($minAvailable, $remaining);
             if ($remaining < $quantity) {
                 throw ValidationException::withMessages([
                     'start_date' => ["Ngày {$dateStr} chỉ còn {$remaining} chỗ/đơn vị trống, không đủ cho yêu cầu ({$quantity})."],
@@ -489,7 +665,11 @@ class BookingService
             }
         }
 
-        // 2. Kiểm tra sức chứa & xung đột phòng cho Chỗ ở có hạng phòng
+        $policyRules = $this->extractPolicyRules($service);
+        $checkoutTime = $policyRules['checkout_time'] ?? null;
+        $isStay = in_array($service->type, ['hotel', 'homestay'], true);
+
+        // 2. Kiểm tra sức chứa (người lớn + trẻ em) & tồn kho động theo đỉnh ngày cho Chỗ ở có hạng phòng
         if ($roomType) {
             $numAdults = (int) ($metadata['num_adults'] ?? 0);
             if ($numAdults > 0 && $roomType->capacity_adults > 0 && $numAdults > ($roomType->capacity_adults * $quantity)) {
@@ -498,26 +678,69 @@ class BookingService
                 ]);
             }
 
-            $totalInventory = (int) ($roomType->inventory ?? $roomType->total_rooms ?? 0);
-            if ($totalInventory > 0 && $endDate) {
-                $overlappingRooms = (int) Booking::query()
-                    ->where('room_type_id', $roomType->id)
-                    ->whereIn('status', self::ACTIVE_BOOKING_STATUSES)
-                    ->whereDate('start_date', '<', $endDate->format('Y-m-d'))
-                    ->where(function ($q) use ($startDate) {
-                        $q->whereNull('end_date')
-                            ->orWhereDate('end_date', '>', $startDate->format('Y-m-d'));
-                    })
-                    ->sum('quantity');
+            $numChildren = (int) ($metadata['num_children'] ?? 0);
+            if ($numChildren > 0 && $roomType->capacity_children > 0 && $numChildren > ($roomType->capacity_children * $quantity)) {
+                throw ValidationException::withMessages([
+                    'metadata.num_children' => ["Hạng phòng \"{$roomType->name}\" chứa tối đa {$roomType->capacity_children} trẻ em/phòng."],
+                ]);
+            }
 
-                if (($overlappingRooms + $quantity) > $totalInventory) {
-                    $roomsLeft = max(0, $totalInventory - $overlappingRooms);
+            $totalInventory = (int) ($roomType->inventory ?? $roomType->total_rooms ?? 0);
+            if ($totalInventory > 0 && ! empty($dates)) {
+                $peakBooked = $this->calculatePeakBookedInRange(
+                    $service->id,
+                    $roomType->id,
+                    $dates,
+                    true,
+                    $checkoutTime
+                );
+
+                $roomsLeft = max(0, $totalInventory - $peakBooked);
+                $minAvailable = $minAvailable === null ? $roomsLeft : min($minAvailable, $roomsLeft);
+
+                if (($peakBooked + $quantity) > $totalInventory) {
                     throw ValidationException::withMessages([
                         'room_type_id' => ["Hạng phòng \"{$roomType->name}\" chỉ còn {$roomsLeft} phòng trống trong khoảng thời gian bạn chọn."],
                     ]);
                 }
             }
+        } elseif ($service->type === 'vehicle' && ! $this->isTrainService($service)) {
+            // 3. Kiểm tra tồn kho động theo khoảng ngày cho Thuê xe (nếu không cấu hình service_availability riêng)
+            $defaultVehicleStock = 10;
+            $peakBooked = $this->calculatePeakBookedInRange(
+                $service->id,
+                null,
+                $dates,
+                false,
+                $checkoutTime
+            );
+            $vehiclesLeft = max(0, $defaultVehicleStock - $peakBooked);
+            $minAvailable = $minAvailable === null ? $vehiclesLeft : min($minAvailable, $vehiclesLeft);
+            if (($peakBooked + $quantity) > $defaultVehicleStock) {
+                throw ValidationException::withMessages([
+                    'start_date' => ["Phương tiện chỉ còn {$vehiclesLeft} xe trống trong khoảng ngày bạn chọn."],
+                ]);
+            }
+        } elseif ($isStay && ! $roomType) {
+            // Chỗ ở nguyên căn không tách hạng phòng
+            $defaultWholeUnitStock = 1;
+            $peakBooked = $this->calculatePeakBookedInRange(
+                $service->id,
+                null,
+                $dates,
+                true,
+                $checkoutTime
+            );
+            $unitsLeft = max(0, $defaultWholeUnitStock - $peakBooked);
+            $minAvailable = $minAvailable === null ? $unitsLeft : min($minAvailable, $unitsLeft);
+            if (($peakBooked + $quantity) > $defaultWholeUnitStock) {
+                throw ValidationException::withMessages([
+                    'start_date' => ['Chỗ ở đã được đặt hết trong khoảng ngày bạn chọn.'],
+                ]);
+            }
         }
+
+        return $minAvailable;
     }
 
     /**
@@ -534,10 +757,13 @@ class BookingService
             return ['allowed_rates' => [100], 'selected_rate' => 100];
         }
 
-        $hasDeposit30 = $service->policies->contains(
+        $policyRules = $this->extractPolicyRules($service);
+        $ruleRates = $policyRules['deposit_rates'];
+
+        $hasDeposit30 = in_array(30, $ruleRates, true) || $service->policies->contains(
             fn ($p) => stripos((string) $p->name, 'Đặt cọc giữ chỗ 30%') !== false
         );
-        $hasPayAtProperty = $service->policies->contains(
+        $hasPayAtProperty = in_array(0, $ruleRates, true) || $service->policies->contains(
             fn ($p) => stripos((string) $p->name, 'Thanh toán khi nhận phòng') !== false
         );
 
@@ -630,6 +856,25 @@ class BookingService
                 throw ValidationException::withMessages([
                     'coupon_code' => ['Mã giảm giá không tồn tại.'],
                 ]);
+            }
+
+            if (($coupon->visibility ?? 'public') === 'private') {
+                if (! $user) {
+                    throw ValidationException::withMessages([
+                        'coupon_code' => ['Mã giảm giá riêng tư chỉ áp dụng cho thành viên đã đăng nhập và được tặng mã.'],
+                    ]);
+                }
+
+                $hasGrant = UserCoupon::query()
+                    ->where('coupon_id', $coupon->id)
+                    ->where('user_id', $user->id)
+                    ->exists();
+
+                if (! $hasGrant) {
+                    throw ValidationException::withMessages([
+                        'coupon_code' => ['Bạn chưa được cấp quyền sử dụng mã giảm giá riêng tư này.'],
+                    ]);
+                }
             }
 
             $now = now();

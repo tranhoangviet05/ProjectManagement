@@ -8,6 +8,8 @@ import ServiceSearchScreen from "../features/explore/screens/ServiceSearchScreen
 import AllLocationsScreen from "../features/explore/screens/AllLocationsScreen";
 import HolidayCampaignsScreen from "../features/explore/screens/HolidayCampaignsScreen";
 import RoomTypeDetailScreen from "../features/explore/screens/RoomTypeDetailScreen";
+import BookingCheckoutScreen from "../features/booking/screens/BookingCheckoutScreen";
+import BookingDetailScreen from "../features/booking/screens/BookingDetailScreen";
 import ToursScreen from "../features/tour/screens/ToursScreen";
 import DetailScreen from "../features/tour/screens/DetailScreen";
 
@@ -50,6 +52,16 @@ export default function RootNavigator() {
       <Stack.Screen
         name="RoomTypeDetail"
         component={RoomTypeDetailScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="BookingCheckout"
+        component={BookingCheckoutScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="BookingDetail"
+        component={BookingDetailScreen}
         options={{ headerShown: false }}
       />
       <Stack.Screen name="Auth" component={AuthScreen} />

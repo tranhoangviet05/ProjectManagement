@@ -16,6 +16,7 @@ import {
   ExploreDataProvider,
   useExploreData,
 } from "./src/features/explore/context/ExploreDataContext";
+import { SearchFilterProvider } from "./src/context/SearchFilterContext";
 import RootNavigator from "./src/navigation/RootNavigator";
 import SplashScreen from "./src/features/splash/screens/SplashScreen";
 import { colors } from "./src/theme/tokens";
@@ -57,7 +58,9 @@ export default function App() {
     <SafeAreaProvider>
       <AuthProvider>
         <ExploreDataProvider>
-          <AppBootstrapShell fontsLoaded={fontsLoaded} />
+          <SearchFilterProvider>
+            <AppBootstrapShell fontsLoaded={fontsLoaded} />
+          </SearchFilterProvider>
         </ExploreDataProvider>
       </AuthProvider>
     </SafeAreaProvider>

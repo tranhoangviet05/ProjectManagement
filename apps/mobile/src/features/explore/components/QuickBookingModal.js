@@ -10,6 +10,7 @@ import {
   View,
 } from "react-native";
 import { Calendar, CheckCircle2, Clock, Tag, X } from "lucide-react-native";
+import { useNavigation } from "@react-navigation/native";
 import AppText from "../../../components/common/AppText";
 import apiClient from "../../../lib/apiClient";
 import { colors, radius, spacing } from "../../../theme/tokens";
@@ -35,6 +36,7 @@ export default function QuickBookingModal({
   user,
   isAuthenticated,
 }) {
+  const navigation = useNavigation();
   const isStay = service?.type === "hotel" || service?.type === "homestay";
   const isTrain =
     service?.type === "train" ||
@@ -252,8 +254,29 @@ export default function QuickBookingModal({
                 ) : null}
               </View>
 
-              <Pressable style={styles.primaryBtn} onPress={onClose}>
-                <AppText style={styles.primaryBtnText}>Hoàn tất</AppText>
+              <Pressable
+                style={styles.primaryBtn}
+                onPress={() => {
+                  const created = createdBooking;
+                  onClose?.();
+                  navigation.navigate("BookingDetail", {
+                    bookingId: created.id,
+                    bookingCode: created.booking_code,
+                    contactPhone: created.contact_phone || contactPhone,
+                    initialBooking: created,
+                  });
+                }}
+              >
+                <AppText style={styles.primaryBtnText}>Xem chi tiết đơn</AppText>
+              </Pressable>
+
+              <Pressable
+                style={[styles.primaryBtn, { backgroundColor: "#F1F5F9", marginTop: 8 }]}
+                onPress={onClose}
+              >
+                <AppText style={[styles.primaryBtnText, { color: colors.inkPrimary }]}>
+                  Đóng
+                </AppText>
               </Pressable>
             </ScrollView>
           ) : (
