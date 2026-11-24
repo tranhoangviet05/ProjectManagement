@@ -25,11 +25,38 @@ const exploreService = {
       query.set("max_price", String(params.max_price));
     }
     if (params.has_pets) query.set("has_pets", "1");
+    if (Array.isArray(params.amenity_ids) && params.amenity_ids.length > 0) {
+      query.set("amenity_ids", params.amenity_ids.join(","));
+    }
+    if (Array.isArray(params.inclusion_ids) && params.inclusion_ids.length > 0) {
+      query.set("inclusion_ids", params.inclusion_ids.join(","));
+    }
+    if (Array.isArray(params.policy_ids) && params.policy_ids.length > 0) {
+      query.set("policy_ids", params.policy_ids.join(","));
+    }
+    if (params.start_date) query.set("start_date", String(params.start_date));
+    if (params.end_date) query.set("end_date", String(params.end_date));
+    if (params.quantity) query.set("quantity", String(params.quantity));
     if (params.sort) query.set("sort", params.sort);
     if (params.per_page) query.set("per_page", String(params.per_page));
 
     const qs = query.toString();
     return apiClient.get(`/public/services${qs ? `?${qs}` : ""}`);
+  },
+
+  async fetchAmenities({ type = "" } = {}) {
+    const qs = type ? `?type=${encodeURIComponent(type)}` : "";
+    return apiClient.get(`/public/amenities${qs}`);
+  },
+
+  async fetchInclusions({ type = "" } = {}) {
+    const qs = type ? `?kind=include&type=${encodeURIComponent(type)}` : "?kind=include";
+    return apiClient.get(`/public/inclusions${qs}`);
+  },
+
+  async fetchPolicies({ type = "" } = {}) {
+    const qs = type ? `?type=${encodeURIComponent(type)}` : "";
+    return apiClient.get(`/public/policies${qs}`);
   },
 
   async fetchServiceDetail(id) {

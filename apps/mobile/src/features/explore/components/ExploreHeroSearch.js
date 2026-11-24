@@ -31,6 +31,7 @@ import {
 } from "lucide-react-native";
 import AppText from "../../../components/common/AppText";
 import { colors, radius, spacing, touchTarget } from "../../../theme/tokens";
+import { useSearchFilters } from "../../../context/SearchFilterContext";
 import { HOME_CATEGORIES, VEHICLE_TYPE_OPTIONS } from "../models/exploreModel";
 import ExploreDatePickerModal, {
   formatCompactDateVi,
@@ -217,10 +218,31 @@ export default function ExploreHeroSearch({ activeCategory, locations = [], onSu
     return startDate ? formatFullDateVi(startDate) : "";
   }, [activeCategory, startDate, endDate, durationOption]);
 
+  const { updateSearchFilters } = useSearchFilters();
+
+  const toLocalIso = (dateObj) => {
+    if (!dateObj) return "";
+    const y = dateObj.getFullYear();
+    const m = String(dateObj.getMonth() + 1).padStart(2, "0");
+    const d = String(dateObj.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  };
+
   const handleSubmit = () => {
     const catMeta = HOME_CATEGORIES.find((c) => c.id === activeCategory);
     const trainQueryParts = [trainFrom, trainTo].filter(Boolean);
     const searchQuery = activeCategory === "train" ? trainQueryParts.join(" - ") : keyword.trim();
+    const isoStart = toLocalIso(startDate);
+    const isoEnd = toLocalIso(endDate);
+
+    updateSearchFilters({
+      startDate: isoStart,
+      endDate: isoEnd,
+      numAdults: adults,
+      numChildren: childrenCount,
+      hasPets,
+      group: catMeta?.apiGroup || "",
+    });
 
     onSubmitSearch({
       group: catMeta?.apiGroup || "",
@@ -233,6 +255,8 @@ export default function ExploreHeroSearch({ activeCategory, locations = [], onSu
       has_pets: hasPets,
       vehicle_type: vehicleType,
       date_label: dateDisplayText,
+      start_date: isoStart,
+      end_date: isoEnd,
     });
   };
 

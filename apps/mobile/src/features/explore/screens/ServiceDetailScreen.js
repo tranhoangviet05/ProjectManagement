@@ -19,7 +19,6 @@ import {
 import AppText from "../../../components/common/AppText";
 import Skeleton from "../../../components/common/Skeleton";
 import { colors, radius, spacing, touchTarget } from "../../../theme/tokens";
-import { useAuth } from "../../../hooks/useAuth";
 import exploreService from "../services/exploreService";
 import {
   formatCurrencyVnd,
@@ -29,7 +28,6 @@ import {
 } from "../models/exploreModel";
 import ServiceDetailGallery from "../components/ServiceDetailGallery";
 import ServiceDetailReviews from "../components/ServiceDetailReviews";
-import QuickBookingModal from "../components/QuickBookingModal";
 
 function DetailSkeleton({ onBack }) {
   return (
@@ -65,7 +63,6 @@ function formatSlotDate(isoDate) {
  */
 export default function ServiceDetailScreen({ navigation, route }) {
   const insets = useSafeAreaInsets();
-  const { isAuthenticated, user } = useAuth();
 
   const initialPreview = route?.params?.tour || null;
   const serviceId = route?.params?.serviceId || initialPreview?.id;
@@ -76,7 +73,6 @@ export default function ServiceDetailScreen({ navigation, route }) {
   const [selectedRoomId, setSelectedRoomId] = useState(null);
   const [selectedDateId, setSelectedDateId] = useState(null);
   const [descExpanded, setDescExpanded] = useState(false);
-  const [bookingModalOpen, setBookingModalOpen] = useState(false);
 
   const loadDetail = useCallback(async () => {
     if (!serviceId) {
@@ -165,7 +161,11 @@ export default function ServiceDetailScreen({ navigation, route }) {
   }, [baseEffectivePrice, activePromotion]);
 
   const handleBookNow = () => {
-    setBookingModalOpen(true);
+    navigation.navigate("BookingCheckout", {
+      service,
+      selectedRoom,
+      selectedSlot,
+    });
   };
 
   if (loading && !service) {
@@ -310,7 +310,7 @@ export default function ServiceDetailScreen({ navigation, route }) {
           {/* Tiện nghi & Dịch vụ Bao gồm / Không bao gồm */}
           {amenities.length > 0 || includes.length > 0 || excludes.length > 0 ? (
             <View style={styles.sectionCard}>
-              <AppText style={styles.sectionTitle}>Tiện ích & Chính sách dịch vụ</AppText>
+              <AppText style={styles.sectionTitle}>Tiện nghi dịch vụ</AppText>
 
               {amenities.length > 0 ? (
                 <View style={styles.chipsWrap}>
@@ -561,16 +561,6 @@ export default function ServiceDetailScreen({ navigation, route }) {
           <AppText style={styles.bookBtnText}>Đặt chỗ ngay</AppText>
         </Pressable>
       </View>
-
-      <QuickBookingModal
-        visible={bookingModalOpen}
-        onClose={() => setBookingModalOpen(false)}
-        service={service}
-        selectedRoom={selectedRoom}
-        selectedSlot={selectedSlot}
-        user={user}
-        isAuthenticated={isAuthenticated}
-      />
     </View>
   );
 }

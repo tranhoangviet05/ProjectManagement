@@ -29,6 +29,7 @@ import { resolveMediaUrl } from "../../../lib/apiClient";
 import { colors, radius, spacing, touchTarget } from "../../../theme/tokens";
 import exploreService from "../services/exploreService";
 import { useExploreData } from "../context/ExploreDataContext";
+import { useSearchFilters } from "../../../context/SearchFilterContext";
 import {
   HOME_CATEGORIES,
   PRICE_PRESETS,
@@ -63,6 +64,7 @@ function ResultSkeletonList() {
 export default function ServiceSearchScreen({ navigation, route }) {
   const initialParams = route?.params || {};
   const { locations } = useExploreData();
+  const { updateSearchFilters } = useSearchFilters();
 
   const [keyword, setKeyword] = useState(initialParams.q || "");
   const [group, setGroup] = useState(initialParams.group || "");
@@ -72,11 +74,42 @@ export default function ServiceSearchScreen({ navigation, route }) {
   const [maxPrice, setMaxPrice] = useState(initialParams.max_price || "");
   const [hasPets, setHasPets] = useState(Boolean(initialParams.has_pets));
   const [sort, setSort] = useState(initialParams.sort || "newest");
+  const [startDate] = useState(initialParams.start_date || "");
+  const [endDate] = useState(initialParams.end_date || "");
+
+  const [selectedAmenityIds, setSelectedAmenityIds] = useState([]);
+  const [selectedInclusionIds, setSelectedInclusionIds] = useState([]);
+  const [selectedPolicyIds, setSelectedPolicyIds] = useState([]);
+
+  const [catalogAmenities, setCatalogAmenities] = useState([]);
+  const [catalogInclusions, setCatalogInclusions] = useState([]);
+  const [catalogPolicies, setCatalogPolicies] = useState([]);
 
   const [results, setResults] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [filterModalOpen, setFilterModalOpen] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    Promise.all([
+      exploreService.fetchAmenities().catch(() => ({ data: [] })),
+      exploreService.fetchInclusions().catch(() => ({ data: [] })),
+      exploreService.fetchPolicies().catch(() => ({ data: [] })),
+    ]).then(([amRes, incRes, polRes]) => {
+      if (!mounted) return;
+      setCatalogAmenities(Array.isArray(amRes?.data) ? amRes.data : []);
+      setCatalogInclusions(Array.isArray(incRes?.data) ? incRes.data : []);
+      setCatalogPolicies(Array.isArray(polRes?.data) ? polRes.data : []);
+    });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const toggleIdInList = (setter, id) => {
+    setter((prev) => (prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]));
+  };
 
   const fetchResults = useCallback(async (params) => {
     setLoading(true);
@@ -88,6 +121,11 @@ export default function ServiceSearchScreen({ navigation, route }) {
         min_price: params.min_price || undefined,
         max_price: params.max_price || undefined,
         has_pets: params.has_pets ? 1 : undefined,
+        amenity_ids: params.amenity_ids,
+        inclusion_ids: params.inclusion_ids,
+        policy_ids: params.policy_ids,
+        start_date: params.start_date || undefined,
+        end_date: params.end_date || undefined,
         sort: params.sort || "newest",
         per_page: 25,
       });
@@ -109,11 +147,22 @@ export default function ServiceSearchScreen({ navigation, route }) {
       min_price: minPrice,
       max_price: maxPrice,
       has_pets: hasPets,
+      amenity_ids: selectedAmenityIds,
+      inclusion_ids: selectedInclusionIds,
+      policy_ids: selectedPolicyIds,
+      start_date: startDate,
+      end_date: endDate,
       sort,
     };
     navigation.setParams({
       ...queryPayload,
       location_name: locationName,
+    });
+    updateSearchFilters({
+      startDate,
+      endDate,
+      hasPets,
+      group,
     });
 
     const timer = setTimeout(() => {
@@ -129,9 +178,15 @@ export default function ServiceSearchScreen({ navigation, route }) {
     minPrice,
     maxPrice,
     hasPets,
+    selectedAmenityIds,
+    selectedInclusionIds,
+    selectedPolicyIds,
+    startDate,
+    endDate,
     sort,
     fetchResults,
     navigation,
+    updateSearchFilters,
   ]);
 
   const handleResetFilters = () => {
@@ -142,6 +197,9 @@ export default function ServiceSearchScreen({ navigation, route }) {
     setMinPrice("");
     setMaxPrice("");
     setHasPets(false);
+    setSelectedAmenityIds([]);
+    setSelectedInclusionIds([]);
+    setSelectedPolicyIds([]);
     setSort("newest");
   };
 
@@ -542,6 +600,68 @@ export default function ServiceSearchScreen({ navigation, route }) {
                         style={[styles.modalChipText, selected && styles.modalChipTextActive]}
                       >
                         {loc.name}
+                      </AppText>
+                    </Pressable>
+                  );
+                })}
+              </View>
+
+              <AppText style={styles.filterGroupLabel}>
+                Tiện nghi & Tiện ích (khớp ít nhất 1)
+              </AppText>
+              <View style={styles.presetWrap}>
+                {catalogAmenities.slice(0, 14).map((am) => {
+                  const selected = selectedAmenityIds.includes(am.id);
+                  return (
+                    <Pressable
+                      key={`am-${am.id}`}
+                      style={[styles.modalChip, selected && styles.modalChipActive]}
+                      onPress={() => toggleIdInList(setSelectedAmenityIds, am.id)}
+                    >
+                      <AppText
+                        style={[styles.modalChipText, selected && styles.modalChipTextActive]}
+                      >
+                        {am.name}
+                      </AppText>
+                    </Pressable>
+                  );
+                })}
+              </View>
+
+              <AppText style={styles.filterGroupLabel}>Dịch vụ bao gồm (khớp ít nhất 1)</AppText>
+              <View style={styles.presetWrap}>
+                {catalogInclusions.slice(0, 12).map((inc) => {
+                  const selected = selectedInclusionIds.includes(inc.id);
+                  return (
+                    <Pressable
+                      key={`inc-${inc.id}`}
+                      style={[styles.modalChip, selected && styles.modalChipActive]}
+                      onPress={() => toggleIdInList(setSelectedInclusionIds, inc.id)}
+                    >
+                      <AppText
+                        style={[styles.modalChipText, selected && styles.modalChipTextActive]}
+                      >
+                        {inc.name}
+                      </AppText>
+                    </Pressable>
+                  );
+                })}
+              </View>
+
+              <AppText style={styles.filterGroupLabel}>Chính sách dịch vụ (khớp ít nhất 1)</AppText>
+              <View style={styles.presetWrap}>
+                {catalogPolicies.slice(0, 12).map((pol) => {
+                  const selected = selectedPolicyIds.includes(pol.id);
+                  return (
+                    <Pressable
+                      key={`pol-${pol.id}`}
+                      style={[styles.modalChip, selected && styles.modalChipActive]}
+                      onPress={() => toggleIdInList(setSelectedPolicyIds, pol.id)}
+                    >
+                      <AppText
+                        style={[styles.modalChipText, selected && styles.modalChipTextActive]}
+                      >
+                        {pol.name}
                       </AppText>
                     </Pressable>
                   );
