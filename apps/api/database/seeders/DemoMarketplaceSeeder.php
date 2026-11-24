@@ -20,6 +20,7 @@ use App\Models\ServicePolicy;
 use App\Models\ServicePromotion;
 use App\Models\ServiceSchedule;
 use App\Models\User;
+use App\Models\UserCoupon;
 use App\Services\AuthService;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -343,10 +344,11 @@ class DemoMarketplaceSeeder extends Seeder
             }
         }
 
-        // 5. Tạo Coupon mẫu để test Booking Engine
+        // 5. Tạo Coupon mẫu (công khai & riêng tư) để test Booking Engine
         Coupon::updateOrCreate(
             ['code' => 'WELCOME100K'],
             [
+                'visibility' => 'public',
                 'type' => 'fixed',
                 'discount_value' => 100000,
                 'min_order_amount' => 500000,
@@ -361,6 +363,7 @@ class DemoMarketplaceSeeder extends Seeder
         Coupon::updateOrCreate(
             ['code' => 'TRAVEL10'],
             [
+                'visibility' => 'public',
                 'type' => 'percent',
                 'discount_value' => 10,
                 'min_order_amount' => 300000,
@@ -371,6 +374,36 @@ class DemoMarketplaceSeeder extends Seeder
                 'created_by' => $admin->id,
             ]
         );
+
+        $vipCoupon = Coupon::updateOrCreate(
+            ['code' => 'VIPGIFT25'],
+            [
+                'visibility' => 'private',
+                'type' => 'percent',
+                'discount_value' => 25,
+                'min_order_amount' => 400000,
+                'usage_limit' => 50,
+                'per_user_limit' => 1,
+                'valid_from' => now()->subDays(5),
+                'valid_until' => now()->addMonths(3),
+                'created_by' => $admin->id,
+            ]
+        );
+
+        $sampleTourists = User::where('role', 'tourist')->limit(3)->get();
+        foreach ($sampleTourists as $sampleTourist) {
+            UserCoupon::updateOrCreate(
+                [
+                    'coupon_id' => $vipCoupon->id,
+                    'user_id' => $sampleTourist->id,
+                ],
+                [
+                    'granted_by' => $admin->id,
+                    'note' => 'Quà tặng riêng tư dành cho thành viên trải nghiệm Booking Engine',
+                    'granted_at' => now(),
+                ]
+            );
+        }
     }
 
     private function upsertFirebaseAccount(

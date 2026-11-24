@@ -13,6 +13,8 @@ class ServicePolicy extends Model
         'name',
         'slug',
         'category',
+        'rule_key',
+        'rule_config',
         'applicable_types',
         'icon',
         'description',
@@ -23,6 +25,7 @@ class ServicePolicy extends Model
     protected function casts(): array
     {
         return [
+            'rule_config' => 'array',
             'applicable_types' => 'array',
             'is_active' => 'boolean',
             'sort_order' => 'integer',

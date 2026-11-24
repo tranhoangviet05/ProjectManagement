@@ -5,14 +5,22 @@ namespace App\Http\Controllers\Api\V1\Public;
 use App\Enums\ProviderStatus;
 use App\Enums\ServiceStatus;
 use App\Http\Controllers\Controller;
+use App\Models\Amenity;
 use App\Models\Location;
 use App\Models\Service;
+use App\Models\ServiceInclusion;
 use App\Models\ServicePromotion;
+use App\Services\BookingService;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class PublicServiceController extends Controller
 {
+    public function __construct(
+        private readonly BookingService $bookingService
+    ) {}
+
     private function resolveActivePromotion(Service $service): ?array
     {
         $now = now();
@@ -82,6 +90,12 @@ class PublicServiceController extends Controller
         $minPrice = $request->query('min_price');
         $maxPrice = $request->query('max_price');
         $hasPets = filter_var($request->query('has_pets', false), FILTER_VALIDATE_BOOLEAN);
+        $amenityParam = $request->query('amenity_ids', $request->query('amenities', ''));
+        $inclusionParam = $request->query('inclusion_ids', $request->query('inclusions', ''));
+        $policyParam = $request->query('policy_ids', '');
+        $startDateParam = trim((string) $request->query('start_date', ''));
+        $endDateParam = trim((string) $request->query('end_date', ''));
+        $quantityParam = max(1, (int) $request->query('quantity', 1));
         $sort = (string) $request->query('sort', 'newest');
         $perPage = min(max((int) $request->query('per_page', 15), 1), 50);
 
@@ -93,7 +107,7 @@ class PublicServiceController extends Controller
                 'category:id,name,slug',
                 'provider:id,business_name,address',
                 'media' => fn ($m) => $m->orderByDesc('is_cover')->orderBy('sort_order'),
-                'policies:id,name,category,icon',
+                'policies:id,name,slug,category,rule_key,rule_config,icon',
                 'promotions.holidayCampaign',
             ])
             ->withCount('reviews');
@@ -163,7 +177,146 @@ class PublicServiceController extends Controller
         }
 
         if ($hasPets) {
-            $query->whereHas('policies', fn ($p) => $p->where('name', 'ilike', '%Cho phép mang theo thú cưng%'));
+            $query->whereHas('policies', function ($p) {
+                $p->where(function ($sub) {
+                    $sub->where('rule_key', 'pet_policy')
+                        ->whereJsonContains('rule_config->allow_pets', true);
+                })->orWhere('name', 'ilike', '%Cho phép mang theo thú cưng%');
+            });
+        }
+
+        // Bộ lọc thuộc tính mở rộng (Tiện nghi, Bao gồm, Chính sách) theo logic OR: chỉ cần đáp ứng >= 1 tiêu chí
+        $parseList = static function (mixed $raw): array {
+            if (is_array($raw)) {
+                return array_values(array_filter(array_map('trim', $raw), fn ($v) => $v !== ''));
+            }
+            $str = trim((string) $raw);
+
+            return $str === '' ? [] : array_values(array_filter(array_map('trim', explode(',', $str)), fn ($v) => $v !== ''));
+        };
+
+        $rawAmenities = $parseList($amenityParam);
+        $amenityNames = [];
+        if (! empty($rawAmenities)) {
+            $numericIds = array_values(array_filter($rawAmenities, 'is_numeric'));
+            $textNames = array_values(array_filter($rawAmenities, fn ($v) => ! is_numeric($v)));
+            if (! empty($numericIds)) {
+                $amenityNames = array_merge($amenityNames, Amenity::whereIn('id', $numericIds)->pluck('name')->all());
+            }
+            $amenityNames = array_values(array_unique(array_merge($amenityNames, $textNames)));
+        }
+
+        $rawInclusions = $parseList($inclusionParam);
+        $inclusionNames = [];
+        if (! empty($rawInclusions)) {
+            $numericIds = array_values(array_filter($rawInclusions, 'is_numeric'));
+            $textNames = array_values(array_filter($rawInclusions, fn ($v) => ! is_numeric($v)));
+            if (! empty($numericIds)) {
+                $inclusionNames = array_merge($inclusionNames, ServiceInclusion::whereIn('id', $numericIds)->pluck('name')->all());
+            }
+            $inclusionNames = array_values(array_unique(array_merge($inclusionNames, $textNames)));
+        }
+
+        $policyIds = array_values(array_map('intval', array_filter($parseList($policyParam), 'is_numeric')));
+
+        if (! empty($amenityNames) || ! empty($inclusionNames) || ! empty($policyIds)) {
+            $query->where(function ($orGroup) use ($amenityNames, $inclusionNames, $policyIds) {
+                foreach ($amenityNames as $amenityName) {
+                    $like = '%'.str_replace(['%', '_'], ['\\%', '\\_'], $amenityName).'%';
+                    $orGroup->orWhereRaw('CAST(amenities AS TEXT) ILIKE ?', [$like])
+                        ->orWhereHas('roomTypes', fn ($r) => $r->whereRaw('CAST(amenities AS TEXT) ILIKE ?', [$like]));
+                }
+
+                foreach ($inclusionNames as $inclusionName) {
+                    $like = '%'.str_replace(['%', '_'], ['\\%', '\\_'], $inclusionName).'%';
+                    $orGroup->orWhereRaw('CAST(includes AS TEXT) ILIKE ?', [$like]);
+                }
+
+                if (! empty($policyIds)) {
+                    $orGroup->orWhereHas('policies', fn ($p) => $p->whereIn('service_policies.id', $policyIds));
+                }
+            });
+        }
+
+        // Lọc theo khoảng ngày còn chỗ thực tế (Chỗ ở / Thuê xe)
+        if ($startDateParam !== '') {
+            try {
+                $startDate = Carbon::parse($startDateParam)->startOfDay();
+                $endDate = $endDateParam !== '' ? Carbon::parse($endDateParam)->startOfDay() : null;
+
+                $candidates = (clone $query)
+                    ->with([
+                        'roomTypes' => fn ($r) => $r->where('status', 'active'),
+                        'policies:id,rule_key,rule_config',
+                        'category:id,slug',
+                    ])
+                    ->get(['id', 'type', 'category_id']);
+
+                $unavailableIds = [];
+                foreach ($candidates as $svc) {
+                    $isStay = in_array($svc->type, ['hotel', 'homestay'], true);
+                    $isTrain = str_contains(strtolower((string) ($svc->category?->slug ?? '')), 'tau');
+                    $isVehicle = $svc->type === 'vehicle' && ! $isTrain;
+
+                    if (! $isStay && ! $isVehicle) {
+                        continue;
+                    }
+
+                    $svcEnd = $endDate ? $endDate->copy() : ($isStay ? $startDate->copy()->addDay() : $startDate->copy());
+                    if ($isStay && $svcEnd->lessThanOrEqualTo($startDate)) {
+                        $svcEnd = $startDate->copy()->addDay();
+                    }
+
+                    $dates = [];
+                    if ($isStay) {
+                        for ($d = $startDate->copy(); $d->lt($svcEnd); $d->addDay()) {
+                            $dates[] = $d->format('Y-m-d');
+                        }
+                    } else {
+                        for ($d = $startDate->copy(); $d->lte($svcEnd); $d->addDay()) {
+                            $dates[] = $d->format('Y-m-d');
+                        }
+                    }
+
+                    $rules = $this->bookingService->extractPolicyRules($svc);
+                    $checkoutTime = $rules['checkout_time'] ?? null;
+
+                    if ($isStay && $svc->roomTypes->isNotEmpty()) {
+                        $hasAnyRoom = false;
+                        foreach ($svc->roomTypes as $rt) {
+                            $inv = (int) ($rt->inventory ?? $rt->total_rooms ?? 0);
+                            if ($inv <= 0) {
+                                $hasAnyRoom = true;
+                                break;
+                            }
+                            $peak = $this->bookingService->calculatePeakBookedInRange($svc->id, $rt->id, $dates, true, $checkoutTime);
+                            if (($inv - $peak) >= $quantityParam) {
+                                $hasAnyRoom = true;
+                                break;
+                            }
+                        }
+                        if (! $hasAnyRoom) {
+                            $unavailableIds[] = $svc->id;
+                        }
+                    } elseif ($isStay) {
+                        $peak = $this->bookingService->calculatePeakBookedInRange($svc->id, null, $dates, true, $checkoutTime);
+                        if ((1 - $peak) < $quantityParam) {
+                            $unavailableIds[] = $svc->id;
+                        }
+                    } elseif ($isVehicle) {
+                        $peak = $this->bookingService->calculatePeakBookedInRange($svc->id, null, $dates, false, $checkoutTime);
+                        if ((10 - $peak) < $quantityParam) {
+                            $unavailableIds[] = $svc->id;
+                        }
+                    }
+                }
+
+                if (! empty($unavailableIds)) {
+                    $query->whereNotIn('services.id', $unavailableIds);
+                }
+            } catch (\Throwable) {
+                // Bỏ qua nếu định dạng ngày không hợp lệ
+            }
         }
 
         if ($sort === 'price_asc') {
@@ -261,7 +414,7 @@ class PublicServiceController extends Controller
                     ->orderBy('available_date')
                     ->limit(30),
                 'reviews' => fn ($rv) => $rv->with('user:id,name,avatar_url')->latest()->limit(10),
-                'policies:id,name,category,icon,description',
+                'policies:id,name,slug,category,rule_key,rule_config,icon,description',
                 'promotions.holidayCampaign',
             ])
             ->withCount('reviews')
@@ -286,6 +439,7 @@ class PublicServiceController extends Controller
                 'total_bookings' => (int) ($service->total_bookings ?? 0),
                 'cover_image' => $cover?->url,
                 'active_promotion' => $activePromotion,
+                'policy_rules' => $this->bookingService->extractPolicyRules($service),
             ]),
         ]);
     }

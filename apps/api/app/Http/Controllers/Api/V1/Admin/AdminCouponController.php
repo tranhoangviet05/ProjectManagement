@@ -86,7 +86,10 @@ class AdminCouponController extends Controller
      */
     public function store(UpsertCouponRequest $request): JsonResponse
     {
-        $coupon = Coupon::create(array_merge($request->validated(), [
+        $validated = $request->validated();
+        $validated['visibility'] = $validated['visibility'] ?? 'public';
+
+        $coupon = Coupon::create(array_merge($validated, [
             'used_count' => 0,
             'created_by' => $request->user()->id,
         ]));
@@ -257,6 +260,7 @@ class AdminCouponController extends Controller
         return [
             'id' => $coupon->id,
             'code' => $coupon->code,
+            'visibility' => $coupon->visibility ?? 'public',
             'type' => $coupon->type,
             'discount_value' => (float) $coupon->discount_value,
             'min_order_amount' => $coupon->min_order_amount !== null ? (float) $coupon->min_order_amount : null,

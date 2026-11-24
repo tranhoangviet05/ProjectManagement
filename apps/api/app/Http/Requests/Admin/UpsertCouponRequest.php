@@ -42,6 +42,7 @@ class UpsertCouponRequest extends FormRequest
                 'alpha_dash',
                 Rule::unique('coupons', 'code')->ignore($couponId),
             ],
+            'visibility' => ['nullable', 'string', 'in:public,private'],
             'type' => ['required', 'string', 'in:percent,fixed'],
             'discount_value' => $discountRules,
             'min_order_amount' => ['nullable', 'numeric', 'min:0'],

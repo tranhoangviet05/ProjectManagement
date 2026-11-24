@@ -153,7 +153,7 @@ class TouristBookingController extends Controller
             ->with([
                 'service.media' => fn ($m) => $m->orderByDesc('is_cover')->orderBy('sort_order'),
                 'service.location:id,name',
-                'service.policies:id,name,category,icon',
+                'service.policies:id,name,slug,category,rule_key,rule_config,icon,description',
                 'provider:id,business_name,phone,address',
                 'roomType:id,name,rank,base_price',
                 'servicePromotion.holidayCampaign',
@@ -170,9 +170,14 @@ class TouristBookingController extends Controller
             ], 404);
         }
 
+        $data = $booking->toArray();
+        $data['policy_rules'] = $booking->service
+            ? $this->bookingService->extractPolicyRules($booking->service)
+            : null;
+
         return response()->json([
             'success' => true,
-            'data' => $booking,
+            'data' => $data,
         ]);
     }
 
@@ -190,6 +195,7 @@ class TouristBookingController extends Controller
             ->with([
                 'service.media' => fn ($m) => $m->orderByDesc('is_cover')->orderBy('sort_order'),
                 'service.location:id,name',
+                'service.policies:id,name,slug,category,rule_key,rule_config,icon,description',
                 'provider:id,business_name,phone,address',
                 'roomType:id,name,rank,base_price',
                 'coupon:id,code',
@@ -221,9 +227,14 @@ class TouristBookingController extends Controller
             ], 404);
         }
 
+        $data = $booking->toArray();
+        $data['policy_rules'] = $booking->service
+            ? $this->bookingService->extractPolicyRules($booking->service)
+            : null;
+
         return response()->json([
             'success' => true,
-            'data' => $booking,
+            'data' => $data,
         ]);
     }
 

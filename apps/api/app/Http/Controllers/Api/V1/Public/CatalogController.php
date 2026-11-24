@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Api\V1\Public;
 use App\Enums\ServiceStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Amenity;
+use App\Models\Booking;
 use App\Models\BusinessType;
 use App\Models\Category;
+use App\Models\Coupon;
 use App\Models\HolidayCampaign;
 use App\Models\Location;
 use App\Models\ServiceInclusion;
@@ -174,6 +176,79 @@ class CatalogController extends Controller
         return response()->json([
             'success' => true,
             'data' => $campaigns,
+        ]);
+    }
+
+    /**
+     * Lấy danh sách mã giảm giá đang còn hiệu lực để khách chọn áp dụng (mỗi đơn tối đa 1 mã).
+     */
+    public function coupons(Request $request): JsonResponse
+    {
+        $now = now();
+        $user = $request->user();
+
+        $query = Coupon::query()
+            ->where(fn ($q) => $q->whereNull('valid_from')->orWhere('valid_from', '<=', $now))
+            ->where(fn ($q) => $q->whereNull('valid_until')->orWhere('valid_until', '>=', $now))
+            ->where(fn ($q) => $q->whereNull('usage_limit')->orWhereColumn('used_count', '<', 'usage_limit'));
+
+        if ($user) {
+            $query->where(function ($q) use ($user) {
+                $q->where('visibility', 'public')
+                    ->orWhere(function ($sub) use ($user) {
+                        $sub->where('visibility', 'private')
+                            ->whereHas('grants', fn ($g) => $g->where('user_id', $user->id));
+                    });
+            });
+        } else {
+            $query->where('visibility', 'public');
+        }
+
+        $coupons = $query->orderByDesc('discount_value')->get();
+
+        $userUsageMap = [];
+        if ($user && $coupons->isNotEmpty()) {
+            $userUsageMap = Booking::query()
+                ->where('user_id', $user->id)
+                ->whereIn('coupon_id', $coupons->pluck('id'))
+                ->where('status', '!=', 'cancelled')
+                ->selectRaw('coupon_id, COUNT(*) as cnt')
+                ->groupBy('coupon_id')
+                ->pluck('cnt', 'coupon_id')
+                ->all();
+        }
+
+        $items = $coupons->filter(function (Coupon $coupon) use ($user, $userUsageMap) {
+            if (! $user || $coupon->per_user_limit === null) {
+                return true;
+            }
+
+            return ((int) ($userUsageMap[$coupon->id] ?? 0)) < $coupon->per_user_limit;
+        })->map(function (Coupon $coupon) use ($userUsageMap) {
+            $remainingTotal = $coupon->usage_limit !== null
+                ? max(0, $coupon->usage_limit - $coupon->used_count)
+                : null;
+            $usedByUser = (int) ($userUsageMap[$coupon->id] ?? 0);
+            $remainingUser = $coupon->per_user_limit !== null
+                ? max(0, $coupon->per_user_limit - $usedByUser)
+                : null;
+
+            return [
+                'id' => $coupon->id,
+                'code' => $coupon->code,
+                'visibility' => $coupon->visibility ?? 'public',
+                'type' => $coupon->type,
+                'discount_value' => (float) $coupon->discount_value,
+                'min_order_amount' => (float) ($coupon->min_order_amount ?? 0),
+                'valid_until' => $coupon->valid_until?->toIso8601String(),
+                'remaining_uses' => $remainingTotal,
+                'user_remaining_uses' => $remainingUser,
+            ];
+        })->values();
+
+        return response()->json([
+            'success' => true,
+            'data' => $items,
         ]);
     }
 }
