@@ -21,6 +21,7 @@ export default function CouponFormModal({
 
   const [form, setForm] = useState({
     code: coupon?.code || "",
+    visibility: coupon?.visibility || "public",
     type: coupon?.type || "percent",
     discount_value: coupon?.discount_value ?? "",
     min_order_amount: coupon?.min_order_amount ?? "",
@@ -61,6 +62,7 @@ export default function CouponFormModal({
 
     const payload = {
       code: trimmedCode,
+      visibility: form.visibility || "public",
       type: form.type,
       discount_value: discountNum,
       min_order_amount: form.min_order_amount === "" ? null : Number(form.min_order_amount),
@@ -125,6 +127,20 @@ export default function CouponFormModal({
                 <option value="fixed">Số tiền cố định (VNĐ)</option>
               </select>
             </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-ink-primary mb-1">
+              Phạm vi áp dụng <span className="text-status-danger">*</span>
+            </label>
+            <select
+              value={form.visibility}
+              onChange={(e) => handleChange("visibility", e.target.value)}
+              className="w-full px-3.5 py-2 rounded-lg border border-border-subtle bg-surface-base text-sm text-ink-primary outline-hidden focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
+            >
+              <option value="public">Công khai (Toàn sàn & Khách vãng lai đều thấy)</option>
+              <option value="private">Riêng tư (Chỉ thành viên được Admin tặng mã)</option>
+            </select>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

@@ -158,8 +158,17 @@ export default function AdminCouponsTable({
                   <tr key={coupon.id} className="hover:bg-slate-50/70 transition-colors">
                     {/* Mã ưu đãi */}
                     <td className="py-4 px-4 sm:px-6">
-                      <span className="font-mono font-bold text-ink-primary bg-slate-100 px-2.5 py-1 rounded border border-border-subtle text-xs sm:text-sm">
+                      <span className="font-mono font-bold text-ink-primary bg-slate-100 px-2.5 py-1 rounded border border-border-subtle text-xs sm:text-sm inline-block">
                         {coupon.code}
+                      </span>
+                      <span
+                        className={`mt-1.5 inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold border ml-2 ${
+                          coupon.visibility === "private"
+                            ? "bg-amber-50 text-amber-700 border-amber-200"
+                            : "bg-sky-50 text-sky-700 border-sky-200"
+                        }`}
+                      >
+                        {coupon.visibility === "private" ? "Riêng tư" : "Công khai"}
                       </span>
                     </td>
 
