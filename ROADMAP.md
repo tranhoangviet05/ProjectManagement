@@ -71,9 +71,9 @@
 
 | Tên Task (Issue / Sub-issues)                                        |     Platform     |  Status  | Priority | Estimate | Module      | Role        | Start date | Date target |
 | :------------------------------------------------------------------- | :--------------: | :------: | :------: | :------: | :---------- | :---------- | :--------- | :---------- |
-| **[EPIC] Booking Engine (Xử lý Đặt chỗ)**                            | **API / Mobile** | **Todo** |  **P0**  |  **7**   | **Booking** | **user**    | 02/12      | 04/12       |
-| ↳ Logic tạo đơn, tính toán tiền cọc 30% & Kiểm tra xung đột lịch     |       API        |   Todo   |    P0    |    4     | Booking     | user        | 02/12      | 03/12       |
-| ↳ Giao diện đặt chỗ & Màn hình quản lý Lịch sử đơn đặt               |      Mobile      |   Todo   |    P1    |    3     | Booking     | user        | 03/12      | 04/12       |
+| **[EPIC] Booking Engine (Xử lý Đặt chỗ)**                            | **API / Mobile** | **Done** |  **P0**  |  **7**   | **Booking** | **user**    | 02/12      | 04/12       |
+| ↳ Logic tạo đơn, tính toán tiền cọc 30% & Kiểm tra xung đột lịch     |       API        |   Done   |    P0    |    4     | Booking     | user        | 02/12      | 03/12       |
+| ↳ Giao diện đặt chỗ & Màn hình quản lý Lịch sử đơn đặt               |      Mobile      |   Done   |    P1    |    3     | Booking     | user        | 03/12      | 04/12       |
 | **[EPIC] Cổng Thanh Toán Sepay & Vé QR**                             |  **API / All**   | **Todo** |  **P0**  |  **8**   | **Payment** | **general** | 05/12      | 08/12       |
 | ↳ Tích hợp Cổng Sepay (Tạo QR thanh toán cọc 30%)                    |    API/Mobile    |   Todo   |    P0    |    3     | Payment     | user        | 05/12      | 06/12       |
 | ↳ Xử lý Webhook Sepay (Idempotent, bảo mật chữ ký, tự động cập nhật) |       API        |   Todo   |    P0    |    3     | Payment     | general     | 06/12      | 07/12       |
